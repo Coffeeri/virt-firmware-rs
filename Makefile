@@ -9,7 +9,10 @@ build-bios-64 clippy-bios-64 : TARGET := $(BARE)
 build-efi-apps clippy-efi-apps : TARGET := $(UEFI)
 
 # targets
-all build: build-bios-32 cargo-build cargo-clippy
+all: build clippy
+build: build-bios-32 cargo-build
+clippy: cargo-clippy
+
 cargo-build: $(patsubst %,build-%,$(PKGS))
 cargo-clippy: $(patsubst %,clippy-%,$(PKGS))
 
