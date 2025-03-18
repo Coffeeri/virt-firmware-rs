@@ -27,6 +27,12 @@ build-bios-32:
 clean-bios-32:
 	make -C bios-32 clean
 
+# maintainer target
+push:
+	git push
+	sleep 10 # let gitlab create pipeline
+	gitlab-ci
+
 # rules
 build-%:
 	cargo build --package $* --target $(TARGET)
