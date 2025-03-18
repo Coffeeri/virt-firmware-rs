@@ -2,3 +2,4 @@
 
 pub mod fwcfg;
 pub mod ioport;
+pub mod pci;

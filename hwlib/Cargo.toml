@@ -8,4 +8,5 @@ publish = false
 alloc = [ "dep:log" ]
 
 [dependencies]
+bitfield-struct = "0.10"
 log = { version = "0.4", optional = true }
