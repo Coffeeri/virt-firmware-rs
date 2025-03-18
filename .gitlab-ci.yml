@@ -1,0 +1,34 @@
+image: registry.fedoraproject.org/fedora:latest
+
+stages:
+  - build
+  - publish
+
+before_script:
+  - dnf install -y make gcc seabios-bin edk2-experimental tree
+    cargo rustc rust-std-static-x86_64-unknown-uefi rust-std-static-x86_64-unknown-none
+
+compile:
+  stage: build
+  script:
+    - make build
+  artifacts:
+    when: on_success
+    paths:
+      - bios-32/*.bin
+      - target/x86_64-unknown-uefi/debug/*.efi
+
+pages:
+  stage: publish
+  script:
+    - mkdir -p public/bios-32
+    - for binary in hello.efi pciscan.efi; do
+      mv -v target/x86_64-unknown-uefi/debug/$binary public;
+      done
+    - mv -v bios-32/*.bin public/bios-32
+    - tree -T "$CI_PROJECT_NAME" --charset utf8 -H . public > index.html
+    - mv index.html public
+    - mv target/x86_64-unknown-uefi/doc public
+  artifacts:
+    paths:
+      - public/
