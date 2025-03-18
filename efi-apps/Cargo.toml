@@ -1,0 +1,12 @@
+[package]
+name = "efi-apps"
+version = "0.0.1"
+edition = "2021"
+publish = false
+
+[dependencies]
+uefi = { version = "0.34", features = ["panic_handler", "logger", "log-debugcon", "alloc", "global_allocator" ] }
+uefi-raw = "0.10"
+log = "0.4"
+#bitfield-struct = "0.10"
+hwlib = { path = "../hwlib", features = ["alloc"] }

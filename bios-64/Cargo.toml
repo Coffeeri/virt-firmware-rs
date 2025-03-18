@@ -1,0 +1,11 @@
+[package]
+name = "bios-64"
+version = "0.0.1"
+edition = "2021"
+publish = false
+
+[dependencies]
+hwlib = { path = "../hwlib" }
+
+[build-dependencies]
+cc = "1"
