@@ -1,3 +1,4 @@
+# variables
 CC	?= gcc
 LD	:= ld
 OBJCOPY	:= objcopy
@@ -9,6 +10,7 @@ LDFLAGS	:= -melf_i386 --script=bios32.lds
 
 TARGETS	:= hello.bin info.bin vmfwupdate.bin
 
+# build targets
 all: build
 
 build: $(TARGETS)
@@ -20,12 +22,7 @@ vmfwupdate.elf: vmfwupdate.o entry32.o fwcfg.o pci.o output.o ioport.o
 clean:
 	rm -f *.o *.elf *.bin
 
-%.elf: %.o
-	$(LD) $(LDFLAGS) -o $@ $^
-
-%.bin: %.elf
-	$(OBJCOPY) -O binary $< $@
-
+# test targets
 run-hello: hello.bin
 	qemu-system-x86_64 -enable-kvm -nographic -bios hello.bin
 
@@ -35,3 +32,10 @@ run-info: info.bin
 run-vmfwupdate: vmfwupdate.bin
 	qemu-system-x86_64 -enable-kvm -nographic -bios vmfwupdate.bin \
 		-device vmfwupdate
+
+# build rules
+%.elf: %.o
+	$(LD) $(LDFLAGS) -o $@ $^
+
+%.bin: %.elf
+	$(OBJCOPY) -O binary $< $@
