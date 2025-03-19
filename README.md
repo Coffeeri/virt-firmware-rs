@@ -18,3 +18,7 @@ Related python project: https://gitlab.com/kraxel/virt-firmware
 ### C code
 
  * [32-bit firmware test images](bios-32/)
+
+### Binaries
+
+ * https://kraxel.gitlab.io/virt-firmware-rs/
