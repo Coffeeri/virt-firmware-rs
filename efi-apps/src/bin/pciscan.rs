@@ -9,7 +9,7 @@ use uefi::prelude::*;
 use uefi::println;
 
 use efi_apps::qemu;
-use hwlib::pci;
+use libhw::pci;
 
 fn scan_one_pci_bus(bus: u8, indent: usize) {
     for slot in 0..32 {

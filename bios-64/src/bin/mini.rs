@@ -4,7 +4,7 @@
 
 use core::panic::PanicInfo;
 
-use hwlib::ioport::{inb, outb};
+use libhw::ioport::{inb, outb};
 
 const SERIAL_BASE: u16 = 0x3f8;
 

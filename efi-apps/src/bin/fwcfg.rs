@@ -9,7 +9,7 @@ use uefi::prelude::*;
 use uefi::println;
 
 use efi_apps::qemu;
-use hwlib::fwcfg;
+use libhw::fwcfg;
 
 #[entry]
 fn main() -> Status {

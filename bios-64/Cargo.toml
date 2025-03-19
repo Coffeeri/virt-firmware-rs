@@ -5,7 +5,7 @@ edition = "2021"
 publish = false
 
 [dependencies]
-hwlib = { path = "../hwlib" }
+libhw = { path = "../libhw" }
 
 [build-dependencies]
 cc = "1"

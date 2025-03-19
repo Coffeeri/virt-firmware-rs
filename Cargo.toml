@@ -3,5 +3,5 @@ resolver = "2"
 members = [
 	"bios-64",
 	"efi-apps",
-        "hwlib",
+        "libhw",
 ]
