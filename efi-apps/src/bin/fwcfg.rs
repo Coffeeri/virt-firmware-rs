@@ -19,8 +19,12 @@ fn main() -> Status {
     if fwcfg::detect() {
         let list = fwcfg::readdir();
         for e in list {
-            println!("fwcfg file: {}", e.name);
+            println!("fwcfg file:  #{}  {}", e.item, e.name);
         }
+    }
+
+    if let Some((item, size)) = fwcfg::findfile("etc/e820") {
+        println!("fwcfg: etc/e820 is item {item}, size {size}");
     }
 
     qemu::shutdown_if_direct_kernel_load();

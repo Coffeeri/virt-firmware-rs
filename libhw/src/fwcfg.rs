@@ -38,6 +38,12 @@ pub fn read_bytes(count: usize) -> Vec<u8> {
     data
 }
 
+pub fn read_bytes_slice(dest: &mut [u8]) {
+    for byte in dest {
+        *byte = read8();
+    }
+}
+
 pub fn read16_le() -> u16 {
     let b1 = read8() as u16;
     let b2 = read8() as u16;
@@ -109,6 +115,23 @@ fn bytes_to_string(data: &[u8]) -> String {
         s.push(*b as char);
     }
     s
+}
+
+pub fn findfile(find: &str) -> Option<(u16, u32)> {
+    select(ITEM_FILEDIR);
+    let count = read32_be();
+
+    for _ in 0..count {
+        let size = read32_be();
+        let item = read16_be();
+        let _ = read16_be();
+        let mut name: [u8; 56] = [0; 56];
+        read_bytes_slice(&mut name);
+        if find.as_bytes() == &name[..find.len()] {
+            return Some((item, size));
+        }
+    }
+    None
 }
 
 #[cfg(feature = "alloc")]
