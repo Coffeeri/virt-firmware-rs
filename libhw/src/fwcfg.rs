@@ -100,6 +100,18 @@ pub struct FwCfgFile {
 }
 
 #[cfg(feature = "alloc")]
+fn bytes_to_string(data: &[u8]) -> String {
+    let mut s = String::new();
+    for b in data {
+        if *b == 0 {
+            break;
+        }
+        s.push(*b as char);
+    }
+    s
+}
+
+#[cfg(feature = "alloc")]
 pub fn readdir() -> Vec<FwCfgFile> {
     let mut list = Vec::new();
 
@@ -115,7 +127,7 @@ pub fn readdir() -> Vec<FwCfgFile> {
         let entry = FwCfgFile {
             size,
             item,
-            name: String::from_utf8_lossy(&name).into_owned(),
+            name: bytes_to_string(&name),
         };
         debug!("{:?}", entry);
         list.push(entry);
