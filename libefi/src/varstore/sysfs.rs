@@ -1,0 +1,90 @@
+//! read efi variables from linux sysfs
+
+use log::debug;
+use log::trace;
+use std::fs;
+use std::io;
+use std::io::Write;
+use uuid::Uuid;
+
+use crate::efivar::types;
+
+fn varstore_filename(name: &str, guid: &Uuid) -> String {
+    let filename = format!("/sys/firmware/efi/efivars/{}-{}", name, guid);
+    filename
+}
+
+pub fn varstore_ls() -> io::Result<Vec<types::EfiVarId>> {
+    let mut vars = Vec::new();
+
+    let dir = fs::read_dir("/sys/firmware/efi/efivars")?;
+    for e in dir {
+        if let Ok(filename) = e?.file_name().into_string() {
+            if filename.len() > 37 {
+                let namelen = filename.len() - 37;
+                let name = filename.get(..namelen).unwrap();
+                let guid_str = filename.get((namelen + 1)..).unwrap();
+                let guid = Uuid::parse_str(guid_str).unwrap();
+                let id = types::EfiVarId {
+                    name: name.to_string(),
+                    guid,
+                };
+                vars.push(id);
+            }
+        }
+    }
+
+    Ok(vars)
+}
+
+pub fn varstore_read(name: &str, guid: &Uuid) -> Option<types::EfiVar> {
+    let filename = varstore_filename(name, guid);
+    debug!("reading {}", filename);
+    let Ok(data) = fs::read(filename) else {
+        return None;
+    };
+    let Ok(attr) = data[0..4].try_into() else {
+        return None;
+    };
+    Some(types::EfiVar {
+        name: name.to_string(),
+        guid: guid.to_owned(),
+        attr: u32::from_le_bytes(attr),
+        data: data[4..].to_vec(),
+    })
+}
+
+pub fn varstore_read_id(id: &types::EfiVarId) -> Option<types::EfiVar> {
+    varstore_read(&id.name, &id.guid)
+}
+
+pub fn varstore_write(var: &types::EfiVar) -> io::Result<()> {
+    // must write variable with a single syscall
+    // so go prepare a buffer with all data
+    let mut blob: Vec<u8> = Vec::new();
+    blob.extend_from_slice(&var.attr.to_le_bytes());
+    blob.extend_from_slice(&var.data);
+    trace!("datablob={:?}", blob);
+
+    let filename = varstore_filename(&var.name, &var.guid);
+    debug!("writing {}", filename);
+    let mut f = fs::OpenOptions::new()
+        .create(true)
+        .truncate(true)
+        .write(true)
+        .open(filename)?;
+    f.write_all(&blob)?;
+
+    Ok(())
+}
+
+pub fn varstore_delete(name: &str, guid: &Uuid) -> io::Result<()> {
+    let filename = varstore_filename(name, guid);
+    debug!("deleting {}", filename);
+    fs::remove_file(filename)?;
+    Ok(())
+}
+
+pub fn varstore_delete_id(id: &types::EfiVarId) -> io::Result<()> {
+    varstore_delete(&id.name, &id.guid)
+}

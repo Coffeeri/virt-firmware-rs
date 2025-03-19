@@ -1,0 +1,11 @@
+[package]
+name = "libefi"
+version = "0.0.1"
+edition = "2021"
+publish = false
+
+[dependencies]
+log = "0.4"
+uuid = "1"
+byteorder = "1"
+udev = "0.9"

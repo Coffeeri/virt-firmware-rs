@@ -5,7 +5,9 @@ fn main() -> ExitCode {
     let srcdir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
 
     if target != "x86_64-unknown-none" {
-        println!("cargo::error=target not supported (expected x86_64-unknown-uefi)");
+        println!(
+            "cargo::error=target not supported (expected x86_64-unknown-none, found {target})"
+        );
         return ExitCode::from(1);
     }
 

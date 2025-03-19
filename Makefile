@@ -1,20 +1,24 @@
 # variables
 ARCH	:= $(shell uname -m)
-UEFI	:= $(ARCH)-unknown-uefi
-BARE	:= $(ARCH)-unknown-none
-PKGS	:= bios-64 efi-apps
+PKGS	:= bios-64 efi-apps efi-tools
 
 # target specific variables
-build-bios-64 clippy-bios-64 : TARGET := $(BARE)
-build-efi-apps clippy-efi-apps : TARGET := $(UEFI)
+doc-bios-64 build-bios-64 clippy-bios-64 release-bios-64 : TARGET := --target $(ARCH)-unknown-none
+doc-efi-apps build-efi-apps clippy-efi-apps release-efi-apps : TARGET := --target $(ARCH)-unknown-uefi
 
 # targets
-all: build clippy
+all: build clippy test
+doc docs: cargo-doc
+test tests: cargo-test
 build: build-bios-32 cargo-build
 clippy: cargo-clippy
+release: build-bios-32 cargo-release
 
+cargo-doc: $(patsubst %,doc-%,$(PKGS))
+cargo-test: test-libefi
 cargo-build: $(patsubst %,build-%,$(PKGS))
 cargo-clippy: $(patsubst %,clippy-%,$(PKGS))
+cargo-release: $(patsubst %,release-%,$(PKGS))
 
 clean: clean-bios-32
 	cargo clean
@@ -37,8 +41,17 @@ push:
 	gitlab-ci
 
 # rules
+doc-%:
+	cargo doc --no-deps --package $* $(TARGET)
+
+test-%:
+	cargo test --package $* $(TARGET)
+
 build-%:
-	cargo build --package $* --target $(TARGET)
+	cargo build --package $* $(TARGET)
 
 clippy-%:
-	cargo clippy --package $* --target $(TARGET)
+	cargo clippy --package $* $(TARGET)
+
+release-%:
+	cargo build --release --package $* $(TARGET)

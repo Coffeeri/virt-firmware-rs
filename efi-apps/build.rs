@@ -4,7 +4,7 @@ fn main() -> ExitCode {
     let target = std::env::var("TARGET").unwrap();
 
     if !target.ends_with("-uefi") {
-        println!("cargo::error=target not supported (expected *-uefi)");
+        println!("cargo::error=target not supported (expected *-uefi, found {target})");
         return ExitCode::from(1);
     }
 
