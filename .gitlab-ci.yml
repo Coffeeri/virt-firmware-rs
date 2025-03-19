@@ -17,11 +17,15 @@ compile:
   stage: build
   script:
     - make all
+    - make doc
   artifacts:
     when: on_success
     paths:
       - bios-32/*.bin
       - target/x86_64-unknown-uefi/debug/*.efi
+      - target/doc
+      - target/x86_64-unknown-none/doc
+      - target/x86_64-unknown-uefi/doc
 
 pages:
   stage: publish
