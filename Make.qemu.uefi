@@ -1,0 +1,9 @@
+# -*- Makefile -*-
+
+run-uefi-hello:
+	qemu-efi-$(ARCH) -nographic -net none \
+		-kernel target/$(ARCH)-unknown-uefi/debug/hello.efi
+
+run-uefi-fwcfg:
+	qemu-efi-$(ARCH) -nographic -net none \
+		-kernel target/$(ARCH)-unknown-uefi/debug/fwcfg.efi
