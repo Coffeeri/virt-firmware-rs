@@ -7,7 +7,7 @@ doc-bios-64 build-bios-64 clippy-bios-64 release-bios-64 : TARGET := --target $(
 doc-efi-apps build-efi-apps clippy-efi-apps release-efi-apps : TARGET := --target $(ARCH)-unknown-uefi
 
 # targets
-all: build clippy test
+all: build clippy test cargo-post
 doc docs: cargo-doc
 test tests: cargo-test
 build: build-bios-32 cargo-build
@@ -27,6 +27,17 @@ clean: clean-bios-32
 realclean: clean
 	rm -f Cargo.lock
 
+# cargo post-processing
+BIOS64	:= mini
+BIOSBIN	:= $(patsubst %,target/x86_64-unknown-none/debug/%.bin,$(BIOS64))
+BIOSELF	:= $(patsubst %,target/x86_64-unknown-none/debug/%,$(BIOS64))
+
+cargo-post: $(BIOSBIN)
+$(BIOSELF): build-bios-64
+
+%.bin: %
+	objcopy -O binary $< $@
+
 # non-cargo subdirs
 build-bios-32:
 	make -C bios-32 build
@@ -40,7 +51,7 @@ push:
 	sleep 10 # let gitlab create pipeline
 	gitlab-ci
 
-# rules
+# cargo rules
 doc-%:
 	cargo doc --no-deps --package $* $(TARGET)
 

@@ -22,6 +22,7 @@ compile:
     when: on_success
     paths:
       - bios-32/*.bin
+      - target/x86_64-unknown-none/debug/*.bin
       - target/x86_64-unknown-uefi/debug/*.efi
       - target/doc
       - target/x86_64-unknown-none/doc
@@ -30,11 +31,12 @@ compile:
 pages:
   stage: publish
   script:
-    - mkdir -p public/bios-32
+    - mkdir -p public/bios-32 public/bios-64 public/efi-apps
     - for binary in hello.efi pciscan.efi; do
-      mv -v target/x86_64-unknown-uefi/debug/$binary public;
+      mv -v target/x86_64-unknown-uefi/debug/$binary public/efi-apps;
       done
     - mv -v bios-32/*.bin public/bios-32
+    - mv -v target/x86_64-unknown-uefi/debug/*.bin public/bios-64
     - tree -T "$CI_PROJECT_NAME" --charset utf8 -H . public > index.html
     - mv index.html public
   artifacts:
