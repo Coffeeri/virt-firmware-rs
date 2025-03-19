@@ -68,4 +68,5 @@ release-%:
 	cargo build --release --package $* $(TARGET)
 
 # include makefiles with run*- convinience targets
+include Make.qemu.bare
 include Make.qemu.uefi
