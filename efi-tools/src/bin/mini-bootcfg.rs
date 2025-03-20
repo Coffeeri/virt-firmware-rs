@@ -1,7 +1,5 @@
-use byteorder::{WriteBytesExt, LE};
 use log::{debug, error, info, warn};
 use std::env;
-use std::fs::File;
 use std::io;
 use std::io::Cursor;
 use std::process::ExitCode;
@@ -18,6 +16,8 @@ use libefi::efivar::io::WriteEfiExt;
 use libefi::efivar::types::EfiVar;
 use libefi::nocasestr::NoCaseString;
 use libefi::varstore::sysfs;
+
+use efi_tools::shimcsv::write_boot_csv;
 
 fn create_file_boot_entry(
     bootcfg: &BootConfig,
@@ -321,11 +321,7 @@ fn update_csv(bootcfg: &BootConfig, shim_opt: Option<&EfiFile>) -> io::Result<()
         csvdata.push('\n');
     }
 
-    let mut csvfile = File::create(csvname)?;
-    csvfile.write_u16::<LE>(0xfeff)?;
-    for char in csvdata.chars() {
-        csvfile.write_u16::<LE>(char as u16)?;
-    }
+    write_boot_csv(&csvname, &csvdata)?;
     Ok(())
 }
 

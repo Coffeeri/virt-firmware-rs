@@ -1,9 +1,14 @@
+//!
+//! Generate BOOT.CVS for UKIs
+//!
+
 use log::{debug, error, info};
 use std::env;
 use std::path::PathBuf;
 use std::process::ExitCode;
 use std::str::FromStr;
 
+use efi_tools::shimcsv::write_boot_csv;
 use libefi::distro::efi_arch;
 
 fn parse_args() -> Option<getopts::Matches> {
@@ -92,15 +97,7 @@ fn main() -> ExitCode {
     }
     print!("{}", csv);
 
-    let mut data: Vec<u8> = Vec::new();
-    data.push(0xff);
-    data.push(0xfe);
-    for c in csv.encode_utf16() {
-        for b in c.to_le_bytes() {
-            data.push(b);
-        }
-    }
-    if let Err(e) = std::fs::write(&csv_path, data) {
+    if let Err(e) = write_boot_csv(&csv_path, &csv) {
         error!("write {}: {}", csv_path.display(), e);
         return ExitCode::from(1);
     }
