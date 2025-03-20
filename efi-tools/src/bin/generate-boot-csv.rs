@@ -1,5 +1,6 @@
 use log::{debug, error, info};
 use std::env;
+use std::path::PathBuf;
 use std::process::ExitCode;
 use std::str::FromStr;
 
@@ -12,6 +13,7 @@ fn parse_args() -> Option<getopts::Matches> {
     opts.optopt("l", "loglevel", "set loglevel", "LEVEL");
 
     opts.optopt("", "esp", "set efi system partition location", "ESP");
+    opts.optopt("", "csv", "override csv output location", "CSV");
 
     let cfg_res = opts.parse(&args[1..]);
     let Ok(cfg) = cfg_res else {
@@ -64,32 +66,28 @@ fn main() -> ExitCode {
     };
     info!("shim: {}", shim_path.display());
 
-    let mut csv_path = shim_path.to_owned();
-    csv_path.pop();
-    csv_path.push(format!("BOOT{}.CSV", arch.to_uppercase()));
+    let mut csv_path;
+    if let Some(csv_opt) = cfg.opt_str("csv") {
+        csv_path = PathBuf::from(csv_opt);
+    } else {
+        csv_path = shim_path.to_owned();
+        csv_path.pop();
+        csv_path.push(format!("BOOT{}.CSV", arch.to_uppercase()));
+    }
     info!("csv: {}", csv_path.display());
 
-    let linux_glob = format!("{esp}/EFI/Linux/*.efi");
-    debug!("find kernels: {linux_glob}");
+    let uki_glob = format!("{esp}/EFI/Linux/*.efi");
+    debug!("find kernels: {uki_glob}");
 
     let mut csv = String::new();
-    for linux in glob::glob(&linux_glob)
-        .expect("linux glob failed")
-        .flatten()
-    {
-        info!("linux: {}", linux.display());
-        let title = linux.file_name().unwrap().to_str().unwrap();
-        let line = format!(
-            "{},{},{} ,{}\n",
-            shim_name,
-            title,
-            linux.display(),
-            "Comment"
-        );
+    for uki in glob::glob(&uki_glob).expect("uki glob failed").flatten() {
+        info!("uki: {}", uki.display());
+        let title = uki.file_name().unwrap().to_str().unwrap();
+        let line = format!("{},{},{} ,{}\n", shim_name, title, uki.display(), "Comment");
         csv.push_str(&line);
     }
     if csv.is_empty() {
-        error!("no linux kernels found ({linux_glob})");
+        error!("no uki images found ({uki_glob})");
         return ExitCode::from(1);
     }
     print!("{}", csv);
