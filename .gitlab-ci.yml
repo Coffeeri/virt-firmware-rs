@@ -26,6 +26,11 @@ compile:
       - target/x86_64-unknown-none/doc
       - target/x86_64-unknown-uefi/doc
 
+release:
+  stage: build
+  script:
+    - make install
+
 pages:
   stage: publish
   script:
