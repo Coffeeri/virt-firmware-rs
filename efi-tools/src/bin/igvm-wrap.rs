@@ -123,7 +123,6 @@ fn main() -> ExitCode {
 
     stderrlog::new()
         .module(module_path!())
-        .module("tools")
         .verbosity(stderrlog::LogLevelNum::Debug)
         .init()
         .unwrap();
