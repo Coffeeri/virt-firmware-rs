@@ -145,7 +145,7 @@ pub struct PciDevAddr {
 }
 
 impl PciDevAddr {
-    pub fn cfg_select(&self, addr: u8) {
+    fn select(&self, addr: u8) {
         let cmd = PciCmd::new()
             .with_bus(self.bus)
             .with_slot(self.slot)
@@ -154,23 +154,23 @@ impl PciDevAddr {
         ioport::outl(IOPORT_PCI_CMD, cmd.into());
     }
 
-    pub fn cfg_readl(&self, addr: u8) -> u32 {
-        self.cfg_select(addr);
+    pub fn readl(&self, addr: u8) -> u32 {
+        self.select(addr);
         ioport::inl(IOPORT_PCI_DATA)
     }
 
-    pub fn cfg_readw(&self, addr: u8) -> u16 {
-        self.cfg_select(addr);
+    pub fn readw(&self, addr: u8) -> u16 {
+        self.select(addr);
         ioport::inw(IOPORT_PCI_DATA)
     }
 
-    pub fn cfg_readb(&self, addr: u8) -> u8 {
-        self.cfg_select(addr);
+    pub fn readb(&self, addr: u8) -> u8 {
+        self.select(addr);
         ioport::inb(IOPORT_PCI_DATA)
     }
 
-    pub fn cfg_writel(&self, addr: u8, value: u32) {
-        self.cfg_select(addr);
+    pub fn writel(&self, addr: u8, value: u32) {
+        self.select(addr);
         ioport::outl(IOPORT_PCI_DATA, value);
     }
 }
@@ -192,12 +192,12 @@ pub struct PciDevice {
 impl PciDevice {
     pub fn try_new(bus: u8, slot: u8, func: u8) -> Option<PciDevice> {
         let addr = PciDevAddr { bus, slot, func };
-        let vendor = addr.cfg_readw(PCI_CFG_VENDOR);
+        let vendor = addr.readw(PCI_CFG_VENDOR);
         if (vendor == 0x0000) || (vendor == 0xffff) {
             return None;
         }
-        let device = addr.cfg_readw(PCI_CFG_DEVICE);
-        let class = addr.cfg_readw(PCI_CFG_CLASS_DEVICE);
+        let device = addr.readw(PCI_CFG_DEVICE);
+        let class = addr.readw(PCI_CFG_CLASS_DEVICE);
         let pcidev = PciDevice {
             addr,
             vendor,
@@ -208,15 +208,15 @@ impl PciDevice {
     }
 
     pub fn command(&self) -> PciCommand {
-        PciCommand::from(self.addr.cfg_readw(PCI_CFG_COMMAND))
+        PciCommand::from(self.addr.readw(PCI_CFG_COMMAND))
     }
 
     pub fn revision(&self) -> u8 {
-        self.addr.cfg_readb(PCI_CFG_DEVICE)
+        self.addr.readb(PCI_CFG_DEVICE)
     }
 
     pub fn header_type(&self) -> PciHeaderType {
-        PciHeaderType::from(self.addr.cfg_readb(PCI_CFG_HEADER_TYPE))
+        PciHeaderType::from(self.addr.readb(PCI_CFG_HEADER_TYPE))
     }
 
     pub fn is_mfd(&self) -> bool {
@@ -239,18 +239,18 @@ impl PciDevice {
         if nr > 5 {
             return None;
         }
-        let mut base = self.addr.cfg_readl(0x10 + nr * 4) as u64;
+        let mut base = self.addr.readl(0x10 + nr * 4) as u64;
         if nr > 0 {
-            let prevbase = self.addr.cfg_readl(0x10 + (nr - 1) * 4);
+            let prevbase = self.addr.readl(0x10 + (nr - 1) * 4);
             if (prevbase & 6) == 4 {
                 // previous bar is 64-bit
                 return None;
             }
         }
 
-        self.addr.cfg_writel(0x10 + nr * 4, !0);
-        let mut size = self.addr.cfg_readl(0x10 + nr * 4) as u64;
-        self.addr.cfg_writel(0x10 + nr * 4, base as u32);
+        self.addr.writel(0x10 + nr * 4, !0);
+        let mut size = self.addr.readl(0x10 + nr * 4) as u64;
+        self.addr.writel(0x10 + nr * 4, base as u32);
 
         if base == 0 {
             None
@@ -281,10 +281,10 @@ impl PciDevice {
             base &= !0x0f;
             size &= !0x0f;
 
-            let nextbase = self.addr.cfg_readl(0x10 + (nr + 1) * 4) as u64;
-            self.addr.cfg_writel(0x10 + (nr + 1) * 4, !0);
-            let nextsize = self.addr.cfg_readl(0x10 + (nr + 1) * 4) as u64;
-            self.addr.cfg_writel(0x10 + (nr + 1) * 4, nextbase as u32);
+            let nextbase = self.addr.readl(0x10 + (nr + 1) * 4) as u64;
+            self.addr.writel(0x10 + (nr + 1) * 4, !0);
+            let nextsize = self.addr.readl(0x10 + (nr + 1) * 4) as u64;
+            self.addr.writel(0x10 + (nr + 1) * 4, nextbase as u32);
 
             base += nextbase << 32;
             size += nextsize << 32;
@@ -315,16 +315,16 @@ impl PciDevice {
     }
 
     pub fn bridge_ctl(&self) -> PciBridgeCtrl {
-        PciBridgeCtrl::from(self.addr.cfg_readb(PCI_CFG_BRIDGE_CTRL))
+        PciBridgeCtrl::from(self.addr.readb(PCI_CFG_BRIDGE_CTRL))
     }
 
     pub fn bridge_secondary(&self) -> u8 {
-        self.addr.cfg_readb(PCI_CFG_SECONDARY_BUS)
+        self.addr.readb(PCI_CFG_SECONDARY_BUS)
     }
 
     pub fn bridge_io(&self) -> Option<PciAddrRange> {
-        let basereg = self.addr.cfg_readb(PCI_CFG_IO_BASE) as u64;
-        let limitreg = self.addr.cfg_readb(PCI_CFG_IO_LIMIT) as u64;
+        let basereg = self.addr.readb(PCI_CFG_IO_BASE) as u64;
+        let limitreg = self.addr.readb(PCI_CFG_IO_LIMIT) as u64;
         if limitreg != 0 {
             let base = (basereg & 0xf0) << 8;
             let limit = ((limitreg & 0xf0) << 8) + 0xfff;
@@ -339,8 +339,8 @@ impl PciDevice {
     }
 
     pub fn bridge_mem(&self) -> Option<PciAddrRange> {
-        let basereg = self.addr.cfg_readw(PCI_CFG_MEM_BASE) as u64;
-        let limitreg = self.addr.cfg_readw(PCI_CFG_MEM_LIMIT) as u64;
+        let basereg = self.addr.readw(PCI_CFG_MEM_BASE) as u64;
+        let limitreg = self.addr.readw(PCI_CFG_MEM_LIMIT) as u64;
         if limitreg != 0 {
             let base = (basereg & 0xfff0) << 16;
             let limit = ((limitreg & 0xfff0) << 16) + 0xfffff;
@@ -355,10 +355,10 @@ impl PciDevice {
     }
 
     pub fn bridge_prefmem(&self) -> Option<PciAddrRange> {
-        let basereg = self.addr.cfg_readw(PCI_CFG_PREFMEM_BASE) as u64;
-        let limitreg = self.addr.cfg_readw(PCI_CFG_PREFMEM_LIMIT) as u64;
-        let basereg_u32 = self.addr.cfg_readl(PCI_CFG_PREFMEM_BASE_U32) as u64;
-        let limitreg_u32 = self.addr.cfg_readl(PCI_CFG_PREFMEM_LIMIT_U32) as u64;
+        let basereg = self.addr.readw(PCI_CFG_PREFMEM_BASE) as u64;
+        let limitreg = self.addr.readw(PCI_CFG_PREFMEM_LIMIT) as u64;
+        let basereg_u32 = self.addr.readl(PCI_CFG_PREFMEM_BASE_U32) as u64;
+        let limitreg_u32 = self.addr.readl(PCI_CFG_PREFMEM_LIMIT_U32) as u64;
         if limitreg != 0 {
             let mut base = (basereg & 0xfff0) << 16;
             let mut limit = (limitreg & 0xfff0) << 16;
