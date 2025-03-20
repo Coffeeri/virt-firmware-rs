@@ -31,6 +31,8 @@ install-tools: release-efi-tools
 	install -s -m 755 target/release/mini-bootcfg $(BINDIR)
 	install -s -m 755 target/release/uefi-boot-menu $(BINDIR)
 	install -s -m 755 target/release/generate-boot-csv $(BINDIR)
+	install -s -m 755 target/release/igvm-wrap $(BINDIR)
+	install -s -m 755 target/release/igvm-inspect $(BINDIR)
 
 clean: clean-bios-32
 	cargo clean
