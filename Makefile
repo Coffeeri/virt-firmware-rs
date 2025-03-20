@@ -2,6 +2,10 @@
 ARCH	:= $(shell uname -m)
 PKGS	:= bios-64 efi-apps efi-tools
 
+DESTDIR	?=
+PREFIX	?= /usr/local
+BINDIR	:= $(DESTDIR)$(PREFIX)/bin
+
 # target specific variables
 doc-bios-64 build-bios-64 clippy-bios-64 release-bios-64 : TARGET := --target $(ARCH)-unknown-none
 doc-efi-apps build-efi-apps clippy-efi-apps release-efi-apps : TARGET := --target $(ARCH)-unknown-uefi
@@ -19,6 +23,14 @@ cargo-test: test-libefi
 cargo-build: $(patsubst %,build-%,$(PKGS))
 cargo-clippy: $(patsubst %,clippy-%,$(PKGS))
 cargo-release: $(patsubst %,release-%,$(PKGS))
+
+install: install-tools
+
+install-tools: release-efi-tools
+	install -d -m 755 $(BINDIR)
+	install -s -m 755 target/release/mini-bootcfg $(BINDIR)
+	install -s -m 755 target/release/uefi-boot-menu $(BINDIR)
+	install -s -m 755 target/release/generate-boot-csv $(BINDIR)
 
 clean: clean-bios-32
 	cargo clean
