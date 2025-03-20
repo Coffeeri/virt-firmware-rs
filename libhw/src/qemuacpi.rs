@@ -1,3 +1,5 @@
+#!cfg[(target_arch = "x86_64")]
+
 use crate::ioport::outw;
 use crate::pci::PciDevice;
 

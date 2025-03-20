@@ -1,6 +1,12 @@
 # variables
 ARCH	:= $(shell uname -m)
-PKGS	:= bios-64 efi-apps efi-tools
+PKGS	:= efi-apps efi-tools
+BIOS32	:=
+
+ifeq ($(ARCH),x86_64)
+PKGS	+= bios-64
+BIOS32	+= build-bios-32
+endif
 
 DESTDIR	?=
 PREFIX	?= /usr/local
@@ -14,9 +20,9 @@ doc-efi-apps build-efi-apps clippy-efi-apps release-efi-apps : TARGET := --targe
 all: build clippy test cargo-post
 doc docs: cargo-doc
 test tests: cargo-test
-build: build-bios-32 cargo-build
+build: $(BIOS32) cargo-build
 clippy: cargo-clippy
-release: build-bios-32 cargo-release
+release: $(BIOS32) cargo-release
 
 cargo-doc: $(patsubst %,doc-%,$(PKGS))
 cargo-test: test-libefi
