@@ -173,6 +173,16 @@ impl PciDevAddr {
         self.select(addr);
         ioport::outl(IOPORT_PCI_DATA, value);
     }
+
+    pub fn writew(&self, addr: u8, value: u16) {
+        self.select(addr);
+        ioport::outw(IOPORT_PCI_DATA, value);
+    }
+
+    pub fn writeb(&self, addr: u8, value: u8) {
+        self.select(addr);
+        ioport::outb(IOPORT_PCI_DATA, value);
+    }
 }
 
 impl fmt::Display for PciDevAddr {

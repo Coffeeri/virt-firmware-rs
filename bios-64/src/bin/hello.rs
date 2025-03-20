@@ -5,6 +5,7 @@
 use core::fmt::Write;
 use core::panic::PanicInfo;
 
+use libhw::qemuacpi::QemuAcpi;
 use libhw::serial::{SerialWriter, SERIAL0_BASE};
 
 #[panic_handler]
@@ -19,4 +20,8 @@ fn main() {
     let _ = writeln!(s);
     let _ = writeln!(s, "Hello rust world!");
     let _ = writeln!(s);
+
+    if let Some(acpi) = QemuAcpi::try_new() {
+        acpi.poweroff();
+    }
 }
