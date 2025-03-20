@@ -40,6 +40,6 @@ fn main() {
     serial_init();
 
     puts("\n");
-    puts("Hello rust world\n");
+    puts("Hello rust world!\n");
     puts("\n");
 }

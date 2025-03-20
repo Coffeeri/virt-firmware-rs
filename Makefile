@@ -40,7 +40,7 @@ realclean: clean
 	rm -f Cargo.lock
 
 # cargo post-processing
-BIOS64	:= mini
+BIOS64	:= mini hello
 BIOSBIN	:= $(patsubst %,target/x86_64-unknown-none/debug/%.bin,$(BIOS64))
 BIOSELF	:= $(patsubst %,target/x86_64-unknown-none/debug/%,$(BIOS64))
 
