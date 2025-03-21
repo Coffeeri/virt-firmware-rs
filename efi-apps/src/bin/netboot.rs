@@ -3,7 +3,7 @@
 //! http network boot config utility
 //!
 //! usage (efi shell prompt):
-//!   `netboot.efi $url`
+//!   `netboot.efi [ $url | xyz ]`
 //!
 //! usage (qemu command line):
 //!   `qemu -kernel netboot.efi -append $url`
