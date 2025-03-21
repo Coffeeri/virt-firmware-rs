@@ -127,9 +127,6 @@ fn main() -> ExitCode {
         .init()
         .unwrap();
 
-    let mut args: Vec<String> = env::args().collect();
-    args.remove(0);
-
     if let Some(infile) = cfg.opt_str("input") {
         info!("reading {}", &infile);
 
