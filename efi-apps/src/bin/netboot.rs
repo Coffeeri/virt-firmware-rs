@@ -50,10 +50,15 @@ fn main() -> Status {
         return Status::SUCCESS;
     };
 
-    let Some(uri) = misc::cmdline() else {
+    let Some(cmdline) = misc::cmdline() else {
         println!("usage: netboot.efi $url");
         boot::stall(1_000_000);
         return Status::SUCCESS;
+    };
+
+    let uri = match cmdline.as_str() {
+        "xyz" => "http://boot.netboot.xyz/ipxe/netboot.xyz.efi",
+        _ => &cmdline,
     };
 
     println!("Creating BootEntry ...");
