@@ -89,13 +89,13 @@ fn fetch_http(handle: Handle, url: &str) -> Option<Vec<u8>> {
 
     let res = http.request_get(url);
     if let Err(e) = res {
-        println!("  error: http get request: {}", e);
+        println!("  error: http request: {}", e);
         return None;
     }
 
     let res = http.response_first(true);
     if let Err(e) = res {
-        println!("  error: http get response: {}", e);
+        println!("  error: http response: {}", e);
         return None;
     }
 
@@ -121,7 +121,7 @@ fn fetch_http(handle: Handle, url: &str) -> Option<Vec<u8>> {
 
         let res = http.response_more();
         if let Err(e) = res {
-            println!("  error: http get more data: {}", e);
+            println!("  error: http more data: {}", e);
             return None;
         }
 
