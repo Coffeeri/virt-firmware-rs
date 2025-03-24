@@ -2,6 +2,7 @@
 
 extern crate alloc;
 use alloc::string::String;
+use alloc::vec;
 use alloc::vec::Vec;
 use core::ffi::{c_void, CStr};
 use core::ptr;
@@ -231,11 +232,12 @@ impl HttpHelper {
         Ok(())
     }
 
-    pub fn response(&mut self, body: &mut [u8]) -> uefi::Result<HttpHelperResponse> {
+    pub fn response_first(&mut self, expect_body: bool) -> uefi::Result<HttpHelperResponse> {
         let mut rx_rsp = HttpResponseData {
             status_code: HttpStatusCode::STATUS_UNSUPPORTED,
         };
 
+        let mut body = vec![0; if expect_body { 16 * 1024 } else { 0 }];
         let mut rx_msg = HttpMessage::default();
         rx_msg.data.response = &mut rx_rsp;
         rx_msg.body_length = body.len();
@@ -293,6 +295,41 @@ impl HttpHelper {
             body: body[0..rx_msg.body_length].to_vec(),
         };
         Ok(rsp)
+    }
+
+    pub fn response_more(&mut self) -> uefi::Result<Vec<u8>> {
+        let mut body = vec![0; 16 * 1024];
+        let mut rx_msg = HttpMessage {
+            body_length: body.len(),
+            body: body.as_mut_ptr() as *mut c_void,
+            ..Default::default()
+        };
+
+        let mut rx_token = HttpToken {
+            status: Status::NOT_READY,
+            message: &mut rx_msg,
+            ..Default::default()
+        };
+
+        let p = self.protocol.as_mut().expect("no http protocol");
+        p.response(&mut rx_token)?;
+
+        loop {
+            if rx_token.status != Status::NOT_READY {
+                break;
+            }
+            p.poll()?;
+        }
+
+        debug!("http: response: {}", rx_token.status);
+
+        if rx_token.status != Status::SUCCESS {
+            return Err(rx_token.status.into());
+        };
+
+        debug!("http: body: {}/{}", rx_msg.body_length, body.len());
+
+        Ok(body[0..rx_msg.body_length].to_vec())
     }
 }
 

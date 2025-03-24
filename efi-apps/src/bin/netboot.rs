@@ -14,7 +14,6 @@
 extern crate alloc;
 use alloc::format;
 use alloc::string::String;
-use alloc::vec;
 use alloc::vec::Vec;
 
 use uefi::prelude::*;
@@ -27,6 +26,7 @@ use uefi::{print, println};
 use uefi_raw::protocol::network::ip4_config2::Ip4Config2Policy;
 use uefi_raw::Ipv4Address;
 
+use efi_apps::distro::coreos;
 use efi_apps::misc;
 use efi_apps::net::http::{HttpBinding, HttpHelper};
 use efi_apps::net::ip4config2::Ip4Config2;
@@ -72,67 +72,64 @@ fn init_nic_ip4config2() -> Option<Handle> {
     None
 }
 
-fn fetch_http(handle: Handle, url: &str) {
-    println!("  http {} ...", url);
+fn fetch_http(handle: Handle, url: &str) -> Option<Vec<u8>> {
+    println!("  http fetch: {} ...", url);
     let http_res = HttpHelper::new(handle);
     if let Err(e) = http_res {
         println!("  error: http new: {}", e);
-        return;
+        return None;
     }
     let mut http = http_res.unwrap();
 
     let res = http.configure();
     if let Err(e) = res {
         println!("  error: http configure: {}", e);
-        return;
+        return None;
     }
 
-    // figure size via HEAD request
-    let res = http.request_head(url);
-    if let Err(e) = res {
-        println!("  error: http head request: {}", e);
-        return;
-    }
-
-    let mut buffer = vec![0; 0];
-    let res = http.response(&mut buffer);
-    if let Err(e) = res {
-        println!("  error: http head response: {}", e);
-        return;
-    }
-
-    let rsp = res.unwrap();
-    let Some(cl_hdr) = rsp.headers.iter().find(|h| h.0 == "content-length") else {
-        println!("  error: no content length");
-        return;
-    };
-    let Ok(cl) = cl_hdr.1.parse::<usize>() else {
-        println!("  error: parse content length ({})", cl_hdr.1);
-        return;
-    };
-    println!("  content-length: {}", cl);
-
-    // fetch data
     let res = http.request_get(url);
     if let Err(e) = res {
         println!("  error: http get request: {}", e);
-        return;
+        return None;
     }
 
-    let mut buffer = vec![0; cl];
-    let res = http.response(&mut buffer);
+    let res = http.response_first(true);
     if let Err(e) = res {
         println!("  error: http get response: {}", e);
-        return;
+        return None;
     }
 
     let rsp = res.unwrap();
-    println!(
-        "  result: {:?} - {:?} - body is {} bytes",
-        rsp.status,
-        rsp.headers,
-        rsp.body.len()
-    );
+    println!("    result: {:?}", rsp.status);
+
+    let Some(cl_hdr) = rsp.headers.iter().find(|h| h.0 == "content-length") else {
+        println!("  error: no content length");
+        return None;
+    };
+    let Ok(cl) = cl_hdr.1.parse::<usize>() else {
+        println!("  error: parse content length ({})", cl_hdr.1);
+        return None;
+    };
+    println!("    content-length: {}", cl);
+
+    let mut data = rsp.body;
+    loop {
+        println!("    body: {}/{}", data.len(), cl);
+        if data.len() >= cl {
+            break;
+        }
+
+        let res = http.response_more();
+        if let Err(e) = res {
+            println!("  error: http get more data: {}", e);
+            return None;
+        }
+
+        let mut buf = res.unwrap();
+        data.append(&mut buf);
+    }
+
+    Some(data)
 }
 
 fn coreos(stream: &str) -> Option<String> {
@@ -143,9 +140,24 @@ fn coreos(stream: &str) -> Option<String> {
     };
 
     let uri = format!("https://builds.coreos.fedoraproject.org/streams/{stream}.json");
-    fetch_http(handle, &uri);
+    let data = fetch_http(handle, &uri);
+    if data.is_none() {
+        println!("failed fetch coreos stream");
+        return None;
+    }
 
-    None
+    let core = serde_json::from_slice::<coreos::Stream>(&data.unwrap());
+    if let Err(e) = core {
+        println!("failed parse coreos stream: {}", e);
+        return None;
+    }
+
+    let arch = core.unwrap().architectures.x86_64.artifacts.metal;
+    println!("  coreos release: {}", arch.release);
+    println!("  url: {}", arch.formats.iso.disk.location);
+
+    println!("  ok, preparing for coreos boot ...");
+    Some(arch.formats.iso.disk.location)
 }
 
 fn bootentry(title: &str, devpath: &DevicePath, optdata: Option<&[u8]>) -> Vec<u8> {
@@ -165,11 +177,12 @@ fn bootentry(title: &str, devpath: &DevicePath, optdata: Option<&[u8]>) -> Vec<u
 #[entry]
 fn main() -> Status {
     uefi::helpers::init().unwrap();
+    log::set_max_level(log::LevelFilter::Info);
 
     let bootnext = CString16::try_from("BootNext").unwrap();
     if runtime::variable_exists(&bootnext, &VariableVendor::GLOBAL_VARIABLE).unwrap() {
         // we land here after reset when loaded via 'qemu -kernel netboot.efi'
-        println!("BootNext exists, nothing to do.");
+        println!("netboot: BootNext exists, nothing to do.");
         boot::stall(1_000_000);
         return Status::SUCCESS;
     };
@@ -208,7 +221,7 @@ fn main() -> Status {
         .unwrap()
         .finalize()
         .unwrap();
-    println!("  devpath : {:?}", devpath);
+    //println!("  devpath : {:?}", devpath);
 
     let battr = VariableAttributes::BOOTSERVICE_ACCESS
         | VariableAttributes::RUNTIME_ACCESS

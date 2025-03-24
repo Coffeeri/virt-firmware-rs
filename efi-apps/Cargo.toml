@@ -9,3 +9,5 @@ uefi = { version = "0.34", features = ["panic_handler", "logger", "log-debugcon"
 uefi-raw = "0.10"
 log = "0.4"
 libhw = { path = "../libhw", features = ["alloc"] }
+serde = { version = "1", default-features = false, features = [ "alloc", "derive" ] }
+serde_json = { version = "1", default-features = false, features = [ "alloc" ]  }

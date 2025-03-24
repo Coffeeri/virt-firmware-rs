@@ -9,6 +9,6 @@ run-uefi-fwcfg:
 		-kernel target/$(ARCH)-unknown-uefi/debug/fwcfg.efi
 
 run-uefi-netboot:
-	qemu-efi-$(ARCH) -nographic \
+	qemu-efi-$(ARCH) -m 4G \
 		-fw_cfg name=etc/edk2/https/cacerts,file=/etc/pki/ca-trust/extracted/edk2/cacerts.bin \
 		-kernel target/$(ARCH)-unknown-uefi/debug/netboot.efi -append coreos
