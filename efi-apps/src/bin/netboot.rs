@@ -12,17 +12,141 @@
 #![no_std]
 
 extern crate alloc;
+use alloc::format;
+use alloc::string::String;
+use alloc::vec;
 use alloc::vec::Vec;
 
 use uefi::prelude::*;
-use uefi::println;
 use uefi::proto::device_path::build;
 use uefi::proto::device_path::DevicePath;
 use uefi::runtime::VariableAttributes;
 use uefi::runtime::VariableVendor;
 use uefi::CString16;
+use uefi::{print, println};
+use uefi_raw::protocol::network::ip4_config2::Ip4Config2Policy;
+use uefi_raw::Ipv4Address;
 
 use efi_apps::misc;
+use efi_apps::net::http::{HttpBinding, HttpHelper};
+use efi_apps::net::ip4config2::Ip4Config2;
+
+fn init_nic_ip4config2() -> Option<Handle> {
+    let Ok(handles) = boot::locate_handle_buffer(boot::SearchType::from_proto::<HttpBinding>())
+    else {
+        println!("no HttpBinding handles found");
+        return None;
+    };
+
+    println!("found {} HttpBinding handle(s)", handles.as_ref().len());
+    for h in handles.as_ref() {
+        misc::print_handle_devpath("  nic: ", h);
+
+        let ip4_res = Ip4Config2::new(*h);
+        if let Err(e) = ip4_res {
+            println!("  error: ip4cfg new: {}", e);
+            continue;
+        }
+        let mut ip4 = ip4_res.unwrap();
+        let noip = Ipv4Address::default();
+
+        let info = ip4.get_interface_info().ok()?;
+        if info.station_addr != noip {
+            println!("  network is up, addr {:?}", info.station_addr);
+            return Some(*h);
+        }
+
+        print!("  kick dhcp ");
+        ip4.set_policy(Ip4Config2Policy::DHCP).ok()?;
+        for _ in 0..30 {
+            print!(".");
+            boot::stall(1_000_000);
+            let info = ip4.get_interface_info().ok()?;
+            if info.station_addr != noip {
+                println!(" got addr {:?}", info.station_addr);
+                return Some(*h);
+            }
+        }
+    }
+
+    None
+}
+
+fn fetch_http(handle: Handle, url: &str) {
+    println!("  http {} ...", url);
+    let http_res = HttpHelper::new(handle);
+    if let Err(e) = http_res {
+        println!("  error: http new: {}", e);
+        return;
+    }
+    let mut http = http_res.unwrap();
+
+    let res = http.configure();
+    if let Err(e) = res {
+        println!("  error: http configure: {}", e);
+        return;
+    }
+
+    // figure size via HEAD request
+    let res = http.request_head(url);
+    if let Err(e) = res {
+        println!("  error: http head request: {}", e);
+        return;
+    }
+
+    let mut buffer = vec![0; 0];
+    let res = http.response(&mut buffer);
+    if let Err(e) = res {
+        println!("  error: http head response: {}", e);
+        return;
+    }
+
+    let rsp = res.unwrap();
+    let Some(cl_hdr) = rsp.headers.iter().find(|h| h.0 == "content-length") else {
+        println!("  error: no content length");
+        return;
+    };
+    let Ok(cl) = cl_hdr.1.parse::<usize>() else {
+        println!("  error: parse content length ({})", cl_hdr.1);
+        return;
+    };
+    println!("  content-length: {}", cl);
+
+    // fetch data
+    let res = http.request_get(url);
+    if let Err(e) = res {
+        println!("  error: http get request: {}", e);
+        return;
+    }
+
+    let mut buffer = vec![0; cl];
+    let res = http.response(&mut buffer);
+    if let Err(e) = res {
+        println!("  error: http get response: {}", e);
+        return;
+    }
+
+    let rsp = res.unwrap();
+    println!(
+        "  result: {:?} - {:?} - body is {} bytes",
+        rsp.status,
+        rsp.headers,
+        rsp.body.len()
+    );
+}
+
+fn coreos(stream: &str) -> Option<String> {
+    misc::connect_all(true);
+    let Some(handle) = init_nic_ip4config2() else {
+        println!("failed to configure network");
+        return None;
+    };
+
+    let uri = format!("https://builds.coreos.fedoraproject.org/streams/{stream}.json");
+    fetch_http(handle, &uri);
+
+    None
+}
 
 fn bootentry(title: &str, devpath: &DevicePath, optdata: Option<&[u8]>) -> Vec<u8> {
     let mut bootentry = Vec::new();
@@ -58,6 +182,15 @@ fn main() -> Status {
 
     let uri = match cmdline.as_str() {
         "xyz" => "http://boot.netboot.xyz/ipxe/netboot.xyz.efi",
+        "coreos" => {
+            let iso = coreos("stable");
+            if iso.is_none() {
+                println!("failed to find latest coreos iso");
+                boot::stall(1_000_000);
+                return Status::SUCCESS;
+            }
+            &iso.unwrap()
+        }
         _ => &cmdline,
     };
 

@@ -6,6 +6,8 @@ extern crate alloc;
 use alloc::string::String;
 
 use uefi::prelude::*;
+use uefi::proto::device_path::text::{AllowShortcuts, DisplayOnly};
+use uefi::proto::device_path::DevicePath;
 use uefi::proto::loaded_image::LoadedImage;
 use uefi::{print, println};
 
@@ -30,5 +32,16 @@ pub fn connect_all(verbose: bool) {
     }
     if verbose {
         println!("done");
+    }
+}
+
+/// print device path for a given handle
+pub fn print_handle_devpath(prefix: &str, handle: &Handle) {
+    let Ok(dp) = boot::open_protocol_exclusive::<DevicePath>(*handle) else {
+        println!("{}no device path for handle", prefix);
+        return;
+    };
+    if let Ok(string) = dp.to_string(DisplayOnly(true), AllowShortcuts(true)) {
+        println!("{}{}", prefix, string);
     }
 }
