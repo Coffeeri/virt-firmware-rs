@@ -48,10 +48,10 @@ fn init_nic_ip4config2() -> Option<Handle> {
             continue;
         }
         let mut ip4 = ip4_res.unwrap();
-        let noip = Ipv4Address::default();
+        let no_address = Ipv4Address::default();
 
         let info = ip4.get_interface_info().ok()?;
-        if info.station_addr != noip {
+        if info.station_addr != no_address {
             println!("  network is up, addr {:?}", info.station_addr);
             return Some(*h);
         }
@@ -62,7 +62,7 @@ fn init_nic_ip4config2() -> Option<Handle> {
             print!(".");
             boot::stall(1_000_000);
             let info = ip4.get_interface_info().ok()?;
-            if info.station_addr != noip {
+            if info.station_addr != no_address {
                 println!(" got addr {:?}", info.station_addr);
                 return Some(*h);
             }
