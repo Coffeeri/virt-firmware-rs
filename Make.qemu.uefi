@@ -8,7 +8,12 @@ run-uefi-fwcfg:
 	qemu-efi-$(ARCH) -nographic -net none \
 		-kernel target/$(ARCH)-unknown-uefi/debug/fwcfg.efi
 
-run-uefi-netboot:
+run-uefi-netboot-coreos:
 	qemu-efi-$(ARCH) -m 4G \
 		-fw_cfg name=etc/edk2/https/cacerts,file=/etc/pki/ca-trust/extracted/edk2/cacerts.bin \
 		-kernel target/$(ARCH)-unknown-uefi/debug/netboot.efi -append coreos
+
+run-uefi-netboot-xyz:
+	qemu-efi-$(ARCH) -m 4G \
+		-fw_cfg name=etc/edk2/https/cacerts,file=/etc/pki/ca-trust/extracted/edk2/cacerts.bin \
+		-kernel target/$(ARCH)-unknown-uefi/debug/netboot.efi -append xyz
