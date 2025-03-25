@@ -1,4 +1,4 @@
-#!cfg[(target_os = "uefi")]
+#![cfg(target_os = "uefi")]
 //!
 //! mandatory hello world application
 //!

@@ -1,4 +1,4 @@
-#!cfg[(target_os = "uefi")]
+#![cfg(target_os = "uefi")]
 
 extern crate alloc;
 use alloc::vec::Vec;

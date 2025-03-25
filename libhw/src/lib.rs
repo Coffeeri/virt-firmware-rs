@@ -1,4 +1,4 @@
-#!cfg[(target_arch = "x86_64")]
+#![cfg(target_arch = "x86_64")]
 #![no_std]
 
 pub mod fwcfg;
