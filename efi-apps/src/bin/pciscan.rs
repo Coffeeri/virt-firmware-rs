@@ -54,6 +54,7 @@ fn scan_one_pci_bus(bus: u8, indent: usize) {
     }
 }
 
+#[cfg(target_arch = "x86_64")]
 fn scan_pci_bus() {
     println!("");
     println!("scan pci bus");
