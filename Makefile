@@ -8,10 +8,6 @@ PKGS	+= bios-64
 BIOS32	+= build-bios-32
 endif
 
-DESTDIR	?=
-PREFIX	?= /usr/local
-BINDIR	:= $(DESTDIR)$(PREFIX)/bin
-
 # target specific variables
 doc-bios-64 build-bios-64 clippy-bios-64 release-bios-64 : TARGET := --target $(ARCH)-unknown-none
 doc-efi-apps build-efi-apps clippy-efi-apps release-efi-apps : TARGET := --target $(ARCH)-unknown-uefi
@@ -23,25 +19,14 @@ test tests: cargo-test
 build: $(BIOS32) cargo-build
 clippy: cargo-clippy
 release: $(BIOS32) cargo-release
+install: cargo-install
 
 cargo-doc: $(patsubst %,doc-%,$(PKGS))
 cargo-test: test-libefi
 cargo-build: $(patsubst %,build-%,$(PKGS))
 cargo-clippy: $(patsubst %,clippy-%,$(PKGS))
 cargo-release: $(patsubst %,release-%,$(PKGS))
-
-install: install-efi-tools install-igvm-tools
-
-install-efi-tools: release-efi-tools
-	install -d -m 755 $(BINDIR)
-	install -s -m 755 target/release/mini-bootcfg $(BINDIR)
-	install -s -m 755 target/release/uefi-boot-menu $(BINDIR)
-	install -s -m 755 target/release/generate-boot-csv $(BINDIR)
-
-install-igvm-tools: release-igvm-tools
-	install -d -m 755 $(BINDIR)
-	install -s -m 755 target/release/igvm-wrap $(BINDIR)
-	install -s -m 755 target/release/igvm-inspect $(BINDIR)
+cargo-install: install-efi-tools install-igvm-tools
 
 clean: clean-bios-32
 	cargo clean
@@ -89,6 +74,9 @@ clippy-%:
 
 release-%:
 	cargo build --release --package $* $(TARGET)
+
+install-%:
+	cargo install --path $* $(TARGET)
 
 # include makefiles with run*- convinience targets
 include Make.qemu.bare
