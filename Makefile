@@ -30,13 +30,16 @@ cargo-build: $(patsubst %,build-%,$(PKGS))
 cargo-clippy: $(patsubst %,clippy-%,$(PKGS))
 cargo-release: $(patsubst %,release-%,$(PKGS))
 
-install: install-tools
+install: install-efi-tools install-igvm-tools
 
-install-tools: release-efi-tools
+install-efi-tools: release-efi-tools
 	install -d -m 755 $(BINDIR)
 	install -s -m 755 target/release/mini-bootcfg $(BINDIR)
 	install -s -m 755 target/release/uefi-boot-menu $(BINDIR)
 	install -s -m 755 target/release/generate-boot-csv $(BINDIR)
+
+install-igvm-tools: release-igvm-tools
+	install -d -m 755 $(BINDIR)
 	install -s -m 755 target/release/igvm-wrap $(BINDIR)
 	install -s -m 755 target/release/igvm-inspect $(BINDIR)
 
