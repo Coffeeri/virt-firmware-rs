@@ -1,9 +1,8 @@
-#![cfg(target_os = "uefi")]
 //!
 //! http network boot config utility
 //!
 //! usage (efi shell prompt):
-//!   `netboot.efi [ $url | xyz ]`
+//!   `netboot.efi [ $url | xyz | coreos ]`
 //!
 //! usage (qemu command line):
 //!   `qemu -kernel netboot.efi -append $url`

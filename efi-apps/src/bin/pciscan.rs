@@ -1,4 +1,3 @@
-#![cfg(target_arch = "x86_64")]
 //!
 //! scan pci bus
 //!
@@ -9,8 +8,10 @@ use uefi::prelude::*;
 use uefi::println;
 
 use virtfw_efi_apps::qemu;
+#[cfg(target_arch = "x86_64")]
 use virtfw_libhw::pci;
 
+#[cfg(target_arch = "x86_64")]
 fn scan_one_pci_bus(bus: u8, indent: usize) {
     for slot in 0..32 {
         for func in 0..8 {
@@ -56,6 +57,7 @@ fn scan_one_pci_bus(bus: u8, indent: usize) {
 fn scan_pci_bus() {
     println!("");
     println!("scan pci bus");
+
     scan_one_pci_bus(0, 2);
 }
 
@@ -64,11 +66,15 @@ fn main() -> Status {
     uefi::helpers::init().unwrap();
     log::set_max_level(log::LevelFilter::Info);
 
+    #[cfg(target_arch = "x86_64")]
     if pci::PciDevice::try_new(0, 0, 0).is_some() {
         scan_pci_bus();
     } else {
         println!("no pci host bridge");
     };
+
+    #[cfg(not(target_arch = "x86_64"))]
+    println!("only x86 is supported right now");
 
     qemu::shutdown_if_direct_kernel_load();
     Status::SUCCESS
