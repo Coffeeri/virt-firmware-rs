@@ -4,6 +4,7 @@ members = [
 	"bios-64",
 	"efi-apps",
 	"efi-tools",
+	"igvm-tools",
 	"libhw",
 	"libefi",
 ]

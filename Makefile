@@ -1,6 +1,6 @@
 # variables
 ARCH	:= $(shell uname -m)
-PKGS	:= efi-apps efi-tools
+PKGS	:= efi-apps efi-tools igvm-tools
 BIOS32	:=
 
 ifeq ($(ARCH),x86_64)
