@@ -61,19 +61,19 @@ push:
 
 # cargo rules
 doc-%:
-	cargo doc --no-deps --package $* $(TARGET)
+	cargo doc --no-deps --package virtfw-$* $(TARGET)
 
 test-%:
-	cargo test --package $* $(TARGET)
+	cargo test --package virtfw-$* $(TARGET)
 
 build-%:
-	cargo build --package $* $(TARGET)
+	cargo build --package virtfw-$* $(TARGET)
 
 clippy-%:
-	cargo clippy --package $* $(TARGET)
+	cargo clippy --package virtfw-$* $(TARGET)
 
 release-%:
-	cargo build --release --package $* $(TARGET)
+	cargo build --release --package virtfw-$* $(TARGET)
 
 install-%:
 	cargo install --path $* $(TARGET)

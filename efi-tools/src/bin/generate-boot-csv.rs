@@ -8,8 +8,8 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 use std::str::FromStr;
 
-use efi_tools::shimcsv::write_boot_csv;
-use libefi::distro::efi_arch;
+use virtfw_efi_tools::shimcsv::write_boot_csv;
+use virtfw_libefi::distro::efi_arch;
 
 fn parse_args() -> Option<getopts::Matches> {
     let args: Vec<String> = env::args().collect();

@@ -8,7 +8,7 @@
 use uefi::prelude::*;
 use uefi::println;
 
-use efi_apps::qemu;
+use virtfw_efi_apps::qemu;
 
 #[entry]
 fn main() -> Status {

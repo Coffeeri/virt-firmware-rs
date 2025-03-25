@@ -5,19 +5,19 @@ use std::io::Cursor;
 use std::process::ExitCode;
 use std::str::FromStr;
 
-use libefi::bootcfg::BootConfig;
-use libefi::distro::LinuxOsInfo;
-use libefi::efifile::EfiFile;
-use libefi::efivar::boot;
-use libefi::efivar::devpath;
-use libefi::efivar::guid;
-use libefi::efivar::io::ReadEfiExt;
-use libefi::efivar::io::WriteEfiExt;
-use libefi::efivar::types::EfiVar;
-use libefi::nocasestr::NoCaseString;
-use libefi::varstore::sysfs;
+use virtfw_libefi::bootcfg::BootConfig;
+use virtfw_libefi::distro::LinuxOsInfo;
+use virtfw_libefi::efifile::EfiFile;
+use virtfw_libefi::efivar::boot;
+use virtfw_libefi::efivar::devpath;
+use virtfw_libefi::efivar::guid;
+use virtfw_libefi::efivar::io::ReadEfiExt;
+use virtfw_libefi::efivar::io::WriteEfiExt;
+use virtfw_libefi::efivar::types::EfiVar;
+use virtfw_libefi::nocasestr::NoCaseString;
+use virtfw_libefi::varstore::sysfs;
 
-use efi_tools::shimcsv::write_boot_csv;
+use virtfw_efi_tools::shimcsv::write_boot_csv;
 
 fn create_file_boot_entry(
     bootcfg: &BootConfig,

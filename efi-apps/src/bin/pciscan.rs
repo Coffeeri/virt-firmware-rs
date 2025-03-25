@@ -8,8 +8,8 @@
 use uefi::prelude::*;
 use uefi::println;
 
-use efi_apps::qemu;
-use libhw::pci;
+use virtfw_efi_apps::qemu;
+use virtfw_libhw::pci;
 
 fn scan_one_pci_bus(bus: u8, indent: usize) {
     for slot in 0..32 {

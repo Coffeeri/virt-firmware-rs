@@ -5,8 +5,8 @@
 use core::fmt::Write;
 use core::panic::PanicInfo;
 
-use libhw::qemuacpi::QemuAcpi;
-use libhw::serial::{SerialWriter, SERIAL0_BASE};
+use virtfw_libhw::qemuacpi::QemuAcpi;
+use virtfw_libhw::serial::{SerialWriter, SERIAL0_BASE};
 
 #[panic_handler]
 fn panic_handler(_info: &PanicInfo) -> ! {

@@ -5,11 +5,11 @@ use std::process::{Command, ExitCode};
 use dialoguer::theme::ColorfulTheme;
 use dialoguer::Select;
 
-use libefi::bootcfg;
-use libefi::efivar::boot::BootIndex;
-use libefi::efivar::guid;
-use libefi::efivar::types::EfiVar;
-use libefi::varstore::sysfs;
+use virtfw_libefi::bootcfg;
+use virtfw_libefi::efivar::boot::BootIndex;
+use virtfw_libefi::efivar::guid;
+use virtfw_libefi::efivar::types::EfiVar;
+use virtfw_libefi::varstore::sysfs;
 
 fn main() -> ExitCode {
     let args: Vec<String> = env::args().collect();

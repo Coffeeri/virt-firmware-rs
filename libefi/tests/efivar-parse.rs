@@ -1,7 +1,7 @@
 use std::io::Cursor;
 
-use libefi::efivar::io::ReadEfiExt;
-use libefi::efivar::io::WriteEfiExt;
+use virtfw_libefi::efivar::io::ReadEfiExt;
+use virtfw_libefi::efivar::io::WriteEfiExt;
 
 const DATA_EMPTY: [u8; 0] = [];
 const DATA_BOOTORDER_2: &[u8] = include_bytes!("data/bootorder_2");

@@ -1,11 +1,11 @@
 [package]
-name = "bios-64"
+name = "virtfw-bios-64"
 version = "0.0.1"
 edition = "2021"
 publish = false
 
 [dependencies]
-libhw = { path = "../libhw" }
+virtfw-libhw = { path = "../libhw" }
 
 [build-dependencies]
 cc = "1"

@@ -25,10 +25,10 @@ use uefi::runtime::VariableVendor;
 use uefi::CString16;
 use uefi_raw::protocol::network::http::HttpStatusCode;
 
-use efi_apps::distro::coreos;
-use efi_apps::misc;
-use efi_apps::net::http::{HttpBinding, HttpHelper};
-use efi_apps::net::ip4config2::Ip4Config2;
+use virtfw_efi_apps::distro::coreos;
+use virtfw_efi_apps::misc;
+use virtfw_efi_apps::net::http::{HttpBinding, HttpHelper};
+use virtfw_efi_apps::net::ip4config2::Ip4Config2;
 
 fn init_nic_ip4config2() -> Option<Handle> {
     let Ok(handles) = boot::locate_handle_buffer(boot::SearchType::from_proto::<HttpBinding>())
