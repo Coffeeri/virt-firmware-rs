@@ -119,6 +119,14 @@ fn fetch_http(handle: Handle, url: &str) -> Option<Vec<u8>> {
     Some(data)
 }
 
+// Hmm, there is no std::env:consts::ARCH in core ...
+#[cfg(target_arch = "aarch64")]
+const ARCH: &str = "aarch64";
+#[cfg(target_arch = "x86_64")]
+const ARCH: &str = "x86_64";
+#[cfg(not(any(target_arch = "aarch64", target_arch = "x86_64",)))]
+const ARCH: &str = "unknown";
+
 fn coreos(stream: &str) -> Option<String> {
     misc::connect_all(true);
     let Some(handle) = init_nic_ip4config2() else {
@@ -139,7 +147,15 @@ fn coreos(stream: &str) -> Option<String> {
         return None;
     }
 
-    let arch = core.unwrap().architectures.x86_64.artifacts.metal;
+    let arch = match ARCH {
+        "x86_64" => core.unwrap().architectures.x86_64.artifacts.metal,
+        "aarch64" => core.unwrap().architectures.aarch64.artifacts.metal,
+        _ => {
+            println!("unsupported architecture");
+            return None;
+        }
+    };
+
     println!();
     println!("coreos release: {}", arch.release);
     println!("url: {}", arch.formats.iso.disk.location);
