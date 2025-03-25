@@ -8,9 +8,11 @@ use core::ffi::c_void;
 use uefi::boot::ScopedProtocol;
 use uefi::prelude::*;
 use uefi::proto::unsafe_protocol;
+use uefi::{print, println};
 use uefi_raw::protocol::network::ip4_config2::{
     Ip4Config2DataType, Ip4Config2InterfaceInfo, Ip4Config2Policy, Ip4Config2Protocol,
 };
+use uefi_raw::Ipv4Address;
 
 #[derive(Debug)]
 #[unsafe_protocol(Ip4Config2Protocol::GUID)]
@@ -86,5 +88,50 @@ impl Ip4Config2 {
             route_table_size: 0,
             route_table: core::ptr::null_mut(),
         })
+    }
+
+    fn print_info(info: &Ip4Config2InterfaceInfo) {
+        println!(
+            "addr v4: {}.{}.{}.{}",
+            info.station_addr.0[0],
+            info.station_addr.0[1],
+            info.station_addr.0[2],
+            info.station_addr.0[3],
+        );
+    }
+
+    pub fn ifup(&mut self, verbose: bool) -> uefi::Result<()> {
+        let no_address = Ipv4Address::default();
+
+        let info = self.get_interface_info()?;
+        if info.station_addr != no_address {
+            if verbose {
+                print!("Network is already up: ");
+                Ip4Config2::print_info(&info);
+            }
+            return Ok(());
+        }
+
+        if verbose {
+            print!("DHCP ");
+        }
+        self.set_policy(Ip4Config2Policy::DHCP)?;
+
+        for _ in 0..30 {
+            if verbose {
+                print!(".");
+            }
+            boot::stall(1_000_000);
+            let info = self.get_interface_info()?;
+            if info.station_addr != no_address {
+                if verbose {
+                    print!(" OK: ");
+                    Ip4Config2::print_info(&info);
+                }
+                return Ok(());
+            }
+        }
+
+        Err(Status::TIMEOUT.into())
     }
 }

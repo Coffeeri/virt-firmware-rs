@@ -17,14 +17,13 @@ use alloc::string::String;
 use alloc::vec::Vec;
 
 use uefi::prelude::*;
+use uefi::println;
 use uefi::proto::device_path::build;
 use uefi::proto::device_path::DevicePath;
 use uefi::runtime::VariableAttributes;
 use uefi::runtime::VariableVendor;
 use uefi::CString16;
-use uefi::{print, println};
-use uefi_raw::protocol::network::ip4_config2::Ip4Config2Policy;
-use uefi_raw::Ipv4Address;
+use uefi_raw::protocol::network::http::HttpStatusCode;
 
 use efi_apps::distro::coreos;
 use efi_apps::misc;
@@ -34,94 +33,83 @@ use efi_apps::net::ip4config2::Ip4Config2;
 fn init_nic_ip4config2() -> Option<Handle> {
     let Ok(handles) = boot::locate_handle_buffer(boot::SearchType::from_proto::<HttpBinding>())
     else {
-        println!("no HttpBinding handles found");
+        println!("No HttpBinding handles found.");
         return None;
     };
 
-    println!("found {} HttpBinding handle(s)", handles.as_ref().len());
     for h in handles.as_ref() {
-        misc::print_handle_devpath("  nic: ", h);
+        misc::print_handle_devpath("Trying nic: ", h);
 
-        let ip4_res = Ip4Config2::new(*h);
-        if let Err(e) = ip4_res {
-            println!("  error: ip4cfg new: {}", e);
+        let ip4 = Ip4Config2::new(*h);
+        if let Err(e) = ip4 {
+            println!("Error: ip4config2 new: {}", e);
             continue;
         }
-        let mut ip4 = ip4_res.unwrap();
-        let no_address = Ipv4Address::default();
 
-        let info = ip4.get_interface_info().ok()?;
-        if info.station_addr != no_address {
-            println!("  network is up, addr {:?}", info.station_addr);
-            return Some(*h);
+        let res = ip4.unwrap().ifup(true);
+        if let Err(e) = res {
+            println!("Error: ip4config ifup: {}", e);
+            continue;
         }
 
-        print!("  kick dhcp ");
-        ip4.set_policy(Ip4Config2Policy::DHCP).ok()?;
-        for _ in 0..30 {
-            print!(".");
-            boot::stall(1_000_000);
-            let info = ip4.get_interface_info().ok()?;
-            if info.station_addr != no_address {
-                println!(" got addr {:?}", info.station_addr);
-                return Some(*h);
-            }
-        }
+        return Some(*h);
     }
 
     None
 }
 
 fn fetch_http(handle: Handle, url: &str) -> Option<Vec<u8>> {
-    println!("  http fetch: {} ...", url);
+    println!("http: fetching {} ...", url);
     let http_res = HttpHelper::new(handle);
     if let Err(e) = http_res {
-        println!("  error: http new: {}", e);
+        println!("Error: http new: {}", e);
         return None;
     }
     let mut http = http_res.unwrap();
 
     let res = http.configure();
     if let Err(e) = res {
-        println!("  error: http configure: {}", e);
+        println!("Error: http configure: {}", e);
         return None;
     }
 
     let res = http.request_get(url);
     if let Err(e) = res {
-        println!("  error: http request: {}", e);
+        println!("Error: http request: {}", e);
         return None;
     }
 
     let res = http.response_first(true);
     if let Err(e) = res {
-        println!("  error: http response: {}", e);
+        println!("Error: http response: {}", e);
         return None;
     }
 
     let rsp = res.unwrap();
-    println!("    result: {:?}", rsp.status);
-
+    if rsp.status != HttpStatusCode::STATUS_200_OK {
+        println!("Error: http server error: {:?}", rsp.status);
+        return None;
+    }
     let Some(cl_hdr) = rsp.headers.iter().find(|h| h.0 == "content-length") else {
-        println!("  error: no content length");
+        println!("Error: no content length");
         return None;
     };
     let Ok(cl) = cl_hdr.1.parse::<usize>() else {
-        println!("  error: parse content length ({})", cl_hdr.1);
+        println!("Error: parse content length ({})", cl_hdr.1);
         return None;
     };
-    println!("    content-length: {}", cl);
+    println!("http: size is {} bytes", cl);
 
     let mut data = rsp.body;
     loop {
-        println!("    body: {}/{}", data.len(), cl);
+        // println!("http: body: {}/{}", data.len(), cl);
         if data.len() >= cl {
             break;
         }
 
         let res = http.response_more();
         if let Err(e) = res {
-            println!("  error: http more data: {}", e);
+            println!("Error: read response: {}", e);
             return None;
         }
 
@@ -153,10 +141,11 @@ fn coreos(stream: &str) -> Option<String> {
     }
 
     let arch = core.unwrap().architectures.x86_64.artifacts.metal;
-    println!("  coreos release: {}", arch.release);
-    println!("  url: {}", arch.formats.iso.disk.location);
+    println!();
+    println!("coreos release: {}", arch.release);
+    println!("url: {}", arch.formats.iso.disk.location);
+    println!();
 
-    println!("  ok, preparing for coreos boot ...");
     Some(arch.formats.iso.disk.location)
 }
 
@@ -199,7 +188,7 @@ fn main() -> Status {
             let iso = coreos("stable");
             if iso.is_none() {
                 println!("failed to find latest coreos iso");
-                boot::stall(1_000_000);
+                boot::stall(3_000_000);
                 return Status::SUCCESS;
             }
             &iso.unwrap()
