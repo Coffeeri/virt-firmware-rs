@@ -2,10 +2,12 @@
 ARCH	:= $(shell uname -m)
 PKGS	:= efi-apps efi-tools igvm-tools
 BIOS32	:=
+POST64	:=
 
 ifeq ($(ARCH),x86_64)
 PKGS	+= bios-64
 BIOS32	+= build-bios-32
+POST64	+= cargo-post
 endif
 
 # target specific variables
@@ -13,7 +15,7 @@ doc-bios-64 build-bios-64 clippy-bios-64 release-bios-64 : TARGET := --target $(
 doc-efi-apps build-efi-apps clippy-efi-apps release-efi-apps : TARGET := --target $(ARCH)-unknown-uefi
 
 # targets
-all: build clippy test cargo-post
+all: build clippy test $(POST64)
 doc docs: cargo-doc
 test tests: cargo-test
 build: $(BIOS32) cargo-build
