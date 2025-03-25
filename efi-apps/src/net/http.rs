@@ -4,7 +4,7 @@ extern crate alloc;
 use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
-use core::ffi::{c_void, CStr};
+use core::ffi::{c_char, c_void, CStr};
 use core::ptr;
 use log::debug;
 
@@ -278,8 +278,8 @@ impl HttpHelper {
             let n;
             let v;
             unsafe {
-                n = CStr::from_ptr((*rx_msg.header.add(i)).field_name as *const i8);
-                v = CStr::from_ptr((*rx_msg.header.add(i)).field_value as *const i8);
+                n = CStr::from_ptr((*rx_msg.header.add(i)).field_name as *const c_char);
+                v = CStr::from_ptr((*rx_msg.header.add(i)).field_value as *const c_char);
             }
             headers.push((
                 n.to_str().unwrap().to_lowercase(),
