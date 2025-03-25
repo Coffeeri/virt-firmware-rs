@@ -1,4 +1,4 @@
-#![cfg(target_arch = "x86_64") && (target_os = "uefi")]
+#![cfg(target_arch = "x86_64")]
 //!
 //! list fw_cfg files
 //!
