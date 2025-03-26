@@ -2,6 +2,8 @@
 name = "virtfw-igvm-tools"
 version = "0.0.1"
 publish = false
+description = "igvm related linux applications"
+readme = "README.md"
 
 license.workspace = true
 repository.workspace = true

@@ -2,6 +2,8 @@
 name = "virtfw-efi-apps"
 version = "0.0.1"
 publish = false
+description = "efi applications, mostly for testing"
+readme = "README.md"
 
 license.workspace = true
 repository.workspace = true

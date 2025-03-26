@@ -2,6 +2,8 @@
 name = "virtfw-bios-64"
 version = "0.0.1"
 publish = false
+description = "bios images for testing"
+readme = "README.md"
 
 license.workspace = true
 repository.workspace = true
