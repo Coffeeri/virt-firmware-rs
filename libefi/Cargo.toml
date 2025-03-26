@@ -2,6 +2,8 @@
 name = "virtfw-libefi"
 version = "0.0.1"
 publish = false
+description = "library to read + write efi data structures"
+readme = "README.md"
 
 license.workspace = true
 repository.workspace = true
