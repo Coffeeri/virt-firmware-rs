@@ -1,8 +1,13 @@
 [package]
 name = "virtfw-efi-apps"
 version = "0.0.1"
-edition = "2021"
 publish = false
+
+license.workspace = true
+license-file.workspace = true
+repository.workspace = true
+authors.workspace = true
+edition.workspace = true
 
 [dependencies]
 uefi = { version = "0.34", features = ["panic_handler", "logger", "log-debugcon", "alloc", "global_allocator" ] }

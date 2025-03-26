@@ -1,8 +1,13 @@
 [package]
 name = "virtfw-efi-tools"
 version = "0.0.1"
-edition = "2021"
 publish = false
+
+license.workspace = true
+license-file.workspace = true
+repository.workspace = true
+authors.workspace = true
+edition.workspace = true
 
 [dependencies]
 getopts = "0.2"

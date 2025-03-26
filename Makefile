@@ -80,6 +80,6 @@ release-%:
 install-%:
 	cargo install --path $* $(TARGET)
 
-# include makefiles with run*- convinience targets
+# include makefiles with run-* convinience targets
 include Make.qemu.bare
 include Make.qemu.uefi

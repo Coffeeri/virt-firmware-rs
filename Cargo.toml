@@ -8,3 +8,10 @@ members = [
 	"libhw",
 	"libefi",
 ]
+
+[workspace.package]
+license = "MIT"
+license-file = "LICENSE"
+repository = "https://gitlab.com/kraxel/virt-firmware-rs"
+authors = [ "Gerd Hoffmann <kraxel@redhat.com>" ]
+edition = "2021"
