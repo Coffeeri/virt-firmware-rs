@@ -22,6 +22,7 @@ build: $(BIOS32) cargo-build
 clippy: cargo-clippy
 release: $(BIOS32) cargo-release
 install: cargo-install
+package: cargo-package
 
 cargo-doc: $(patsubst %,doc-%,$(PKGS))
 cargo-test: test-libefi
@@ -29,6 +30,7 @@ cargo-build: $(patsubst %,build-%,$(PKGS))
 cargo-clippy: $(patsubst %,clippy-%,$(PKGS))
 cargo-release: $(patsubst %,release-%,$(PKGS))
 cargo-install: install-efi-tools install-igvm-tools
+cargo-package: package-libefi
 
 clean: clean-bios-32
 	cargo clean
@@ -79,6 +81,9 @@ release-%:
 
 install-%:
 	cargo install --path $* $(TARGET)
+
+package-%:
+	cargo package --package virtfw-$* $(TARGET)
 
 # include makefiles with run-* convinience targets
 include Make.qemu.bare

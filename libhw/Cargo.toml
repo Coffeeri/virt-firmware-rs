@@ -4,7 +4,6 @@ version = "0.0.1"
 publish = false
 
 license.workspace = true
-license-file.workspace = true
 repository.workspace = true
 authors.workspace = true
 edition.workspace = true
