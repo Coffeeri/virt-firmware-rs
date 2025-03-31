@@ -1,11 +1,12 @@
 //! efi boot configuration
 
-extern crate std;
-use std::fmt;
-use std::format;
-use std::string::{String, ToString};
-use std::vec;
-use std::vec::Vec;
+extern crate alloc;
+use alloc::format;
+use alloc::string::{String, ToString};
+use alloc::vec;
+use alloc::vec::Vec;
+
+use core::fmt;
 
 use uuid::Uuid;
 
