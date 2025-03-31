@@ -14,6 +14,7 @@ use virtfw_libefi::efivar::guid;
 use virtfw_libefi::efivar::io::ReadEfiExt;
 use virtfw_libefi::efivar::io::WriteEfiExt;
 use virtfw_libefi::efivar::types::EfiVar;
+use virtfw_libefi::efivar::types::EfiVarAttr;
 use virtfw_libefi::nocasestr::NoCaseString;
 use virtfw_libefi::varstore::sysfs;
 
@@ -141,7 +142,7 @@ fn write_bootentry(
     let be = EfiVar {
         name: format!("Boot{}", index),
         guid: guid::EfiGlobalVariable,
-        attr: 0x07,
+        attr: EfiVarAttr::new_nv_bs_rs(),
         data: wr.into_inner(),
     };
 
@@ -157,7 +158,7 @@ fn write_bootnext(index: &boot::BootIndex, dryrun: bool) -> io::Result<()> {
     let bn = EfiVar {
         name: "BootNext".to_string(),
         guid: guid::EfiGlobalVariable,
-        attr: 0x07,
+        attr: EfiVarAttr::new_nv_bs_rs(),
         data: Vec::from(index),
     };
 
@@ -174,7 +175,7 @@ fn update_bootorder(
     let bo = EfiVar {
         name: "BootOrder".to_string(),
         guid: guid::EfiGlobalVariable,
-        attr: 0x07,
+        attr: EfiVarAttr::new_nv_bs_rs(),
         data: Vec::from(new_order),
     };
 

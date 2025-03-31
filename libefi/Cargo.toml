@@ -11,7 +11,10 @@ authors.workspace = true
 edition.workspace = true
 
 [dependencies]
-log = "0.4"
-uuid = "1"
+bitfield-struct = "0.10"
 byteorder = "1"
+log = "0.4"
 udev = "0.9"
+uuid = "1"
+zerocopy = { version = "0.8", features = [ "std" ]}
+zerocopy-derive = "0.8"

@@ -8,7 +8,7 @@ use dialoguer::Select;
 use virtfw_libefi::bootcfg;
 use virtfw_libefi::efivar::boot::BootIndex;
 use virtfw_libefi::efivar::guid;
-use virtfw_libefi::efivar::types::EfiVar;
+use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr};
 use virtfw_libefi::varstore::sysfs;
 
 fn main() -> ExitCode {
@@ -64,7 +64,7 @@ fn main() -> ExitCode {
     let bn = EfiVar {
         name: "BootNext".to_string(),
         guid: guid::EfiGlobalVariable,
-        attr: 0x07,
+        attr: EfiVarAttr::new_nv_bs_rs(),
         data: Vec::from(bi),
     };
     debug!("{:?}", bn);
