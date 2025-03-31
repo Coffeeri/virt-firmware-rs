@@ -1,12 +1,16 @@
 //! case insensitive string (for efi file names)
-use std::fmt;
+
+extern crate alloc;
+use alloc::string::String;
+
+use core::fmt;
 
 #[derive(Clone, Debug)]
 pub struct NoCaseString(pub String);
 
 impl NoCaseString {
     pub fn new(s: &str) -> Self {
-        Self(s.to_string())
+        Self(String::from(s))
     }
 }
 

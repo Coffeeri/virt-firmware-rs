@@ -1,6 +1,12 @@
 //! efi boot configuration
 
+extern crate std;
 use std::fmt;
+use std::format;
+use std::string::{String, ToString};
+use std::vec;
+use std::vec::Vec;
+
 use uuid::Uuid;
 
 use crate::efivar::devpath::DevPath;

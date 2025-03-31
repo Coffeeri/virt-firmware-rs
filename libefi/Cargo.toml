@@ -10,11 +10,15 @@ repository.workspace = true
 authors.workspace = true
 edition.workspace = true
 
+[features]
+default = [ "std" ]
+std = [ "zerocopy/std" ]
+
 [dependencies]
 bitfield-struct = "0.10"
 byteorder = "1"
 log = "0.4"
 udev = "0.9"
 uuid = "1"
-zerocopy = { version = "0.8", features = [ "std" ]}
+zerocopy = "0.8"
 zerocopy-derive = "0.8"

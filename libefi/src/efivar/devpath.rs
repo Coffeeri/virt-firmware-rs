@@ -1,7 +1,12 @@
 //! efi device paths
 
+extern crate std;
 use std::fmt;
+use std::format;
 use std::net::{Ipv4Addr, Ipv6Addr};
+use std::string::String;
+use std::vec::Vec;
+
 use uuid::Uuid;
 
 use crate::nocasestr::NoCaseString;

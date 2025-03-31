@@ -1,10 +1,16 @@
 //! read efi variables from linux sysfs
 
-use log::debug;
-use log::trace;
+extern crate std;
+use std::borrow::ToOwned;
+use std::format;
 use std::fs;
 use std::io;
 use std::io::Write;
+use std::string::{String, ToString};
+use std::vec::Vec;
+
+use log::debug;
+use log::trace;
 use uuid::Uuid;
 use zerocopy::FromBytes;
 

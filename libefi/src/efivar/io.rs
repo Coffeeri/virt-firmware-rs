@@ -1,7 +1,12 @@
-use byteorder::{ReadBytesExt, WriteBytesExt, LE};
-use log::debug;
+extern crate std;
 use std::io::{self, Cursor, Result};
 use std::net::{Ipv4Addr, Ipv6Addr};
+use std::string::String;
+use std::vec;
+use std::vec::Vec;
+
+use byteorder::{ReadBytesExt, WriteBytesExt, LE};
+use log::debug;
 use uuid::Uuid;
 
 use crate::efivar::boot;

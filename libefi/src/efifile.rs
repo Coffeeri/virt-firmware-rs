@@ -1,8 +1,11 @@
-use log::error;
+extern crate std;
 use std::fs;
 use std::io;
 use std::os::unix::fs::MetadataExt;
 use std::path::{Path, PathBuf};
+use std::string::{String, ToString};
+
+use log::error;
 use uuid::Uuid;
 
 use crate::efivar::devpath;

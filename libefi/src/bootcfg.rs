@@ -1,7 +1,12 @@
-use log::error;
+extern crate std;
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::format;
 use std::io::Cursor;
+use std::string::String;
+use std::vec::Vec;
+
+use log::error;
 
 use crate::efivar::boot::{BootEntry, BootIndex, BootOrder};
 use crate::efivar::guid;

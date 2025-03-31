@@ -1,5 +1,9 @@
 //! misc ef data types
 
+extern crate alloc;
+use alloc::string::String;
+use alloc::vec::Vec;
+
 use bitfield_struct::bitfield;
 use uuid::Uuid;
 

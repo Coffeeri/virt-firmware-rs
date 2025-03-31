@@ -1,8 +1,12 @@
-use log::{debug, error};
+extern crate std;
 use std::collections::HashMap;
+use std::format;
 use std::fs;
 use std::path::Path;
 use std::process::Command;
+use std::string::{String, ToString};
+
+use log::{debug, error};
 
 pub fn envfile_parse_string(data: &str) -> HashMap<String, String> {
     let mut values = HashMap::new();
