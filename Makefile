@@ -1,6 +1,6 @@
 # variables
 ARCH	:= $(shell uname -m)
-PKGS	:= efi-apps efi-tools igvm-tools
+PKGS	:= efi-apps efi-tools igvm-tools varstore
 BIOS32	:=
 POST64	:=
 
