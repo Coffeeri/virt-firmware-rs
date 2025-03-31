@@ -64,7 +64,7 @@ fn main() -> ExitCode {
     let bn = EfiVar {
         name: "BootNext".to_string(),
         guid: guid::EfiGlobalVariable,
-        attr: EfiVarAttr::new_nv_bs_rs(),
+        attr: EfiVarAttr::new_nv_bs_rt(),
         data: Vec::from(bi),
     };
     debug!("{:?}", bn);

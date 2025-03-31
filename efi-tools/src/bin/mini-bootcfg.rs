@@ -142,7 +142,7 @@ fn write_bootentry(
     let be = EfiVar {
         name: format!("Boot{}", index),
         guid: guid::EfiGlobalVariable,
-        attr: EfiVarAttr::new_nv_bs_rs(),
+        attr: EfiVarAttr::new_nv_bs_rt(),
         data: wr.into_inner(),
     };
 
@@ -158,7 +158,7 @@ fn write_bootnext(index: &boot::BootIndex, dryrun: bool) -> io::Result<()> {
     let bn = EfiVar {
         name: "BootNext".to_string(),
         guid: guid::EfiGlobalVariable,
-        attr: EfiVarAttr::new_nv_bs_rs(),
+        attr: EfiVarAttr::new_nv_bs_rt(),
         data: Vec::from(index),
     };
 
@@ -175,7 +175,7 @@ fn update_bootorder(
     let bo = EfiVar {
         name: "BootOrder".to_string(),
         guid: guid::EfiGlobalVariable,
-        attr: EfiVarAttr::new_nv_bs_rs(),
+        attr: EfiVarAttr::new_nv_bs_rt(),
         data: Vec::from(new_order),
     };
 
