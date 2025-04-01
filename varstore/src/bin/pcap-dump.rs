@@ -2,7 +2,10 @@ use std::fs::File;
 use std::process::ExitCode;
 
 use log::{error, info};
+
+use virtfw_libefi::guids;
 use virtfw_varstore::mm::core::MmCore;
+use virtfw_varstore::mm::variable::MmVariableRequest;
 use virtfw_varstore::pcap::parse::{VarstorePcapItem, VarstorePcapParser};
 
 fn parse_args() -> Option<getopts::Matches> {
@@ -39,14 +42,26 @@ fn loginit(cfg: &getopts::Matches) {
         .unwrap();
 }
 
+fn print_request(data: &[u8]) {
+    let core = MmCore::new(data).unwrap();
+    match core.guid {
+        guids::EfiSmmVariableProtocol => {
+            let var = MmVariableRequest::new(core.data).unwrap();
+            println!("request/var: {}", var);
+        }
+        _ => {
+            println!("request/core: {}", core);
+        }
+    }
+}
+
 fn print_pcap(filename: &str) -> std::io::Result<()> {
     let file = File::open(filename)?;
     let parser = VarstorePcapParser::new(&file)?;
     for p in parser {
         match p {
             VarstorePcapItem::Request(d) => {
-                let core = MmCore::new(&d).unwrap();
-                println!("request/core: {}", core);
+                print_request(&d);
             }
             _ => {
                 println!("{}", p);

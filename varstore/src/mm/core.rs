@@ -7,7 +7,7 @@ use zerocopy_derive::FromBytes;
 use virtfw_libefi::guids;
 
 // EFI_MM_COMMUNICATE_HEADER
-#[repr(C)]
+#[repr(C, packed)]
 #[derive(Debug, FromBytes)]
 pub struct MmCoreHeader {
     pub guid: [u8; 16],

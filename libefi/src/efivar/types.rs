@@ -3,11 +3,13 @@
 extern crate alloc;
 use alloc::string::String;
 use alloc::vec::Vec;
+use zerocopy_derive::FromBytes;
 
 use bitfield_struct::bitfield;
 use uguid::Guid;
 
 #[bitfield(u32)]
+#[derive(FromBytes)]
 pub struct EfiVarAttr {
     pub non_volatile: bool,
     pub bootservice_access: bool,
