@@ -26,6 +26,11 @@ compile:
       - target/x86_64-unknown-none/doc
       - target/x86_64-unknown-uefi/doc
 
+tests:
+  stage: build
+  script:
+    - make test
+
 release:
   stage: build
   script:
