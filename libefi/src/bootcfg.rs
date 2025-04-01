@@ -9,8 +9,8 @@ use std::vec::Vec;
 use log::error;
 
 use crate::efivar::boot::{BootEntry, BootIndex, BootOrder};
-use crate::efivar::guid;
 use crate::efivar::io::ReadEfiExt;
+use crate::guids;
 use crate::varstore::sysfs;
 
 pub struct BootConfig {
@@ -23,7 +23,7 @@ pub struct BootConfig {
 
 impl BootConfig {
     fn read_bool(name: &str) -> bool {
-        if let Some(var) = sysfs::varstore_read(name, &guid::EfiGlobalVariable) {
+        if let Some(var) = sysfs::varstore_read(name, &guids::EfiGlobalVariable) {
             if var.data.len() == 1 {
                 return var.data[0] != 0;
             }
@@ -32,7 +32,7 @@ impl BootConfig {
     }
 
     fn read_index(name: &str) -> Option<BootIndex> {
-        let var = sysfs::varstore_read(name, &guid::EfiGlobalVariable)?;
+        let var = sysfs::varstore_read(name, &guids::EfiGlobalVariable)?;
         let mut r = Cursor::new(var.data);
         let index = r.read_boot_index();
         if let Err(e) = index {
@@ -43,7 +43,7 @@ impl BootConfig {
     }
 
     fn read_order() -> Option<BootOrder> {
-        let var = sysfs::varstore_read("BootOrder", &guid::EfiGlobalVariable)?;
+        let var = sysfs::varstore_read("BootOrder", &guids::EfiGlobalVariable)?;
         let mut r = Cursor::new(var.data);
         let order = r.read_boot_order();
         if let Err(e) = order {
@@ -58,7 +58,7 @@ impl BootConfig {
         let vars = sysfs::varstore_ls().expect("failed to list efi vars");
 
         for var in vars {
-            if var.guid != guid::EfiGlobalVariable {
+            if var.guid != guids::EfiGlobalVariable {
                 continue;
             }
             if !var.name.starts_with("Boot") {

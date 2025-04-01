@@ -10,11 +10,11 @@ use virtfw_libefi::distro::LinuxOsInfo;
 use virtfw_libefi::efifile::EfiFile;
 use virtfw_libefi::efivar::boot;
 use virtfw_libefi::efivar::devpath;
-use virtfw_libefi::efivar::guid;
 use virtfw_libefi::efivar::io::ReadEfiExt;
 use virtfw_libefi::efivar::io::WriteEfiExt;
 use virtfw_libefi::efivar::types::EfiVar;
 use virtfw_libefi::efivar::types::EfiVarAttr;
+use virtfw_libefi::guids;
 use virtfw_libefi::nocasestr::NoCaseString;
 use virtfw_libefi::varstore::sysfs;
 
@@ -126,7 +126,7 @@ fn delete_variable(name: &str, dryrun: bool) -> io::Result<()> {
         info!("skip delete efivar: {} (dry-run)", name);
     } else {
         info!("delete efivar: {}", name);
-        sysfs::varstore_delete(name, &guid::EfiGlobalVariable)?;
+        sysfs::varstore_delete(name, &guids::EfiGlobalVariable)?;
     }
     Ok(())
 }
@@ -141,7 +141,7 @@ fn write_bootentry(
 
     let be = EfiVar {
         name: format!("Boot{}", index),
-        guid: guid::EfiGlobalVariable,
+        guid: guids::EfiGlobalVariable,
         attr: EfiVarAttr::new_nv_bs_rt(),
         data: wr.into_inner(),
     };
@@ -157,7 +157,7 @@ fn write_bootentry(
 fn write_bootnext(index: &boot::BootIndex, dryrun: bool) -> io::Result<()> {
     let bn = EfiVar {
         name: "BootNext".to_string(),
-        guid: guid::EfiGlobalVariable,
+        guid: guids::EfiGlobalVariable,
         attr: EfiVarAttr::new_nv_bs_rt(),
         data: Vec::from(index),
     };
@@ -174,7 +174,7 @@ fn update_bootorder(
 ) -> io::Result<()> {
     let bo = EfiVar {
         name: "BootOrder".to_string(),
-        guid: guid::EfiGlobalVariable,
+        guid: guids::EfiGlobalVariable,
         attr: EfiVarAttr::new_nv_bs_rt(),
         data: Vec::from(new_order),
     };
@@ -564,7 +564,7 @@ fn main() -> ExitCode {
     }
 
     if cfg.opt_present("print-loader") {
-        let Some(var) = sysfs::varstore_read("LoaderInfo", &guid::LoaderInfo) else {
+        let Some(var) = sysfs::varstore_read("LoaderInfo", &guids::LoaderInfo) else {
             println!("unknown");
             return ExitCode::from(0);
         };
