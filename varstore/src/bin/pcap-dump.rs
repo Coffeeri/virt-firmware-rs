@@ -2,7 +2,8 @@ use std::fs::File;
 use std::process::ExitCode;
 
 use log::{error, info};
-use virtfw_varstore::pcap::parse::VarstorePcapParser;
+use virtfw_varstore::mm::core::MmCore;
+use virtfw_varstore::pcap::parse::{VarstorePcapItem, VarstorePcapParser};
 
 fn parse_args() -> Option<getopts::Matches> {
     let args: Vec<String> = std::env::args().collect();
@@ -42,7 +43,15 @@ fn print_pcap(filename: &str) -> std::io::Result<()> {
     let file = File::open(filename)?;
     let parser = VarstorePcapParser::new(&file)?;
     for p in parser {
-        println!("{}", p);
+        match p {
+            VarstorePcapItem::Request(d) => {
+                let core = MmCore::new(&d).unwrap();
+                println!("{}", core);
+            }
+            _ => {
+                println!("{}", p);
+            }
+        }
     }
     Ok(())
 }
