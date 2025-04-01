@@ -46,7 +46,7 @@ fn print_pcap(filename: &str) -> std::io::Result<()> {
         match p {
             VarstorePcapItem::Request(d) => {
                 let core = MmCore::new(&d).unwrap();
-                println!("{}", core);
+                println!("request/core: {}", core);
             }
             _ => {
                 println!("{}", p);
