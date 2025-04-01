@@ -33,6 +33,28 @@ impl EfiVarAttr {
     }
 }
 
+impl core::fmt::Display for EfiVarAttr {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        let mut flags = Vec::new();
+        if self.non_volatile() {
+            flags.push("nv");
+        }
+        if self.bootservice_access() {
+            flags.push("bs");
+        }
+        if self.runtime_access() {
+            flags.push("rt");
+        }
+        if self.auth_wr_access() || self.time_auth_wr_access() {
+            flags.push("auth");
+        }
+        if self.append_write() {
+            flags.push("append");
+        }
+        write!(f, "[{}]", flags.join(","))
+    }
+}
+
 #[derive(Debug)]
 pub struct EfiVarId {
     pub name: String,

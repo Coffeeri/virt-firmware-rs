@@ -1,5 +1,5 @@
 use core::fmt::Display;
-use zerocopy::error::SizeError;
+use uguid::Guid;
 use zerocopy::FromBytes;
 use zerocopy_derive::FromBytes;
 
@@ -62,7 +62,7 @@ pub struct MmGetPayloadSize {
 
 #[derive(Debug)]
 pub enum MmVariableRequest {
-    // GetVariable { access: MmVariableAccess },
+    GetVariable { guid: Guid, attr: EfiVarAttr },
     // GetNextVariableName = 2,
     // SetVariable = 3,
     // QueryVariableInfo = 4,
@@ -74,13 +74,19 @@ pub enum MmVariableRequest {
 }
 
 impl MmVariableRequest {
-    pub fn new(data: &[u8]) -> Result<Self, SizeError<&[u8], MmVariableHeader>> {
-        let (header, _body) = MmVariableHeader::read_from_prefix(data)?;
+    pub fn new(data: &[u8]) -> Result<Self, uefi::Error> {
+        let (header, body) = MmVariableHeader::read_from_prefix(data)
+            .or::<uefi::Error>(Err(uefi::Status::BAD_BUFFER_SIZE.into()))?;
         let req = match header.function {
-            // GET_VARIABLE => {
-            // let (access, namedata) = MmVariableAccess::read_from_prefix(body)?;
-            // MmVariableRequest::GetVariable { access }
-            // }
+            GET_VARIABLE => {
+                let (access, _namedata) = MmVariableAccess::read_from_prefix(body)
+                    .or::<uefi::Error>(Err(uefi::Status::BAD_BUFFER_SIZE.into()))?;
+                let guid = Guid::from_bytes(access.guid);
+                MmVariableRequest::GetVariable {
+                    guid,
+                    attr: access.attributes,
+                }
+            }
             READY_TO_BOOT => MmVariableRequest::ReadyToBoot,
             EXIT_BOOT_SERVICE => MmVariableRequest::ExitBootService,
             _ => MmVariableRequest::Unknown {
@@ -94,9 +100,9 @@ impl MmVariableRequest {
 impl Display for MmVariableRequest {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         match self {
-            // MmVariableRequest::GetVariable { access } => {
-            // write!(f, "request/var: get-variable {:?}", access)
-            // }
+            MmVariableRequest::GetVariable { guid, attr } => {
+                write!(f, "request/var: get-variable {guid} {attr}",)
+            }
             MmVariableRequest::ReadyToBoot => {
                 write!(f, "request/var: ready-to-boot")
             }
