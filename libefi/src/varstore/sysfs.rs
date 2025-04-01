@@ -11,12 +11,12 @@ use std::vec::Vec;
 
 use log::debug;
 use log::trace;
-use uuid::Uuid;
+use uguid::Guid;
 use zerocopy::FromBytes;
 
 use crate::efivar::types;
 
-fn varstore_filename(name: &str, guid: &Uuid) -> String {
+fn varstore_filename(name: &str, guid: &Guid) -> String {
     let filename = format!("/sys/firmware/efi/efivars/{}-{}", name, guid);
     filename
 }
@@ -31,7 +31,7 @@ pub fn varstore_ls() -> io::Result<Vec<types::EfiVarId>> {
                 let namelen = filename.len() - 37;
                 let name = filename.get(..namelen).unwrap();
                 let guid_str = filename.get((namelen + 1)..).unwrap();
-                let guid = Uuid::parse_str(guid_str).unwrap();
+                let guid = Guid::try_parse(guid_str).unwrap();
                 let id = types::EfiVarId {
                     name: name.to_string(),
                     guid,
@@ -44,7 +44,7 @@ pub fn varstore_ls() -> io::Result<Vec<types::EfiVarId>> {
     Ok(vars)
 }
 
-pub fn varstore_read(name: &str, guid: &Uuid) -> Option<types::EfiVar> {
+pub fn varstore_read(name: &str, guid: &Guid) -> Option<types::EfiVar> {
     let filename = varstore_filename(name, guid);
     debug!("reading {}", filename);
     let Ok(blob) = fs::read(filename) else {
@@ -86,7 +86,7 @@ pub fn varstore_write(var: &types::EfiVar) -> io::Result<()> {
     Ok(())
 }
 
-pub fn varstore_delete(name: &str, guid: &Uuid) -> io::Result<()> {
+pub fn varstore_delete(name: &str, guid: &Guid) -> io::Result<()> {
     let filename = varstore_filename(name, guid);
     debug!("deleting {}", filename);
     fs::remove_file(filename)?;

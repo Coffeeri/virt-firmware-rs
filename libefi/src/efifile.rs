@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use std::string::{String, ToString};
 
 use log::error;
-use uuid::Uuid;
+use uguid::Guid;
 
 use crate::efivar::devpath;
 use crate::nocasestr::NoCaseString;
@@ -85,13 +85,13 @@ impl EfiFile {
         let nr: u32 = nr_raw.parse().ok()?;
         let start: u64 = self.udev_prop("ID_PART_ENTRY_OFFSET")?.parse().ok()?;
         let size: u64 = self.udev_prop("ID_PART_ENTRY_SIZE")?.parse().ok()?;
-        let uuid_str = self.udev_prop("ID_PART_ENTRY_UUID")?;
-        let uuid = Uuid::parse_str(&uuid_str).ok()?;
+        let guid_str = self.udev_prop("ID_PART_ENTRY_UUID")?;
+        let guid = Guid::try_parse(&guid_str).ok()?;
         Some(devpath::DevPathNode::MediaHd {
             nr,
             start,
             size,
-            signature: uuid,
+            signature: guid,
             mbrtype: 2, // GPT
             sigtype: 2, // UUID
         })

@@ -336,8 +336,8 @@ fn show_bootcfg(bootcfg: &BootConfig, verbose: bool) {
                     boot::BootEntryOptData::String { string } => {
                         println!("      optdata/string: \"{}\"", string)
                     }
-                    boot::BootEntryOptData::Uuid { uuid } => {
-                        println!("      optdata/uuid: {}", uuid)
+                    boot::BootEntryOptData::Guid { guid } => {
+                        println!("      optdata/guid: {}", guid)
                     }
                     boot::BootEntryOptData::Data { bytes } => {
                         println!("      optdata/bytes: {:?}", bytes)

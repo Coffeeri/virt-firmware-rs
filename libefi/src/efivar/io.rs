@@ -7,7 +7,7 @@ use std::vec::Vec;
 
 use byteorder::{ReadBytesExt, WriteBytesExt, LE};
 use log::debug;
-use uuid::Uuid;
+use uguid::Guid;
 
 use crate::efivar::boot;
 use crate::efivar::devpath;
@@ -20,7 +20,7 @@ pub trait ReadEfiExt: io::Read {
     fn read_ipv6(&mut self) -> Result<Ipv6Addr>;
     fn read_ascii_string(&mut self) -> Result<String>;
     fn read_efi_string(&mut self) -> Result<String>;
-    fn read_efi_guid(&mut self) -> Result<Uuid>;
+    fn read_efi_guid(&mut self) -> Result<Guid>;
     fn read_boot_index(&mut self) -> Result<boot::BootIndex>;
     fn read_boot_order(&mut self) -> Result<boot::BootOrder>;
     fn read_boot_entry(&mut self) -> Result<boot::BootEntry>;
@@ -31,7 +31,7 @@ pub trait ReadEfiExt: io::Read {
 pub trait WriteEfiExt: io::Write {
     fn write_ascii_string(&mut self, value: &str) -> Result<()>;
     fn write_efi_string(&mut self, value: &str) -> Result<()>;
-    fn write_efi_guid(&mut self, value: &Uuid) -> Result<()>;
+    fn write_efi_guid(&mut self, value: &Guid) -> Result<()>;
     fn write_boot_index(&mut self, value: &boot::BootIndex) -> Result<()>;
     fn write_boot_order(&mut self, value: &boot::BootOrder) -> Result<()>;
     fn write_boot_entry(&mut self, value: &boot::BootEntry) -> Result<()>;
@@ -90,10 +90,10 @@ impl<T: io::Read> ReadEfiExt for T {
         Ok(s)
     }
 
-    fn read_efi_guid(&mut self) -> Result<Uuid> {
+    fn read_efi_guid(&mut self) -> Result<Guid> {
         let mut guid_bytes: [u8; 16] = [0; 16];
         self.read_exact(&mut guid_bytes)?;
-        Ok(Uuid::from_slice_le(&guid_bytes).unwrap())
+        Ok(Guid::from_bytes(guid_bytes))
     }
 
     fn read_boot_index(&mut self) -> Result<boot::BootIndex> {
@@ -137,8 +137,9 @@ impl<T: io::Read> ReadEfiExt for T {
         } else if let Some(string) = try_efi_string(&optdata_bytes) {
             boot::BootEntryOptData::String { string }
         } else if optdata_bytes.len() == 16 {
-            let uuid = Uuid::from_slice_le(&optdata_bytes).unwrap();
-            boot::BootEntryOptData::Uuid { uuid }
+            let bytes: [u8; 16] = optdata_bytes.try_into().unwrap();
+            let guid = Guid::from_bytes(bytes);
+            boot::BootEntryOptData::Guid { guid }
         } else {
             boot::BootEntryOptData::Data {
                 bytes: optdata_bytes,
@@ -382,8 +383,8 @@ impl<T: io::Write> WriteEfiExt for T {
         self.write_u16::<LE>(0)
     }
 
-    fn write_efi_guid(&mut self, value: &Uuid) -> Result<()> {
-        self.write_all(&value.to_bytes_le())
+    fn write_efi_guid(&mut self, value: &Guid) -> Result<()> {
+        self.write_all(&value.to_bytes())
     }
 
     fn write_boot_index(&mut self, value: &boot::BootIndex) -> Result<()> {
@@ -405,7 +406,7 @@ impl<T: io::Write> WriteEfiExt for T {
                 cursor.write_efi_string(string)?;
                 cursor.into_inner()
             }
-            boot::BootEntryOptData::Uuid { uuid } => uuid.to_bytes_le().to_vec(),
+            boot::BootEntryOptData::Guid { guid } => guid.to_bytes().to_vec(),
             boot::BootEntryOptData::Data { bytes } => bytes.to_vec(),
         };
 

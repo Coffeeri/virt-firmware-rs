@@ -5,7 +5,7 @@ use alloc::string::String;
 use alloc::vec::Vec;
 
 use bitfield_struct::bitfield;
-use uuid::Uuid;
+use uguid::Guid;
 
 #[bitfield(u32)]
 pub struct EfiVarAttr {
@@ -34,13 +34,13 @@ impl EfiVarAttr {
 #[derive(Debug)]
 pub struct EfiVarId {
     pub name: String,
-    pub guid: Uuid,
+    pub guid: Guid,
 }
 
 #[derive(Debug)]
 pub struct EfiVar {
     pub name: String,
-    pub guid: Uuid,
+    pub guid: Guid,
     pub attr: EfiVarAttr,
     pub data: Vec<u8>,
 }

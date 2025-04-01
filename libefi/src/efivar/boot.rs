@@ -8,7 +8,7 @@ use alloc::vec::Vec;
 
 use core::fmt;
 
-use uuid::Uuid;
+use uguid::Guid;
 
 use crate::efivar::devpath::DevPath;
 
@@ -113,7 +113,7 @@ pub const LOAD_OPTION_CATEGORY_APP: u32 = 0x0100;
 pub enum BootEntryOptData {
     None,
     String { string: String },
-    Uuid { uuid: Uuid },
+    Guid { guid: Guid },
     Data { bytes: Vec<u8> },
 }
 
@@ -123,8 +123,8 @@ impl fmt::Display for BootEntryOptData {
             BootEntryOptData::String { string } => {
                 write!(f, "\"{}\"", string)
             }
-            BootEntryOptData::Uuid { uuid } => {
-                write!(f, "{}", uuid)
+            BootEntryOptData::Guid { guid } => {
+                write!(f, "{}", guid)
             }
             BootEntryOptData::Data { bytes } => {
                 write!(f, "{:?}", bytes)

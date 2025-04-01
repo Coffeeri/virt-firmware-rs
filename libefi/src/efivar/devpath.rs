@@ -8,7 +8,7 @@ use alloc::vec::Vec;
 use core::fmt;
 use core::net::{Ipv4Addr, Ipv6Addr};
 
-use uuid::Uuid;
+use uguid::Guid;
 
 use crate::nocasestr::NoCaseString;
 
@@ -68,7 +68,7 @@ pub enum DevPathNode {
         interface: u8,
     },
     MsgVendor {
-        guid: Uuid,
+        guid: Guid,
     },
     MsgMac {
         mac: [u8; 32],
@@ -121,21 +121,21 @@ pub enum DevPathNode {
         nr: u32,
         start: u64,
         size: u64,
-        signature: Uuid,
+        signature: Guid,
         mbrtype: u8, // use enum ?
         sigtype: u8, // use enum ?
     },
     MediaVendor {
-        guid: Uuid,
+        guid: Guid,
     },
     MediaFilePath {
         path: NoCaseString,
     },
     MediaFwFile {
-        filename: Uuid,
+        filename: Guid,
     },
     MediaFwVol {
-        volume: Uuid,
+        volume: Guid,
     },
 
     End {
