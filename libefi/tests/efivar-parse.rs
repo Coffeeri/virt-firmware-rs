@@ -1,3 +1,4 @@
+#![cfg(feature = "std")]
 use std::io::Cursor;
 
 use virtfw_libefi::efivar::io::ReadEfiExt;

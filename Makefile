@@ -70,6 +70,7 @@ doc-%:
 
 test-%:
 	cargo test --package virtfw-$* $(TARGET)
+	cargo test --package virtfw-$* --all-features $(TARGET)
 
 build-%:
 	cargo build --package virtfw-$* $(TARGET)
