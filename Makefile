@@ -59,7 +59,7 @@ clean-bios-32:
 	make -C bios-32 clean
 
 # maintainer target
-push:
+push: all
 	git push
 	sleep 10 # let gitlab create pipeline
 	gitlab-ci
