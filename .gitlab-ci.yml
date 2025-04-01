@@ -14,7 +14,7 @@ before_script:
 compile:
   stage: build
   script:
-    - make all
+    - make default
     - make doc
   artifacts:
     when: on_success
@@ -30,6 +30,11 @@ release:
   stage: build
   script:
     - make install
+
+package:
+  stage: build
+  script:
+    - make package
 
 pages:
   stage: publish
