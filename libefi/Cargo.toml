@@ -11,14 +11,13 @@ authors.workspace = true
 edition.workspace = true
 
 [features]
-default = [ "std" ]
-std = [ "zerocopy/std" ]
+std = [ "zerocopy/std", "dep:udev" ]
 
 [dependencies]
 bitfield-struct = "0.10"
 byteorder = "1"
 log = "0.4"
-udev = "0.9"
+udev = { version = "0.9", optional = true }
 uuid = "1"
 zerocopy = "0.8"
 zerocopy-derive = "0.8"
