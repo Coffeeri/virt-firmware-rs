@@ -3,6 +3,8 @@ use uguid::Guid;
 use zerocopy::FromBytes;
 use zerocopy_derive::FromBytes;
 
+use uefi::{Error, Status};
+
 use virtfw_libefi::efivar::types::EfiVarAttr;
 
 pub const GET_VARIABLE: u64 = 1;
@@ -74,13 +76,13 @@ pub enum MmVariableRequest {
 }
 
 impl MmVariableRequest {
-    pub fn new(data: &[u8]) -> Result<Self, uefi::Error> {
+    pub fn new(data: &[u8]) -> Result<Self, Error> {
         let (header, body) = MmVariableHeader::read_from_prefix(data)
-            .or::<uefi::Error>(Err(uefi::Status::BAD_BUFFER_SIZE.into()))?;
+            .or::<Error>(Err(Status::BAD_BUFFER_SIZE.into()))?;
         let req = match header.function {
             GET_VARIABLE => {
                 let (access, _namedata) = MmVariableAccess::read_from_prefix(body)
-                    .or::<uefi::Error>(Err(uefi::Status::BAD_BUFFER_SIZE.into()))?;
+                    .or::<Error>(Err(Status::BAD_BUFFER_SIZE.into()))?;
                 let guid = Guid::from_bytes(access.guid);
                 MmVariableRequest::GetVariable {
                     guid,

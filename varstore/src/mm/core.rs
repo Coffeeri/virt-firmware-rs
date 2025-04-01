@@ -1,8 +1,9 @@
 use core::fmt::Display;
 use uguid::Guid;
-use zerocopy::error::SizeError;
 use zerocopy::FromBytes;
 use zerocopy_derive::FromBytes;
+
+use uefi::{Error, Status};
 
 use virtfw_libefi::guids;
 
@@ -22,8 +23,9 @@ pub struct MmCore<'d> {
 }
 
 impl<'data> MmCore<'data> {
-    pub fn new(data: &'data [u8]) -> Result<Self, SizeError<&'data [u8], MmCoreHeader>> {
-        let (header, body) = MmCoreHeader::read_from_prefix(data)?;
+    pub fn new(data: &'data [u8]) -> Result<Self, Error> {
+        let (header, body) = MmCoreHeader::read_from_prefix(data)
+            .or::<Error>(Err(Status::BAD_BUFFER_SIZE.into()))?;
         let guid = Guid::from_bytes(header.guid);
         let size = header.size as usize;
         let data = &body[0..size];
