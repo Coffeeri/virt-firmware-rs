@@ -9,6 +9,7 @@ use core::fmt;
 use core::net::{Ipv4Addr, Ipv6Addr};
 
 use uguid::Guid;
+use zerocopy_derive::{FromBytes, Immutable, IntoBytes};
 
 use crate::nocasestr::NoCaseString;
 
@@ -44,12 +45,16 @@ pub const TYPE_MEDIA_PROTOCOL: u8 = 5;
 pub const TYPE_MEDIA_FW_FILE: u8 = 6;
 pub const TYPE_MEDIA_FW_VOL: u8 = 7;
 
+#[repr(C, packed)]
+#[derive(Debug, PartialEq, FromBytes, IntoBytes, Immutable)]
+pub struct DevPathHwPci {
+    pub function: u8,
+    pub device: u8,
+}
+
 #[derive(Debug, PartialEq)]
 pub enum DevPathNode {
-    HwPci {
-        function: u8,
-        device: u8,
-    },
+    HwPci(DevPathHwPci),
 
     AcpiDp {
         hid: u32,
@@ -153,8 +158,8 @@ pub enum DevPathNode {
 impl fmt::Display for DevPathNode {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            DevPathNode::HwPci { device, function } => {
-                write!(f, "Pci({:02x}.{:x})", device, function)
+            DevPathNode::HwPci(pci) => {
+                write!(f, "Pci({:02x}.{:x})", pci.device, pci.function)
             }
 
             DevPathNode::AcpiDp { hid, uid } => match (hid, uid) {

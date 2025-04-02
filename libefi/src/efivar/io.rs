@@ -8,6 +8,7 @@ use std::vec::Vec;
 use byteorder::{ReadBytesExt, WriteBytesExt, LE};
 use log::debug;
 use uguid::Guid;
+use zerocopy::{FromBytes, IntoBytes};
 
 use crate::efivar::boot;
 use crate::efivar::devpath;
@@ -161,9 +162,8 @@ impl<T: io::Read> ReadEfiExt for T {
 
         match (devtype, subtype, (length - 4) as usize) {
             (devpath::TYPE_HW, devpath::TYPE_HW_PCI, 2) => {
-                let function = self.read_u8()?;
-                let device = self.read_u8()?;
-                Ok(devpath::DevPathNode::HwPci { function, device })
+                let pci = devpath::DevPathHwPci::read_from_io(self)?;
+                Ok(devpath::DevPathNode::HwPci(pci))
             }
 
             (devpath::TYPE_ACPI, devpath::TYPE_ACPI_DP, 8) => {
@@ -420,12 +420,11 @@ impl<T: io::Write> WriteEfiExt for T {
 
     fn write_devpath_node(&mut self, value: &devpath::DevPathNode) -> Result<()> {
         match value {
-            devpath::DevPathNode::HwPci { function, device } => {
+            devpath::DevPathNode::HwPci(pci) => {
                 self.write_u8(devpath::TYPE_HW)?;
                 self.write_u8(devpath::TYPE_HW_PCI)?;
                 self.write_u16::<LE>(4 + 2)?;
-                self.write_u8(*function)?;
-                self.write_u8(*device)?;
+                pci.write_to_io(self)?;
                 Ok(())
             }
 
