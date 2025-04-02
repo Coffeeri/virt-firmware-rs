@@ -47,6 +47,14 @@ pub const TYPE_MEDIA_FW_VOL: u8 = 7;
 
 #[repr(C, packed)]
 #[derive(Debug, PartialEq, FromBytes, IntoBytes, Immutable)]
+pub struct DevPathHeader {
+    pub devtype: u8,
+    pub subtype: u8,
+    pub length: u16,
+}
+
+#[repr(C, packed)]
+#[derive(Debug, PartialEq, FromBytes, IntoBytes, Immutable)]
 pub struct DevPathHwPci {
     pub function: u8,
     pub device: u8,
