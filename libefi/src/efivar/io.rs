@@ -194,10 +194,8 @@ impl<T: io::Read> ReadEfiExt for T {
             }
 
             (devpath::TYPE_MSG, devpath::TYPE_MSG_MAC, 33) => {
-                let mut mac: [u8; 32] = [0; 32];
-                self.read_exact(&mut mac)?;
-                let iftype = self.read_u8()?;
-                Ok(devpath::DevPathNode::MsgMac { mac, iftype })
+                let mac = devpath::DevPathMsgMac::read_from_io(&mut *self)?;
+                Ok(devpath::DevPathNode::MsgMac(mac))
             }
 
             (devpath::TYPE_MSG, devpath::TYPE_MSG_IPV4, 23) => {
@@ -462,12 +460,10 @@ impl<T: io::Write> WriteEfiExt for T {
                 Ok(())
             }
 
-            devpath::DevPathNode::MsgMac { mac, iftype } => {
-                self.write_u8(devpath::TYPE_MSG)?;
-                self.write_u8(devpath::TYPE_MSG_MAC)?;
-                self.write_u16::<LE>(4 + 33)?;
-                self.write_all(mac)?;
-                self.write_u8(*iftype)?;
+            devpath::DevPathNode::MsgMac(mac) => {
+                let hdr = devpath::DevPathHeader::new_msg_mac();
+                hdr.write_to_io(&mut *self)?;
+                mac.write_to_io(&mut *self)?;
                 Ok(())
             }
 
