@@ -419,10 +419,9 @@ impl<T: io::Write> WriteEfiExt for T {
     fn write_devpath_node(&mut self, value: &devpath::DevPathNode) -> Result<()> {
         match value {
             devpath::DevPathNode::HwPci(pci) => {
-                self.write_u8(devpath::TYPE_HW)?;
-                self.write_u8(devpath::TYPE_HW_PCI)?;
-                self.write_u16::<LE>(4 + 2)?;
-                pci.write_to_io(self)?;
+                let hdr = devpath::DevPathHeader::new_hw_pci();
+                hdr.write_to_io(&mut *self)?;
+                pci.write_to_io(&mut *self)?;
                 Ok(())
             }
 

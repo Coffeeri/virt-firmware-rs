@@ -6,6 +6,7 @@ use alloc::string::String;
 use alloc::vec::Vec;
 
 use core::fmt;
+use core::mem::size_of;
 use core::net::{Ipv4Addr, Ipv6Addr};
 
 use uguid::Guid;
@@ -51,6 +52,20 @@ pub struct DevPathHeader {
     pub devtype: u8,
     pub subtype: u8,
     pub length: u16,
+}
+
+impl DevPathHeader {
+    pub fn new(devtype: u8, subtype: u8, length: usize) -> Self {
+        DevPathHeader {
+            devtype,
+            subtype,
+            length: (size_of::<DevPathHeader>() + length) as u16,
+        }
+    }
+
+    pub fn new_hw_pci() -> Self {
+        DevPathHeader::new(TYPE_HW, TYPE_HW_PCI, size_of::<DevPathHwPci>())
+    }
 }
 
 #[repr(C, packed)]
