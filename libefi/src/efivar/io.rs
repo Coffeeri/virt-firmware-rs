@@ -179,15 +179,13 @@ impl<T: io::Read> ReadEfiExt for T {
             }
 
             (devpath::TYPE_MSG, devpath::TYPE_MSG_SCSI, 4) => {
-                let target = self.read_u16::<LE>()?;
-                let lun = self.read_u16::<LE>()?;
-                Ok(devpath::DevPathNode::MsgScsi { target, lun })
+                let scsi = devpath::DevPathMsgScsi::read_from_io(&mut *self)?;
+                Ok(devpath::DevPathNode::MsgScsi(scsi))
             }
 
             (devpath::TYPE_MSG, devpath::TYPE_MSG_USB, 2) => {
-                let port = self.read_u8()?;
-                let interface = self.read_u8()?;
-                Ok(devpath::DevPathNode::MsgUsb { port, interface })
+                let usb = devpath::DevPathMsgUsb::read_from_io(&mut *self)?;
+                Ok(devpath::DevPathNode::MsgUsb(usb))
             }
 
             (devpath::TYPE_MSG, devpath::TYPE_MSG_VENDOR, 16) => {
@@ -442,21 +440,17 @@ impl<T: io::Write> WriteEfiExt for T {
                 Ok(())
             }
 
-            devpath::DevPathNode::MsgScsi { target, lun } => {
-                self.write_u8(devpath::TYPE_MSG)?;
-                self.write_u8(devpath::TYPE_MSG_SCSI)?;
-                self.write_u16::<LE>(4 + 4)?;
-                self.write_u16::<LE>(*target)?;
-                self.write_u16::<LE>(*lun)?;
+            devpath::DevPathNode::MsgScsi(scsi) => {
+                let hdr = devpath::DevPathHeader::new_msg_scsi();
+                hdr.write_to_io(&mut *self)?;
+                scsi.write_to_io(&mut *self)?;
                 Ok(())
             }
 
-            devpath::DevPathNode::MsgUsb { port, interface } => {
-                self.write_u8(devpath::TYPE_MSG)?;
-                self.write_u8(devpath::TYPE_MSG_USB)?;
-                self.write_u16::<LE>(4 + 2)?;
-                self.write_u8(*port)?;
-                self.write_u8(*interface)?;
+            devpath::DevPathNode::MsgUsb(usb) => {
+                let hdr = devpath::DevPathHeader::new_msg_usb();
+                hdr.write_to_io(&mut *self)?;
+                usb.write_to_io(&mut *self)?;
                 Ok(())
             }
 

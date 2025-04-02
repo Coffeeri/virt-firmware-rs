@@ -46,7 +46,7 @@ pub const TYPE_MEDIA_PROTOCOL: u8 = 5;
 pub const TYPE_MEDIA_FW_FILE: u8 = 6;
 pub const TYPE_MEDIA_FW_VOL: u8 = 7;
 
-#[repr(C, packed)]
+#[repr(C)]
 #[derive(Debug, PartialEq, FromBytes, IntoBytes, Immutable)]
 pub struct DevPathHeader {
     pub devtype: u8,
@@ -70,20 +70,42 @@ impl DevPathHeader {
     pub fn new_acpi_dp() -> Self {
         DevPathHeader::new(TYPE_ACPI, TYPE_ACPI_DP, size_of::<DevPathAcpiDp>())
     }
+
+    pub fn new_msg_scsi() -> Self {
+        DevPathHeader::new(TYPE_MSG, TYPE_MSG_SCSI, size_of::<DevPathMsgScsi>())
+    }
+
+    pub fn new_msg_usb() -> Self {
+        DevPathHeader::new(TYPE_MSG, TYPE_MSG_USB, size_of::<DevPathMsgUsb>())
+    }
 }
 
-#[repr(C, packed)]
+#[repr(C)]
 #[derive(Debug, PartialEq, FromBytes, IntoBytes, Immutable)]
 pub struct DevPathHwPci {
     pub function: u8,
     pub device: u8,
 }
 
-#[repr(C, packed)]
+#[repr(C)]
 #[derive(Debug, PartialEq, FromBytes, IntoBytes, Immutable)]
 pub struct DevPathAcpiDp {
     hid: u32,
     uid: u32,
+}
+
+#[repr(C)]
+#[derive(Debug, PartialEq, FromBytes, IntoBytes, Immutable)]
+pub struct DevPathMsgScsi {
+    target: u16,
+    lun: u16,
+}
+
+#[repr(C)]
+#[derive(Debug, PartialEq, FromBytes, IntoBytes, Immutable)]
+pub struct DevPathMsgUsb {
+    port: u8,
+    interface: u8,
 }
 
 #[derive(Debug, PartialEq)]
@@ -95,14 +117,8 @@ pub enum DevPathNode {
         adr: Vec<u32>,
     },
 
-    MsgScsi {
-        target: u16,
-        lun: u16,
-    },
-    MsgUsb {
-        port: u8,
-        interface: u8,
-    },
+    MsgScsi(DevPathMsgScsi),
+    MsgUsb(DevPathMsgUsb),
     MsgVendor {
         guid: Guid,
     },
@@ -207,12 +223,12 @@ impl fmt::Display for DevPathNode {
                 write!(f, "Acpi(adr={})", s.join(","))
             }
 
-            DevPathNode::MsgScsi { target, lun } => {
-                write!(f, "Scsi(target={},lun={})", target, lun)
+            DevPathNode::MsgScsi(scsi) => {
+                write!(f, "Scsi(target={},lun={})", scsi.target, scsi.lun)
             }
 
-            DevPathNode::MsgUsb { port, interface } => {
-                write!(f, "Usb(port={},if={})", port, interface)
+            DevPathNode::MsgUsb(usb) => {
+                write!(f, "Usb(port={},if={})", usb.port, usb.interface)
             }
 
             DevPathNode::MsgVendor { guid } => {
