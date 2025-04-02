@@ -66,6 +66,10 @@ impl DevPathHeader {
     pub fn new_hw_pci() -> Self {
         DevPathHeader::new(TYPE_HW, TYPE_HW_PCI, size_of::<DevPathHwPci>())
     }
+
+    pub fn new_acpi_dp() -> Self {
+        DevPathHeader::new(TYPE_ACPI, TYPE_ACPI_DP, size_of::<DevPathAcpiDp>())
+    }
 }
 
 #[repr(C, packed)]
@@ -75,14 +79,18 @@ pub struct DevPathHwPci {
     pub device: u8,
 }
 
+#[repr(C, packed)]
+#[derive(Debug, PartialEq, FromBytes, IntoBytes, Immutable)]
+pub struct DevPathAcpiDp {
+    hid: u32,
+    uid: u32,
+}
+
 #[derive(Debug, PartialEq)]
 pub enum DevPathNode {
     HwPci(DevPathHwPci),
 
-    AcpiDp {
-        hid: u32,
-        uid: u32,
-    },
+    AcpiDp(DevPathAcpiDp),
     AcpiAdr {
         adr: Vec<u32>,
     },
@@ -185,7 +193,7 @@ impl fmt::Display for DevPathNode {
                 write!(f, "Pci({:02x}.{:x})", pci.device, pci.function)
             }
 
-            DevPathNode::AcpiDp { hid, uid } => match (hid, uid) {
+            DevPathNode::AcpiDp(acpi) => match (acpi.hid, acpi.uid) {
                 (0xa0341d0, _) => {
                     write!(f, "PciRoot()")
                 }

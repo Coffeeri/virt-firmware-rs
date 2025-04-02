@@ -165,9 +165,8 @@ impl<T: io::Read> ReadEfiExt for T {
             }
 
             (devpath::TYPE_ACPI, devpath::TYPE_ACPI_DP, 8) => {
-                let hid = self.read_u32::<LE>()?;
-                let uid = self.read_u32::<LE>()?;
-                Ok(devpath::DevPathNode::AcpiDp { hid, uid })
+                let acpi = devpath::DevPathAcpiDp::read_from_io(&mut *self)?;
+                Ok(devpath::DevPathNode::AcpiDp(acpi))
             }
 
             (devpath::TYPE_ACPI, devpath::TYPE_ACPI_ADR, len) => {
@@ -425,12 +424,10 @@ impl<T: io::Write> WriteEfiExt for T {
                 Ok(())
             }
 
-            devpath::DevPathNode::AcpiDp { hid, uid } => {
-                self.write_u8(devpath::TYPE_ACPI)?;
-                self.write_u8(devpath::TYPE_ACPI_DP)?;
-                self.write_u16::<LE>(4 + 8)?;
-                self.write_u32::<LE>(*hid)?;
-                self.write_u32::<LE>(*uid)?;
+            devpath::DevPathNode::AcpiDp(acpi) => {
+                let hdr = devpath::DevPathHeader::new_acpi_dp();
+                hdr.write_to_io(&mut *self)?;
+                acpi.write_to_io(&mut *self)?;
                 Ok(())
             }
 
