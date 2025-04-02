@@ -82,6 +82,10 @@ impl DevPathHeader {
     pub fn new_msg_mac() -> Self {
         DevPathHeader::new(TYPE_MSG, TYPE_MSG_MAC, size_of::<DevPathMsgMac>())
     }
+
+    pub fn new_msg_sata() -> Self {
+        DevPathHeader::new(TYPE_MSG, TYPE_MSG_SATA, size_of::<DevPathMsgSata>())
+    }
 }
 
 #[repr(C)]
@@ -117,6 +121,14 @@ pub struct DevPathMsgUsb {
 pub struct DevPathMsgMac {
     mac: [u8; 32],
     iftype: u8,
+}
+
+#[repr(C)]
+#[derive(Debug, PartialEq, FromBytes, IntoBytes, Immutable)]
+pub struct DevPathMsgSata {
+    port: u16,
+    mul_port: u16,
+    lun: u16,
 }
 
 #[derive(Debug, PartialEq)]
@@ -161,11 +173,7 @@ pub enum DevPathNode {
         parity: u8,
         stopbits: u8,
     },
-    MsgSata {
-        port: u16,
-        mul_port: u16,
-        lun: u16,
-    },
+    MsgSata(DevPathMsgSata),
     MsgUsbClass {
         vendor: u16,
         product: u16,
@@ -290,12 +298,8 @@ impl fmt::Display for DevPathNode {
                 write!(f, "UART()")
             }
 
-            DevPathNode::MsgSata {
-                port,
-                mul_port: _,
-                lun: _,
-            } => {
-                write!(f, "SATA(port={})", port)
+            DevPathNode::MsgSata(sata) => {
+                write!(f, "SATA(port={})", sata.port)
             }
 
             DevPathNode::MsgUsbClass {

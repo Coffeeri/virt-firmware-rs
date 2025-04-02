@@ -256,14 +256,8 @@ impl<T: io::Read> ReadEfiExt for T {
             }
 
             (devpath::TYPE_MSG, devpath::TYPE_MSG_SATA, 6) => {
-                let port = self.read_u16::<LE>()?;
-                let mul_port = self.read_u16::<LE>()?;
-                let lun = self.read_u16::<LE>()?;
-                Ok(devpath::DevPathNode::MsgSata {
-                    port,
-                    mul_port,
-                    lun,
-                })
+                let sata = devpath::DevPathMsgSata::read_from_io(&mut *self)?;
+                Ok(devpath::DevPathNode::MsgSata(sata))
             }
 
             (devpath::TYPE_MSG, devpath::TYPE_MSG_USB_CLASS, 7) => {
@@ -533,17 +527,10 @@ impl<T: io::Write> WriteEfiExt for T {
                 Ok(())
             }
 
-            devpath::DevPathNode::MsgSata {
-                port,
-                mul_port,
-                lun,
-            } => {
-                self.write_u8(devpath::TYPE_MSG)?;
-                self.write_u8(devpath::TYPE_MSG_SATA)?;
-                self.write_u16::<LE>(4 + 6)?;
-                self.write_u16::<LE>(*port)?;
-                self.write_u16::<LE>(*mul_port)?;
-                self.write_u16::<LE>(*lun)?;
+            devpath::DevPathNode::MsgSata(sata) => {
+                let hdr = devpath::DevPathHeader::new_msg_sata();
+                hdr.write_to_io(&mut *self)?;
+                sata.write_to_io(&mut *self)?;
                 Ok(())
             }
 
