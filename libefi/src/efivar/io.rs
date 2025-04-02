@@ -156,13 +156,11 @@ impl<T: io::Read> ReadEfiExt for T {
     }
 
     fn read_devpath_node(&mut self) -> Result<devpath::DevPathNode> {
-        let devtype = self.read_u8()?;
-        let subtype = self.read_u8()?;
-        let length = self.read_u16::<LE>()?;
+        let hdr = devpath::DevPathHeader::read_from_io(&mut *self)?;
 
-        match (devtype, subtype, (length - 4) as usize) {
+        match (hdr.devtype, hdr.subtype, (hdr.length - 4) as usize) {
             (devpath::TYPE_HW, devpath::TYPE_HW_PCI, 2) => {
-                let pci = devpath::DevPathHwPci::read_from_io(self)?;
+                let pci = devpath::DevPathHwPci::read_from_io(&mut *self)?;
                 Ok(devpath::DevPathNode::HwPci(pci))
             }
 
