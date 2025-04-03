@@ -31,7 +31,7 @@ cargo-build: $(patsubst %,build-%,$(PKGS))
 cargo-clippy: $(patsubst %,clippy-%,$(PKGS))
 cargo-release: $(patsubst %,release-%,$(PKGS))
 cargo-install: install-efi-tools install-igvm-tools
-cargo-package: package-libefi package-efi-tools
+cargo-package: package-libefi package-efi-tools package-igvm-tools
 
 clean: clean-bios-32
 	cargo clean
