@@ -138,6 +138,10 @@ impl DevPathHeader {
     pub fn new_media_filepath(bytes: usize) -> Self {
         DevPathHeader::new(TYPE_MEDIA, TYPE_MEDIA_FILEPATH, bytes)
     }
+
+    pub fn new_end(subtype: u8) -> Self {
+        DevPathHeader::new(TYPE_END, subtype, 0)
+    }
 }
 
 #[repr(C)]

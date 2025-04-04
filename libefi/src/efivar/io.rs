@@ -547,9 +547,8 @@ impl<T: io::Write> WriteEfiExt for T {
             }
 
             dp::DevPathNode::End { subtype } => {
-                self.write_u8(dp::TYPE_END)?;
-                self.write_u8(*subtype)?;
-                self.write_u16::<LE>(4)?;
+                let hdr = dp::DevPathHeader::new_end(*subtype);
+                hdr.write_to_io(&mut *self)?;
                 Ok(())
             }
 
@@ -558,9 +557,8 @@ impl<T: io::Write> WriteEfiExt for T {
                 subtype,
                 blob,
             } => {
-                self.write_u8(*devtype)?;
-                self.write_u8(*subtype)?;
-                self.write_u16::<LE>(4 + blob.len() as u16)?;
+                let hdr = dp::DevPathHeader::new(*devtype, *subtype, blob.len());
+                hdr.write_to_io(&mut *self)?;
                 self.write_all(blob)?;
                 Ok(())
             }
