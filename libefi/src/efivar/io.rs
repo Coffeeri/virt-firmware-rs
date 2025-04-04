@@ -175,7 +175,9 @@ impl<T: io::Read> ReadEfiExt for T {
                     let v = self.read_u32::<LE>()?;
                     adr.push(v);
                 }
-                Ok(devpath::DevPathNode::AcpiAdr { adr })
+                Ok(devpath::DevPathNode::AcpiAdr(devpath::DevPathAcpiAdr {
+                    adr,
+                }))
             }
 
             (devpath::TYPE_MSG, devpath::TYPE_MSG_SCSI, 4) => {
@@ -421,11 +423,10 @@ impl<T: io::Write> WriteEfiExt for T {
                 Ok(())
             }
 
-            devpath::DevPathNode::AcpiAdr { adr } => {
-                let len = adr.len() * 4;
-                self.write_u8(devpath::TYPE_ACPI)?;
-                self.write_u8(devpath::TYPE_ACPI_ADR)?;
-                self.write_u16::<LE>(4 + len as u16)?;
+            devpath::DevPathNode::AcpiAdr(acpi) => {
+                let hdr = devpath::DevPathHeader::new_acpi_adr(acpi.adr.len());
+                hdr.write_to_io(&mut *self)?;
+                let adr: &Vec<u32> = acpi.adr.as_ref();
                 for i in adr {
                     self.write_u32::<LE>(*i)?;
                 }

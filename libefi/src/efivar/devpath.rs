@@ -71,6 +71,10 @@ impl DevPathHeader {
         DevPathHeader::new(TYPE_ACPI, TYPE_ACPI_DP, size_of::<DevPathAcpiDp>())
     }
 
+    pub fn new_acpi_adr(elems: usize) -> Self {
+        DevPathHeader::new(TYPE_ACPI, TYPE_ACPI_ADR, elems * size_of::<u32>())
+    }
+
     pub fn new_msg_scsi() -> Self {
         DevPathHeader::new(TYPE_MSG, TYPE_MSG_SCSI, size_of::<DevPathMsgScsi>())
     }
@@ -98,37 +102,42 @@ pub struct DevPathHwPci {
 #[repr(C)]
 #[derive(Debug, PartialEq, FromBytes, IntoBytes, Immutable)]
 pub struct DevPathAcpiDp {
-    hid: u32,
-    uid: u32,
+    pub hid: u32,
+    pub uid: u32,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct DevPathAcpiAdr {
+    pub adr: Vec<u32>,
 }
 
 #[repr(C)]
 #[derive(Debug, PartialEq, FromBytes, IntoBytes, Immutable)]
 pub struct DevPathMsgScsi {
-    target: u16,
-    lun: u16,
+    pub target: u16,
+    pub lun: u16,
 }
 
 #[repr(C)]
 #[derive(Debug, PartialEq, FromBytes, IntoBytes, Immutable)]
 pub struct DevPathMsgUsb {
-    port: u8,
-    interface: u8,
+    pub port: u8,
+    pub interface: u8,
 }
 
 #[repr(C)]
 #[derive(Debug, PartialEq, FromBytes, IntoBytes, Immutable)]
 pub struct DevPathMsgMac {
-    mac: [u8; 32],
-    iftype: u8,
+    pub mac: [u8; 32],
+    pub iftype: u8,
 }
 
 #[repr(C)]
 #[derive(Debug, PartialEq, FromBytes, IntoBytes, Immutable)]
 pub struct DevPathMsgSata {
-    port: u16,
-    mul_port: u16,
-    lun: u16,
+    pub port: u16,
+    pub mul_port: u16,
+    pub lun: u16,
 }
 
 #[derive(Debug, PartialEq)]
@@ -136,9 +145,7 @@ pub enum DevPathNode {
     HwPci(DevPathHwPci),
 
     AcpiDp(DevPathAcpiDp),
-    AcpiAdr {
-        adr: Vec<u32>,
-    },
+    AcpiAdr(DevPathAcpiAdr),
 
     MsgScsi(DevPathMsgScsi),
     MsgUsb(DevPathMsgUsb),
@@ -234,8 +241,8 @@ impl fmt::Display for DevPathNode {
                 }
             },
 
-            DevPathNode::AcpiAdr { adr } => {
-                let s: Vec<String> = adr.iter().map(|a| format!("0x{:x}", a)).collect();
+            DevPathNode::AcpiAdr(acpi) => {
+                let s: Vec<String> = acpi.adr.iter().map(|a| format!("0x{:x}", a)).collect();
                 write!(f, "Acpi(adr={})", s.join(","))
             }
 
