@@ -9,7 +9,7 @@ use virtfw_libefi::bootcfg::BootConfig;
 use virtfw_libefi::distro::LinuxOsInfo;
 use virtfw_libefi::efifile::EfiFile;
 use virtfw_libefi::efivar::boot;
-use virtfw_libefi::efivar::devpath;
+use virtfw_libefi::efivar::devpath as dp;
 use virtfw_libefi::efivar::io::ReadEfiExt;
 use virtfw_libefi::efivar::io::WriteEfiExt;
 use virtfw_libefi::efivar::types::EfiVar;
@@ -66,8 +66,8 @@ fn create_uri_boot_entry(
     title: Option<String>,
     cmdline: Option<String>,
 ) -> Option<boot::BootEntry> {
-    let mut devpath = devpath::DevPath::new();
-    devpath.push(devpath::DevPathNode::MsgUri(devpath::DevPathMsgUri {
+    let mut devpath = dp::DevPath::new();
+    devpath.push(dp::DevPathNode::MsgUri(dp::DevPathMsgUri {
         uri: Some(uri.to_string()),
     }));
     let optdata = cmdline.map(|c| c.to_string());
