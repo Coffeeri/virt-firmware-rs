@@ -215,6 +215,11 @@ pub struct DevPathMsgUsbClass {
 }
 
 #[derive(Debug, PartialEq)]
+pub struct DevPathMsgUri {
+    pub uri: Option<String>,
+}
+
+#[derive(Debug, PartialEq)]
 pub enum DevPathNode {
     HwPci(DevPathHwPci),
 
@@ -230,9 +235,7 @@ pub enum DevPathNode {
     MsgUart(DevPathMsgUart),
     MsgSata(DevPathMsgSata),
     MsgUsbClass(DevPathMsgUsbClass),
-    MsgUri {
-        uri: Option<String>,
-    },
+    MsgUri(DevPathMsgUri),
 
     MediaHd {
         nr: u32,
@@ -330,7 +333,7 @@ impl fmt::Display for DevPathNode {
             DevPathNode::MsgUsbClass(_) => {
                 write!(f, "UsbClass()")
             }
-            DevPathNode::MsgUri { uri } => match uri {
+            DevPathNode::MsgUri(u) => match &u.uri {
                 None => write!(f, "URI()"),
                 Some(u) => write!(f, "URI(\"{}\")", u),
             },

@@ -67,9 +67,9 @@ fn create_uri_boot_entry(
     cmdline: Option<String>,
 ) -> Option<boot::BootEntry> {
     let mut devpath = devpath::DevPath::new();
-    devpath.push(devpath::DevPathNode::MsgUri {
+    devpath.push(devpath::DevPathNode::MsgUri(devpath::DevPathMsgUri {
         uri: Some(uri.to_string()),
-    });
+    }));
     let optdata = cmdline.map(|c| c.to_string());
     let t = match title {
         Some(t) => t,

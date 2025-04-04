@@ -262,7 +262,7 @@ impl<T: io::Read> ReadEfiExt for T {
                     let mut r = self.get_cursor(len)?;
                     Some(r.read_ascii_string()?)
                 };
-                Ok(dp::DevPathNode::MsgUri { uri })
+                Ok(dp::DevPathNode::MsgUri(dp::DevPathMsgUri { uri }))
             }
 
             (dp::TYPE_MEDIA, dp::TYPE_MEDIA_HD, 38) => {
@@ -488,11 +488,11 @@ impl<T: io::Write> WriteEfiExt for T {
                 Ok(())
             }
 
-            dp::DevPathNode::MsgUri { uri } => {
+            dp::DevPathNode::MsgUri(u) => {
                 self.write_u8(dp::TYPE_MSG)?;
                 self.write_u8(dp::TYPE_MSG_URI)?;
 
-                match uri {
+                match &u.uri {
                     Some(u) => {
                         let mut w = Cursor::new(Vec::new());
                         w.write_ascii_string(u)?;
