@@ -211,7 +211,7 @@ impl<T: io::Read> ReadEfiExt for T {
                 let static_ip = self.read_u8()?;
                 let gw_addr = self.read_ipv4()?;
                 let net_mask = self.read_ipv4()?;
-                Ok(devpath::DevPathNode::MsgIPv4 {
+                Ok(devpath::DevPathNode::MsgIPv4(devpath::DevPathMsgIPv4 {
                     local_addr,
                     remote_addr,
                     local_port,
@@ -220,7 +220,7 @@ impl<T: io::Read> ReadEfiExt for T {
                     static_ip: static_ip != 0,
                     gw_addr,
                     net_mask,
-                })
+                }))
             }
 
             (devpath::TYPE_MSG, devpath::TYPE_MSG_IPV6, 56) => {
@@ -232,7 +232,7 @@ impl<T: io::Read> ReadEfiExt for T {
                 let addr_origin = self.read_u8()?;
                 let prefix_len = self.read_u8()?;
                 let gw_addr = self.read_ipv6()?;
-                Ok(devpath::DevPathNode::MsgIPv6 {
+                Ok(devpath::DevPathNode::MsgIPv6(devpath::DevPathMsgIPv6 {
                     local_addr,
                     remote_addr,
                     local_port,
@@ -241,7 +241,7 @@ impl<T: io::Read> ReadEfiExt for T {
                     addr_origin,
                     prefix_len,
                     gw_addr,
-                })
+                }))
             }
 
             (devpath::TYPE_MSG, devpath::TYPE_MSG_UART, 15) => {
@@ -463,51 +463,31 @@ impl<T: io::Write> WriteEfiExt for T {
                 Ok(())
             }
 
-            devpath::DevPathNode::MsgIPv4 {
-                local_addr,
-                remote_addr,
-                local_port,
-                remote_port,
-                protocol,
-                static_ip,
-                gw_addr,
-                net_mask,
-            } => {
-                self.write_u8(devpath::TYPE_MSG)?;
-                self.write_u8(devpath::TYPE_MSG_IPV4)?;
-                self.write_u16::<LE>(4 + 23)?;
-                self.write_all(&local_addr.octets())?;
-                self.write_all(&remote_addr.octets())?;
-                self.write_u16::<LE>(*local_port)?;
-                self.write_u16::<LE>(*remote_port)?;
-                self.write_u16::<LE>(*protocol)?;
-                self.write_u8(if *static_ip { 1 } else { 0 })?;
-                self.write_all(&gw_addr.octets())?;
-                self.write_all(&net_mask.octets())?;
+            devpath::DevPathNode::MsgIPv4(ipv4) => {
+                let hdr = devpath::DevPathHeader::new_msg_ipv4();
+                hdr.write_to_io(&mut *self)?;
+                self.write_all(&ipv4.local_addr.octets())?;
+                self.write_all(&ipv4.remote_addr.octets())?;
+                self.write_u16::<LE>(ipv4.local_port)?;
+                self.write_u16::<LE>(ipv4.remote_port)?;
+                self.write_u16::<LE>(ipv4.protocol)?;
+                self.write_u8(if ipv4.static_ip { 1 } else { 0 })?;
+                self.write_all(&ipv4.gw_addr.octets())?;
+                self.write_all(&ipv4.net_mask.octets())?;
                 Ok(())
             }
 
-            devpath::DevPathNode::MsgIPv6 {
-                local_addr,
-                remote_addr,
-                local_port,
-                remote_port,
-                protocol,
-                addr_origin,
-                prefix_len,
-                gw_addr,
-            } => {
-                self.write_u8(devpath::TYPE_MSG)?;
-                self.write_u8(devpath::TYPE_MSG_IPV6)?;
-                self.write_u16::<LE>(4 + 56)?;
-                self.write_all(&local_addr.octets())?;
-                self.write_all(&remote_addr.octets())?;
-                self.write_u16::<LE>(*local_port)?;
-                self.write_u16::<LE>(*remote_port)?;
-                self.write_u16::<LE>(*protocol)?;
-                self.write_u8(*addr_origin)?;
-                self.write_u8(*prefix_len)?;
-                self.write_all(&gw_addr.octets())?;
+            devpath::DevPathNode::MsgIPv6(ipv6) => {
+                let hdr = devpath::DevPathHeader::new_msg_ipv6();
+                hdr.write_to_io(&mut *self)?;
+                self.write_all(&ipv6.local_addr.octets())?;
+                self.write_all(&ipv6.remote_addr.octets())?;
+                self.write_u16::<LE>(ipv6.local_port)?;
+                self.write_u16::<LE>(ipv6.remote_port)?;
+                self.write_u16::<LE>(ipv6.protocol)?;
+                self.write_u8(ipv6.addr_origin)?;
+                self.write_u8(ipv6.prefix_len)?;
+                self.write_all(&ipv6.gw_addr.octets())?;
                 Ok(())
             }
 

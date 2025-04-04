@@ -91,6 +91,14 @@ impl DevPathHeader {
         DevPathHeader::new(TYPE_MSG, TYPE_MSG_MAC, size_of::<DevPathMsgMac>())
     }
 
+    pub fn new_msg_ipv4() -> Self {
+        DevPathHeader::new(TYPE_MSG, TYPE_MSG_IPV4, 23)
+    }
+
+    pub fn new_msg_ipv6() -> Self {
+        DevPathHeader::new(TYPE_MSG, TYPE_MSG_IPV6, 56)
+    }
+
     pub fn new_msg_sata() -> Self {
         DevPathHeader::new(TYPE_MSG, TYPE_MSG_SATA, size_of::<DevPathMsgSata>())
     }
@@ -129,6 +137,7 @@ pub struct DevPathMsgUsb {
     pub interface: u8,
 }
 
+#[repr(C)]
 #[derive(Debug, PartialEq)]
 pub struct DevPathMsgVendor {
     pub guid: Guid,
@@ -139,6 +148,30 @@ pub struct DevPathMsgVendor {
 pub struct DevPathMsgMac {
     pub mac: [u8; 32],
     pub iftype: u8,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct DevPathMsgIPv4 {
+    pub local_addr: Ipv4Addr,
+    pub remote_addr: Ipv4Addr,
+    pub local_port: u16,
+    pub remote_port: u16,
+    pub protocol: u16,
+    pub static_ip: bool,
+    pub gw_addr: Ipv4Addr,
+    pub net_mask: Ipv4Addr,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct DevPathMsgIPv6 {
+    pub local_addr: Ipv6Addr,
+    pub remote_addr: Ipv6Addr,
+    pub local_port: u16,
+    pub remote_port: u16,
+    pub protocol: u16,
+    pub addr_origin: u8,
+    pub prefix_len: u8,
+    pub gw_addr: Ipv6Addr,
 }
 
 #[repr(C)]
@@ -160,26 +193,8 @@ pub enum DevPathNode {
     MsgUsb(DevPathMsgUsb),
     MsgVendor(DevPathMsgVendor),
     MsgMac(DevPathMsgMac),
-    MsgIPv4 {
-        local_addr: Ipv4Addr,
-        remote_addr: Ipv4Addr,
-        local_port: u16,
-        remote_port: u16,
-        protocol: u16,
-        static_ip: bool,
-        gw_addr: Ipv4Addr,
-        net_mask: Ipv4Addr,
-    },
-    MsgIPv6 {
-        local_addr: Ipv6Addr,
-        remote_addr: Ipv6Addr,
-        local_port: u16,
-        remote_port: u16,
-        protocol: u16,
-        addr_origin: u8,
-        prefix_len: u8,
-        gw_addr: Ipv6Addr,
-    },
+    MsgIPv4(DevPathMsgIPv4),
+    MsgIPv6(DevPathMsgIPv6),
     MsgUart {
         reserved: u32,
         baudrate: u64,
@@ -269,33 +284,15 @@ impl fmt::Display for DevPathNode {
                 write!(f, "MAC()")
             }
 
-            DevPathNode::MsgIPv4 {
-                local_addr: _,
-                remote_addr: _,
-                local_port: _,
-                remote_port: _,
-                protocol: _,
-                static_ip,
-                gw_addr: _,
-                net_mask: _,
-            } => {
-                if *static_ip {
+            DevPathNode::MsgIPv4(ipv4) => {
+                if ipv4.static_ip {
                     write!(f, "IPv4(static)")
                 } else {
                     write!(f, "IPv4(dhcp)")
                 }
             }
 
-            DevPathNode::MsgIPv6 {
-                local_addr: _,
-                remote_addr: _,
-                local_port: _,
-                remote_port: _,
-                protocol: _,
-                addr_origin,
-                prefix_len: _,
-                gw_addr: _,
-            } => match addr_origin {
+            DevPathNode::MsgIPv6(ipv6) => match ipv6.addr_origin {
                 0 => write!(f, "IPv6(static)"),
                 1 => write!(f, "IPv6(stateless)"),
                 2 => write!(f, "IPv6(stateful)"),
