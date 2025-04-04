@@ -175,7 +175,7 @@ impl<T: io::Read> ReadEfiExt for T {
                     let v = self.read_u32::<LE>()?;
                     adr.push(v);
                 }
-                Ok(dp::DevPathNode::AcpiAdr(dp::DevPathAcpiAdr { adr }))
+                Ok(dp::DevPathNode::AcpiAdr(adr))
             }
 
             (dp::TYPE_MSG, dp::TYPE_MSG_SCSI, 4) => {
@@ -262,7 +262,7 @@ impl<T: io::Read> ReadEfiExt for T {
                     let mut r = self.get_cursor(len)?;
                     Some(r.read_ascii_string()?)
                 };
-                Ok(dp::DevPathNode::MsgUri(dp::DevPathMsgUri { uri }))
+                Ok(dp::DevPathNode::MsgUri(uri))
             }
 
             (dp::TYPE_MEDIA, dp::TYPE_MEDIA_HD, 38) => {
@@ -399,10 +399,9 @@ impl<T: io::Write> WriteEfiExt for T {
                 Ok(())
             }
 
-            dp::DevPathNode::AcpiAdr(acpi) => {
-                let hdr = dp::DevPathHeader::new_acpi_adr(acpi.adr.len());
+            dp::DevPathNode::AcpiAdr(adr) => {
+                let hdr = dp::DevPathHeader::new_acpi_adr(adr.len());
                 hdr.write_to_io(&mut *self)?;
-                let adr: &Vec<u32> = acpi.adr.as_ref();
                 for i in adr {
                     self.write_u32::<LE>(*i)?;
                 }
@@ -486,8 +485,8 @@ impl<T: io::Write> WriteEfiExt for T {
                 Ok(())
             }
 
-            dp::DevPathNode::MsgUri(u) => {
-                match &u.uri {
+            dp::DevPathNode::MsgUri(uri) => {
+                match &uri {
                     Some(u) => {
                         let mut w = Cursor::new(Vec::new());
                         w.write_ascii_string(u)?;

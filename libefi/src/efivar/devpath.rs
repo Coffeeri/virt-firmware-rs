@@ -154,11 +154,6 @@ pub struct DevPathAcpiDp {
     pub uid: u32,
 }
 
-#[derive(Debug, PartialEq)]
-pub struct DevPathAcpiAdr {
-    pub adr: Vec<u32>,
-}
-
 #[repr(C)]
 #[derive(Debug, PartialEq, FromBytes, IntoBytes, Immutable)]
 pub struct DevPathMsgScsi {
@@ -233,11 +228,6 @@ pub struct DevPathMsgUsbClass {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct DevPathMsgUri {
-    pub uri: Option<String>,
-}
-
-#[derive(Debug, PartialEq)]
 pub struct DevPathMediaHd {
     pub nr: u32,
     pub start: u64,
@@ -252,7 +242,7 @@ pub enum DevPathNode {
     HwPci(DevPathHwPci),
 
     AcpiDp(DevPathAcpiDp),
-    AcpiAdr(DevPathAcpiAdr),
+    AcpiAdr(Vec<u32>),
 
     MsgScsi(DevPathMsgScsi),
     MsgUsb(DevPathMsgUsb),
@@ -263,7 +253,7 @@ pub enum DevPathNode {
     MsgUart(DevPathMsgUart),
     MsgSata(DevPathMsgSata),
     MsgUsbClass(DevPathMsgUsbClass),
-    MsgUri(DevPathMsgUri),
+    MsgUri(Option<String>),
 
     MediaHd(DevPathMediaHd),
     MediaVendor(Guid),
@@ -299,8 +289,8 @@ impl fmt::Display for DevPathNode {
                 }
             },
 
-            DevPathNode::AcpiAdr(acpi) => {
-                let s: Vec<String> = acpi.adr.iter().map(|a| format!("0x{:x}", a)).collect();
+            DevPathNode::AcpiAdr(adr) => {
+                let s: Vec<String> = adr.iter().map(|a| format!("0x{:x}", a)).collect();
                 write!(f, "Acpi(adr={})", s.join(","))
             }
 
@@ -346,7 +336,7 @@ impl fmt::Display for DevPathNode {
             DevPathNode::MsgUsbClass(_) => {
                 write!(f, "UsbClass()")
             }
-            DevPathNode::MsgUri(u) => match &u.uri {
+            DevPathNode::MsgUri(uri) => match &uri {
                 None => write!(f, "URI()"),
                 Some(u) => write!(f, "URI(\"{}\")", u),
             },
