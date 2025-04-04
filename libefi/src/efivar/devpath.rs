@@ -99,6 +99,10 @@ impl DevPathHeader {
         DevPathHeader::new(TYPE_MSG, TYPE_MSG_IPV6, 56)
     }
 
+    pub fn new_msg_uart() -> Self {
+        DevPathHeader::new(TYPE_MSG, TYPE_MSG_UART, size_of::<DevPathMsgUart>())
+    }
+
     pub fn new_msg_sata() -> Self {
         DevPathHeader::new(TYPE_MSG, TYPE_MSG_SATA, size_of::<DevPathMsgSata>())
     }
@@ -174,6 +178,16 @@ pub struct DevPathMsgIPv6 {
     pub gw_addr: Ipv6Addr,
 }
 
+#[repr(C, packed)]
+#[derive(Debug, PartialEq, FromBytes, IntoBytes, Immutable)]
+pub struct DevPathMsgUart {
+    pub reserved: u32,
+    pub baudrate: u64,
+    pub databits: u8,
+    pub parity: u8,
+    pub stopbits: u8,
+}
+
 #[repr(C)]
 #[derive(Debug, PartialEq, FromBytes, IntoBytes, Immutable)]
 pub struct DevPathMsgSata {
@@ -195,13 +209,7 @@ pub enum DevPathNode {
     MsgMac(DevPathMsgMac),
     MsgIPv4(DevPathMsgIPv4),
     MsgIPv6(DevPathMsgIPv6),
-    MsgUart {
-        reserved: u32,
-        baudrate: u64,
-        databits: u8,
-        parity: u8,
-        stopbits: u8,
-    },
+    MsgUart(DevPathMsgUart),
     MsgSata(DevPathMsgSata),
     MsgUsbClass {
         vendor: u16,
@@ -299,13 +307,7 @@ impl fmt::Display for DevPathNode {
                 _ => write!(f, "IPv6(invalid)"),
             },
 
-            DevPathNode::MsgUart {
-                reserved: _,
-                baudrate: _,
-                databits: _,
-                parity: _,
-                stopbits: _,
-            } => {
+            DevPathNode::MsgUart(_) => {
                 write!(f, "UART()")
             }
 
@@ -416,4 +418,5 @@ fn test_struct_sizes() {
     assert_eq!(size_of::<DevPathMsgVendor>(), 16);
     assert_eq!(size_of::<DevPathMsgMac>(), 33);
     assert_eq!(size_of::<DevPathMsgSata>(), 6);
+    assert_eq!(size_of::<DevPathMsgUart>(), 15);
 }

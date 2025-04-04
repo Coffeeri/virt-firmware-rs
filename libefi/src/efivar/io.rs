@@ -245,18 +245,8 @@ impl<T: io::Read> ReadEfiExt for T {
             }
 
             (devpath::TYPE_MSG, devpath::TYPE_MSG_UART, 15) => {
-                let reserved = self.read_u32::<LE>()?;
-                let baudrate = self.read_u64::<LE>()?;
-                let databits = self.read_u8()?;
-                let parity = self.read_u8()?;
-                let stopbits = self.read_u8()?;
-                Ok(devpath::DevPathNode::MsgUart {
-                    reserved,
-                    baudrate,
-                    databits,
-                    parity,
-                    stopbits,
-                })
+                let uart = devpath::DevPathMsgUart::read_from_io(&mut *self)?;
+                Ok(devpath::DevPathNode::MsgUart(uart))
             }
 
             (devpath::TYPE_MSG, devpath::TYPE_MSG_SATA, 6) => {
@@ -491,21 +481,10 @@ impl<T: io::Write> WriteEfiExt for T {
                 Ok(())
             }
 
-            devpath::DevPathNode::MsgUart {
-                reserved,
-                baudrate,
-                databits,
-                parity,
-                stopbits,
-            } => {
-                self.write_u8(devpath::TYPE_MSG)?;
-                self.write_u8(devpath::TYPE_MSG_UART)?;
-                self.write_u16::<LE>(4 + 15)?;
-                self.write_u32::<LE>(*reserved)?;
-                self.write_u64::<LE>(*baudrate)?;
-                self.write_u8(*databits)?;
-                self.write_u8(*parity)?;
-                self.write_u8(*stopbits)?;
+            devpath::DevPathNode::MsgUart(uart) => {
+                let hdr = devpath::DevPathHeader::new_msg_uart();
+                hdr.write_to_io(&mut *self)?;
+                uart.write_to_io(&mut *self)?;
                 Ok(())
             }
 
