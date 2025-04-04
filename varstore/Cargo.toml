@@ -14,6 +14,6 @@ log = "0.4"
 uefi = "0.34"
 uguid = "2"
 stderrlog = "0.6"
-virtfw-libefi = { path = "../libefi", version = "0.1" }
+virtfw-libefi = { path = "../libefi", version = "0.2" }
 zerocopy = { version = "0.8", features = [ "std" ]}
 zerocopy-derive = "0.8"
