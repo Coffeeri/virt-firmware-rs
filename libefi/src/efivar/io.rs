@@ -11,7 +11,7 @@ use uguid::Guid;
 use zerocopy::{FromBytes, IntoBytes};
 
 use crate::efivar::boot;
-use crate::efivar::devpath;
+use crate::efivar::devpath as dp;
 use crate::nocasestr::NoCaseString;
 
 pub trait ReadEfiExt: io::Read {
@@ -25,8 +25,8 @@ pub trait ReadEfiExt: io::Read {
     fn read_boot_index(&mut self) -> Result<boot::BootIndex>;
     fn read_boot_order(&mut self) -> Result<boot::BootOrder>;
     fn read_boot_entry(&mut self) -> Result<boot::BootEntry>;
-    fn read_devpath_node(&mut self) -> Result<devpath::DevPathNode>;
-    fn read_devpath(&mut self) -> Result<devpath::DevPath>;
+    fn read_devpath_node(&mut self) -> Result<dp::DevPathNode>;
+    fn read_devpath(&mut self) -> Result<dp::DevPath>;
 }
 
 pub trait WriteEfiExt: io::Write {
@@ -36,8 +36,8 @@ pub trait WriteEfiExt: io::Write {
     fn write_boot_index(&mut self, value: &boot::BootIndex) -> Result<()>;
     fn write_boot_order(&mut self, value: &boot::BootOrder) -> Result<()>;
     fn write_boot_entry(&mut self, value: &boot::BootEntry) -> Result<()>;
-    fn write_devpath_node(&mut self, value: &devpath::DevPathNode) -> Result<()>;
-    fn write_devpath(&mut self, value: &devpath::DevPath) -> Result<()>;
+    fn write_devpath_node(&mut self, value: &dp::DevPathNode) -> Result<()>;
+    fn write_devpath(&mut self, value: &dp::DevPath) -> Result<()>;
 }
 
 impl<T: io::Read> ReadEfiExt for T {
@@ -155,54 +155,50 @@ impl<T: io::Read> ReadEfiExt for T {
         })
     }
 
-    fn read_devpath_node(&mut self) -> Result<devpath::DevPathNode> {
-        let hdr = devpath::DevPathHeader::read_from_io(&mut *self)?;
+    fn read_devpath_node(&mut self) -> Result<dp::DevPathNode> {
+        let hdr = dp::DevPathHeader::read_from_io(&mut *self)?;
 
         match (hdr.devtype, hdr.subtype, (hdr.length - 4) as usize) {
-            (devpath::TYPE_HW, devpath::TYPE_HW_PCI, 2) => {
-                let pci = devpath::DevPathHwPci::read_from_io(&mut *self)?;
-                Ok(devpath::DevPathNode::HwPci(pci))
+            (dp::TYPE_HW, dp::TYPE_HW_PCI, 2) => {
+                let pci = dp::DevPathHwPci::read_from_io(&mut *self)?;
+                Ok(dp::DevPathNode::HwPci(pci))
             }
 
-            (devpath::TYPE_ACPI, devpath::TYPE_ACPI_DP, 8) => {
-                let acpi = devpath::DevPathAcpiDp::read_from_io(&mut *self)?;
-                Ok(devpath::DevPathNode::AcpiDp(acpi))
+            (dp::TYPE_ACPI, dp::TYPE_ACPI_DP, 8) => {
+                let acpi = dp::DevPathAcpiDp::read_from_io(&mut *self)?;
+                Ok(dp::DevPathNode::AcpiDp(acpi))
             }
 
-            (devpath::TYPE_ACPI, devpath::TYPE_ACPI_ADR, len) => {
+            (dp::TYPE_ACPI, dp::TYPE_ACPI_ADR, len) => {
                 let mut adr = Vec::new();
                 for _i in 0..len / 4 {
                     let v = self.read_u32::<LE>()?;
                     adr.push(v);
                 }
-                Ok(devpath::DevPathNode::AcpiAdr(devpath::DevPathAcpiAdr {
-                    adr,
-                }))
+                Ok(dp::DevPathNode::AcpiAdr(dp::DevPathAcpiAdr { adr }))
             }
 
-            (devpath::TYPE_MSG, devpath::TYPE_MSG_SCSI, 4) => {
-                let scsi = devpath::DevPathMsgScsi::read_from_io(&mut *self)?;
-                Ok(devpath::DevPathNode::MsgScsi(scsi))
+            (dp::TYPE_MSG, dp::TYPE_MSG_SCSI, 4) => {
+                let scsi = dp::DevPathMsgScsi::read_from_io(&mut *self)?;
+                Ok(dp::DevPathNode::MsgScsi(scsi))
             }
 
-            (devpath::TYPE_MSG, devpath::TYPE_MSG_USB, 2) => {
-                let usb = devpath::DevPathMsgUsb::read_from_io(&mut *self)?;
-                Ok(devpath::DevPathNode::MsgUsb(usb))
+            (dp::TYPE_MSG, dp::TYPE_MSG_USB, 2) => {
+                let usb = dp::DevPathMsgUsb::read_from_io(&mut *self)?;
+                Ok(dp::DevPathNode::MsgUsb(usb))
             }
 
-            (devpath::TYPE_MSG, devpath::TYPE_MSG_VENDOR, 16) => {
+            (dp::TYPE_MSG, dp::TYPE_MSG_VENDOR, 16) => {
                 let guid = self.read_efi_guid()?;
-                Ok(devpath::DevPathNode::MsgVendor(devpath::DevPathMsgVendor {
-                    guid,
-                }))
+                Ok(dp::DevPathNode::MsgVendor(dp::DevPathMsgVendor { guid }))
             }
 
-            (devpath::TYPE_MSG, devpath::TYPE_MSG_MAC, 33) => {
-                let mac = devpath::DevPathMsgMac::read_from_io(&mut *self)?;
-                Ok(devpath::DevPathNode::MsgMac(mac))
+            (dp::TYPE_MSG, dp::TYPE_MSG_MAC, 33) => {
+                let mac = dp::DevPathMsgMac::read_from_io(&mut *self)?;
+                Ok(dp::DevPathNode::MsgMac(mac))
             }
 
-            (devpath::TYPE_MSG, devpath::TYPE_MSG_IPV4, 23) => {
+            (dp::TYPE_MSG, dp::TYPE_MSG_IPV4, 23) => {
                 let local_addr = self.read_ipv4()?;
                 let remote_addr = self.read_ipv4()?;
                 let local_port = self.read_u16::<LE>()?;
@@ -211,7 +207,7 @@ impl<T: io::Read> ReadEfiExt for T {
                 let static_ip = self.read_u8()?;
                 let gw_addr = self.read_ipv4()?;
                 let net_mask = self.read_ipv4()?;
-                Ok(devpath::DevPathNode::MsgIPv4(devpath::DevPathMsgIPv4 {
+                Ok(dp::DevPathNode::MsgIPv4(dp::DevPathMsgIPv4 {
                     local_addr,
                     remote_addr,
                     local_port,
@@ -223,7 +219,7 @@ impl<T: io::Read> ReadEfiExt for T {
                 }))
             }
 
-            (devpath::TYPE_MSG, devpath::TYPE_MSG_IPV6, 56) => {
+            (dp::TYPE_MSG, dp::TYPE_MSG_IPV6, 56) => {
                 let local_addr = self.read_ipv6()?;
                 let remote_addr = self.read_ipv6()?;
                 let local_port = self.read_u16::<LE>()?;
@@ -232,7 +228,7 @@ impl<T: io::Read> ReadEfiExt for T {
                 let addr_origin = self.read_u8()?;
                 let prefix_len = self.read_u8()?;
                 let gw_addr = self.read_ipv6()?;
-                Ok(devpath::DevPathNode::MsgIPv6(devpath::DevPathMsgIPv6 {
+                Ok(dp::DevPathNode::MsgIPv6(dp::DevPathMsgIPv6 {
                     local_addr,
                     remote_addr,
                     local_port,
@@ -244,39 +240,39 @@ impl<T: io::Read> ReadEfiExt for T {
                 }))
             }
 
-            (devpath::TYPE_MSG, devpath::TYPE_MSG_UART, 15) => {
-                let uart = devpath::DevPathMsgUart::read_from_io(&mut *self)?;
-                Ok(devpath::DevPathNode::MsgUart(uart))
+            (dp::TYPE_MSG, dp::TYPE_MSG_UART, 15) => {
+                let uart = dp::DevPathMsgUart::read_from_io(&mut *self)?;
+                Ok(dp::DevPathNode::MsgUart(uart))
             }
 
-            (devpath::TYPE_MSG, devpath::TYPE_MSG_SATA, 6) => {
-                let sata = devpath::DevPathMsgSata::read_from_io(&mut *self)?;
-                Ok(devpath::DevPathNode::MsgSata(sata))
+            (dp::TYPE_MSG, dp::TYPE_MSG_SATA, 6) => {
+                let sata = dp::DevPathMsgSata::read_from_io(&mut *self)?;
+                Ok(dp::DevPathNode::MsgSata(sata))
             }
 
-            (devpath::TYPE_MSG, devpath::TYPE_MSG_USB_CLASS, 7) => {
-                let class = devpath::DevPathMsgUsbClass::read_from_io(&mut *self)?;
-                Ok(devpath::DevPathNode::MsgUsbClass(class))
+            (dp::TYPE_MSG, dp::TYPE_MSG_USB_CLASS, 7) => {
+                let class = dp::DevPathMsgUsbClass::read_from_io(&mut *self)?;
+                Ok(dp::DevPathNode::MsgUsbClass(class))
             }
 
-            (devpath::TYPE_MSG, devpath::TYPE_MSG_URI, len) => {
+            (dp::TYPE_MSG, dp::TYPE_MSG_URI, len) => {
                 let uri = if len == 0 {
                     None
                 } else {
                     let mut r = self.get_cursor(len)?;
                     Some(r.read_ascii_string()?)
                 };
-                Ok(devpath::DevPathNode::MsgUri { uri })
+                Ok(dp::DevPathNode::MsgUri { uri })
             }
 
-            (devpath::TYPE_MEDIA, devpath::TYPE_MEDIA_HD, 38) => {
+            (dp::TYPE_MEDIA, dp::TYPE_MEDIA_HD, 38) => {
                 let nr = self.read_u32::<LE>()?;
                 let start = self.read_u64::<LE>()?;
                 let size = self.read_u64::<LE>()?;
                 let guid = self.read_efi_guid()?;
                 let mbrtype = self.read_u8()?;
                 let sigtype = self.read_u8()?;
-                Ok(devpath::DevPathNode::MediaHd {
+                Ok(dp::DevPathNode::MediaHd {
                     nr,
                     start,
                     size,
@@ -286,30 +282,30 @@ impl<T: io::Read> ReadEfiExt for T {
                 })
             }
 
-            (devpath::TYPE_MEDIA, devpath::TYPE_MEDIA_VENDOR, 16) => {
+            (dp::TYPE_MEDIA, dp::TYPE_MEDIA_VENDOR, 16) => {
                 let guid = self.read_efi_guid()?;
-                Ok(devpath::DevPathNode::MediaVendor { guid })
+                Ok(dp::DevPathNode::MediaVendor { guid })
             }
 
-            (devpath::TYPE_MEDIA, devpath::TYPE_MEDIA_FILEPATH, len) => {
+            (dp::TYPE_MEDIA, dp::TYPE_MEDIA_FILEPATH, len) => {
                 let mut r = self.get_cursor(len)?;
                 let path = r.read_efi_string()?;
-                Ok(devpath::DevPathNode::MediaFilePath {
+                Ok(dp::DevPathNode::MediaFilePath {
                     path: NoCaseString::new(&path),
                 })
             }
 
-            (devpath::TYPE_MEDIA, devpath::TYPE_MEDIA_FW_FILE, 16) => {
+            (dp::TYPE_MEDIA, dp::TYPE_MEDIA_FW_FILE, 16) => {
                 let filename = self.read_efi_guid()?;
-                Ok(devpath::DevPathNode::MediaFwFile { filename })
+                Ok(dp::DevPathNode::MediaFwFile { filename })
             }
 
-            (devpath::TYPE_MEDIA, devpath::TYPE_MEDIA_FW_VOL, 16) => {
+            (dp::TYPE_MEDIA, dp::TYPE_MEDIA_FW_VOL, 16) => {
                 let volume = self.read_efi_guid()?;
-                Ok(devpath::DevPathNode::MediaFwVol { volume })
+                Ok(dp::DevPathNode::MediaFwVol { volume })
             }
 
-            (devpath::TYPE_END, subtype, 0) => Ok(devpath::DevPathNode::End { subtype }),
+            (dp::TYPE_END, subtype, 0) => Ok(dp::DevPathNode::End { subtype }),
 
             (d, s, len) => {
                 let data = self.read_blob(len)?;
@@ -317,7 +313,7 @@ impl<T: io::Read> ReadEfiExt for T {
                     "devpath node type=0x{:x} subtype=0x{:x} data={:?}",
                     d, s, data
                 );
-                Ok(devpath::DevPathNode::Other {
+                Ok(dp::DevPathNode::Other {
                     devtype: d,
                     subtype: s,
                     blob: data,
@@ -326,16 +322,16 @@ impl<T: io::Read> ReadEfiExt for T {
         }
     }
 
-    fn read_devpath(&mut self) -> Result<devpath::DevPath> {
+    fn read_devpath(&mut self) -> Result<dp::DevPath> {
         let mut nodes = Vec::new();
         loop {
             let node = self.read_devpath_node()?;
             match node {
-                devpath::DevPathNode::End { subtype: _ } => break,
+                dp::DevPathNode::End { subtype: _ } => break,
                 _ => nodes.push(node),
             }
         }
-        Ok(devpath::DevPath { nodes })
+        Ok(dp::DevPath { nodes })
     }
 }
 
@@ -389,24 +385,24 @@ impl<T: io::Write> WriteEfiExt for T {
         Ok(())
     }
 
-    fn write_devpath_node(&mut self, value: &devpath::DevPathNode) -> Result<()> {
+    fn write_devpath_node(&mut self, value: &dp::DevPathNode) -> Result<()> {
         match value {
-            devpath::DevPathNode::HwPci(pci) => {
-                let hdr = devpath::DevPathHeader::new_hw_pci();
+            dp::DevPathNode::HwPci(pci) => {
+                let hdr = dp::DevPathHeader::new_hw_pci();
                 hdr.write_to_io(&mut *self)?;
                 pci.write_to_io(&mut *self)?;
                 Ok(())
             }
 
-            devpath::DevPathNode::AcpiDp(acpi) => {
-                let hdr = devpath::DevPathHeader::new_acpi_dp();
+            dp::DevPathNode::AcpiDp(acpi) => {
+                let hdr = dp::DevPathHeader::new_acpi_dp();
                 hdr.write_to_io(&mut *self)?;
                 acpi.write_to_io(&mut *self)?;
                 Ok(())
             }
 
-            devpath::DevPathNode::AcpiAdr(acpi) => {
-                let hdr = devpath::DevPathHeader::new_acpi_adr(acpi.adr.len());
+            dp::DevPathNode::AcpiAdr(acpi) => {
+                let hdr = dp::DevPathHeader::new_acpi_adr(acpi.adr.len());
                 hdr.write_to_io(&mut *self)?;
                 let adr: &Vec<u32> = acpi.adr.as_ref();
                 for i in adr {
@@ -415,36 +411,36 @@ impl<T: io::Write> WriteEfiExt for T {
                 Ok(())
             }
 
-            devpath::DevPathNode::MsgScsi(scsi) => {
-                let hdr = devpath::DevPathHeader::new_msg_scsi();
+            dp::DevPathNode::MsgScsi(scsi) => {
+                let hdr = dp::DevPathHeader::new_msg_scsi();
                 hdr.write_to_io(&mut *self)?;
                 scsi.write_to_io(&mut *self)?;
                 Ok(())
             }
 
-            devpath::DevPathNode::MsgUsb(usb) => {
-                let hdr = devpath::DevPathHeader::new_msg_usb();
+            dp::DevPathNode::MsgUsb(usb) => {
+                let hdr = dp::DevPathHeader::new_msg_usb();
                 hdr.write_to_io(&mut *self)?;
                 usb.write_to_io(&mut *self)?;
                 Ok(())
             }
 
-            devpath::DevPathNode::MsgVendor(v) => {
-                let hdr = devpath::DevPathHeader::new_msg_vendor();
+            dp::DevPathNode::MsgVendor(v) => {
+                let hdr = dp::DevPathHeader::new_msg_vendor();
                 hdr.write_to_io(&mut *self)?;
                 self.write_efi_guid(&v.guid)?;
                 Ok(())
             }
 
-            devpath::DevPathNode::MsgMac(mac) => {
-                let hdr = devpath::DevPathHeader::new_msg_mac();
+            dp::DevPathNode::MsgMac(mac) => {
+                let hdr = dp::DevPathHeader::new_msg_mac();
                 hdr.write_to_io(&mut *self)?;
                 mac.write_to_io(&mut *self)?;
                 Ok(())
             }
 
-            devpath::DevPathNode::MsgIPv4(ipv4) => {
-                let hdr = devpath::DevPathHeader::new_msg_ipv4();
+            dp::DevPathNode::MsgIPv4(ipv4) => {
+                let hdr = dp::DevPathHeader::new_msg_ipv4();
                 hdr.write_to_io(&mut *self)?;
                 self.write_all(&ipv4.local_addr.octets())?;
                 self.write_all(&ipv4.remote_addr.octets())?;
@@ -457,8 +453,8 @@ impl<T: io::Write> WriteEfiExt for T {
                 Ok(())
             }
 
-            devpath::DevPathNode::MsgIPv6(ipv6) => {
-                let hdr = devpath::DevPathHeader::new_msg_ipv6();
+            dp::DevPathNode::MsgIPv6(ipv6) => {
+                let hdr = dp::DevPathHeader::new_msg_ipv6();
                 hdr.write_to_io(&mut *self)?;
                 self.write_all(&ipv6.local_addr.octets())?;
                 self.write_all(&ipv6.remote_addr.octets())?;
@@ -471,30 +467,30 @@ impl<T: io::Write> WriteEfiExt for T {
                 Ok(())
             }
 
-            devpath::DevPathNode::MsgUart(uart) => {
-                let hdr = devpath::DevPathHeader::new_msg_uart();
+            dp::DevPathNode::MsgUart(uart) => {
+                let hdr = dp::DevPathHeader::new_msg_uart();
                 hdr.write_to_io(&mut *self)?;
                 uart.write_to_io(&mut *self)?;
                 Ok(())
             }
 
-            devpath::DevPathNode::MsgSata(sata) => {
-                let hdr = devpath::DevPathHeader::new_msg_sata();
+            dp::DevPathNode::MsgSata(sata) => {
+                let hdr = dp::DevPathHeader::new_msg_sata();
                 hdr.write_to_io(&mut *self)?;
                 sata.write_to_io(&mut *self)?;
                 Ok(())
             }
 
-            devpath::DevPathNode::MsgUsbClass(class) => {
-                let hdr = devpath::DevPathHeader::new_msg_usb_class();
+            dp::DevPathNode::MsgUsbClass(class) => {
+                let hdr = dp::DevPathHeader::new_msg_usb_class();
                 hdr.write_to_io(&mut *self)?;
                 class.write_to_io(&mut *self)?;
                 Ok(())
             }
 
-            devpath::DevPathNode::MsgUri { uri } => {
-                self.write_u8(devpath::TYPE_MSG)?;
-                self.write_u8(devpath::TYPE_MSG_URI)?;
+            dp::DevPathNode::MsgUri { uri } => {
+                self.write_u8(dp::TYPE_MSG)?;
+                self.write_u8(dp::TYPE_MSG_URI)?;
 
                 match uri {
                     Some(u) => {
@@ -510,7 +506,7 @@ impl<T: io::Write> WriteEfiExt for T {
                 Ok(())
             }
 
-            devpath::DevPathNode::MediaHd {
+            dp::DevPathNode::MediaHd {
                 nr,
                 start,
                 size,
@@ -518,8 +514,8 @@ impl<T: io::Write> WriteEfiExt for T {
                 mbrtype,
                 sigtype,
             } => {
-                self.write_u8(devpath::TYPE_MEDIA)?;
-                self.write_u8(devpath::TYPE_MEDIA_HD)?;
+                self.write_u8(dp::TYPE_MEDIA)?;
+                self.write_u8(dp::TYPE_MEDIA_HD)?;
                 self.write_u16::<LE>(4 + 38)?;
                 self.write_u32::<LE>(*nr)?;
                 self.write_u64::<LE>(*start)?;
@@ -530,49 +526,49 @@ impl<T: io::Write> WriteEfiExt for T {
                 Ok(())
             }
 
-            devpath::DevPathNode::MediaVendor { guid } => {
-                self.write_u8(devpath::TYPE_MEDIA)?;
-                self.write_u8(devpath::TYPE_MEDIA_VENDOR)?;
+            dp::DevPathNode::MediaVendor { guid } => {
+                self.write_u8(dp::TYPE_MEDIA)?;
+                self.write_u8(dp::TYPE_MEDIA_VENDOR)?;
                 self.write_u16::<LE>(4 + 16)?;
                 self.write_efi_guid(guid)?;
                 Ok(())
             }
 
-            devpath::DevPathNode::MediaFilePath { path } => {
+            dp::DevPathNode::MediaFilePath { path } => {
                 let mut w = Cursor::new(Vec::new());
                 w.write_efi_string(&path.0)?;
 
-                self.write_u8(devpath::TYPE_MEDIA)?;
-                self.write_u8(devpath::TYPE_MEDIA_FILEPATH)?;
+                self.write_u8(dp::TYPE_MEDIA)?;
+                self.write_u8(dp::TYPE_MEDIA_FILEPATH)?;
                 self.write_u16::<LE>(4 + w.position() as u16)?;
                 self.write_all(&w.into_inner())?;
                 Ok(())
             }
 
-            devpath::DevPathNode::MediaFwFile { filename } => {
-                self.write_u8(devpath::TYPE_MEDIA)?;
-                self.write_u8(devpath::TYPE_MEDIA_FW_FILE)?;
+            dp::DevPathNode::MediaFwFile { filename } => {
+                self.write_u8(dp::TYPE_MEDIA)?;
+                self.write_u8(dp::TYPE_MEDIA_FW_FILE)?;
                 self.write_u16::<LE>(4 + 16)?;
                 self.write_efi_guid(filename)?;
                 Ok(())
             }
 
-            devpath::DevPathNode::MediaFwVol { volume } => {
-                self.write_u8(devpath::TYPE_MEDIA)?;
-                self.write_u8(devpath::TYPE_MEDIA_FW_VOL)?;
+            dp::DevPathNode::MediaFwVol { volume } => {
+                self.write_u8(dp::TYPE_MEDIA)?;
+                self.write_u8(dp::TYPE_MEDIA_FW_VOL)?;
                 self.write_u16::<LE>(4 + 16)?;
                 self.write_efi_guid(volume)?;
                 Ok(())
             }
 
-            devpath::DevPathNode::End { subtype } => {
-                self.write_u8(devpath::TYPE_END)?;
+            dp::DevPathNode::End { subtype } => {
+                self.write_u8(dp::TYPE_END)?;
                 self.write_u8(*subtype)?;
                 self.write_u16::<LE>(4)?;
                 Ok(())
             }
 
-            devpath::DevPathNode::Other {
+            dp::DevPathNode::Other {
                 devtype,
                 subtype,
                 blob,
@@ -586,11 +582,11 @@ impl<T: io::Write> WriteEfiExt for T {
         }
     }
 
-    fn write_devpath(&mut self, value: &devpath::DevPath) -> Result<()> {
+    fn write_devpath(&mut self, value: &dp::DevPath) -> Result<()> {
         for node in &value.nodes {
             self.write_devpath_node(node)?;
         }
-        let end = devpath::DevPathNode::End { subtype: 0xff };
+        let end = dp::DevPathNode::End { subtype: 0xff };
         self.write_devpath_node(&end)
     }
 }
