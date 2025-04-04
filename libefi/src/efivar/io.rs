@@ -255,18 +255,8 @@ impl<T: io::Read> ReadEfiExt for T {
             }
 
             (devpath::TYPE_MSG, devpath::TYPE_MSG_USB_CLASS, 7) => {
-                let vendor = self.read_u16::<LE>()?;
-                let product = self.read_u16::<LE>()?;
-                let class = self.read_u8()?;
-                let subclass = self.read_u8()?;
-                let protocol = self.read_u8()?;
-                Ok(devpath::DevPathNode::MsgUsbClass {
-                    vendor,
-                    product,
-                    class,
-                    subclass,
-                    protocol,
-                })
+                let class = devpath::DevPathMsgUsbClass::read_from_io(&mut *self)?;
+                Ok(devpath::DevPathNode::MsgUsbClass(class))
             }
 
             (devpath::TYPE_MSG, devpath::TYPE_MSG_URI, len) => {
@@ -495,21 +485,10 @@ impl<T: io::Write> WriteEfiExt for T {
                 Ok(())
             }
 
-            devpath::DevPathNode::MsgUsbClass {
-                vendor,
-                product,
-                class,
-                subclass,
-                protocol,
-            } => {
-                self.write_u8(devpath::TYPE_MSG)?;
-                self.write_u8(devpath::TYPE_MSG_USB_CLASS)?;
-                self.write_u16::<LE>(4 + 7)?;
-                self.write_u16::<LE>(*vendor)?;
-                self.write_u16::<LE>(*product)?;
-                self.write_u8(*class)?;
-                self.write_u8(*subclass)?;
-                self.write_u8(*protocol)?;
+            devpath::DevPathNode::MsgUsbClass(class) => {
+                let hdr = devpath::DevPathHeader::new_msg_usb_class();
+                hdr.write_to_io(&mut *self)?;
+                class.write_to_io(&mut *self)?;
                 Ok(())
             }
 

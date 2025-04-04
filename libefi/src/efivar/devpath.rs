@@ -106,6 +106,14 @@ impl DevPathHeader {
     pub fn new_msg_sata() -> Self {
         DevPathHeader::new(TYPE_MSG, TYPE_MSG_SATA, size_of::<DevPathMsgSata>())
     }
+
+    pub fn new_msg_usb_class() -> Self {
+        DevPathHeader::new(
+            TYPE_MSG,
+            TYPE_MSG_USB_CLASS,
+            size_of::<DevPathMsgUsbClass>(),
+        )
+    }
 }
 
 #[repr(C)]
@@ -196,6 +204,16 @@ pub struct DevPathMsgSata {
     pub lun: u16,
 }
 
+#[repr(C, packed)]
+#[derive(Debug, PartialEq, FromBytes, IntoBytes, Immutable)]
+pub struct DevPathMsgUsbClass {
+    pub vendor: u16,
+    pub product: u16,
+    pub class: u8,
+    pub subclass: u8,
+    pub protocol: u8,
+}
+
 #[derive(Debug, PartialEq)]
 pub enum DevPathNode {
     HwPci(DevPathHwPci),
@@ -211,13 +229,7 @@ pub enum DevPathNode {
     MsgIPv6(DevPathMsgIPv6),
     MsgUart(DevPathMsgUart),
     MsgSata(DevPathMsgSata),
-    MsgUsbClass {
-        vendor: u16,
-        product: u16,
-        class: u8,
-        subclass: u8,
-        protocol: u8,
-    },
+    MsgUsbClass(DevPathMsgUsbClass),
     MsgUri {
         uri: Option<String>,
     },
@@ -315,13 +327,7 @@ impl fmt::Display for DevPathNode {
                 write!(f, "SATA(port={})", sata.port)
             }
 
-            DevPathNode::MsgUsbClass {
-                vendor: _,
-                product: _,
-                class: _,
-                subclass: _s,
-                protocol: _,
-            } => {
+            DevPathNode::MsgUsbClass(_) => {
                 write!(f, "UsbClass()")
             }
             DevPathNode::MsgUri { uri } => match uri {
@@ -419,4 +425,5 @@ fn test_struct_sizes() {
     assert_eq!(size_of::<DevPathMsgMac>(), 33);
     assert_eq!(size_of::<DevPathMsgSata>(), 6);
     assert_eq!(size_of::<DevPathMsgUart>(), 15);
+    assert_eq!(size_of::<DevPathMsgUsbClass>(), 7);
 }
