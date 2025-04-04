@@ -99,7 +99,7 @@ impl EfiFile {
 
     pub fn devpathnode_file(&self) -> Option<devpath::DevPathNode> {
         let path = self.efi_name()?;
-        Some(devpath::DevPathNode::MediaFilePath { path })
+        Some(devpath::DevPathNode::MediaFilePath(path))
     }
 
     pub fn devpath(&self) -> Option<devpath::DevPath> {

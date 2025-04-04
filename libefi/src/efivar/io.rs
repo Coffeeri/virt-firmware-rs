@@ -290,9 +290,7 @@ impl<T: io::Read> ReadEfiExt for T {
             (dp::TYPE_MEDIA, dp::TYPE_MEDIA_FILEPATH, len) => {
                 let mut r = self.get_cursor(len)?;
                 let path = r.read_efi_string()?;
-                Ok(dp::DevPathNode::MediaFilePath {
-                    path: NoCaseString::new(&path),
-                })
+                Ok(dp::DevPathNode::MediaFilePath(NoCaseString::new(&path)))
             }
 
             (dp::TYPE_MEDIA, dp::TYPE_MEDIA_FW_FILE, 16) => {
@@ -489,18 +487,18 @@ impl<T: io::Write> WriteEfiExt for T {
             }
 
             dp::DevPathNode::MsgUri(u) => {
-                self.write_u8(dp::TYPE_MSG)?;
-                self.write_u8(dp::TYPE_MSG_URI)?;
-
                 match &u.uri {
                     Some(u) => {
                         let mut w = Cursor::new(Vec::new());
                         w.write_ascii_string(u)?;
-                        self.write_u16::<LE>(4 + w.position() as u16)?;
+
+                        let hdr = dp::DevPathHeader::new_msg_uri(w.position() as usize);
+                        hdr.write_to_io(&mut *self)?;
                         self.write_all(&w.into_inner())?;
                     }
                     None => {
-                        self.write_u16::<LE>(4)?;
+                        let hdr = dp::DevPathHeader::new_msg_uri(0);
+                        hdr.write_to_io(&mut *self)?;
                     }
                 }
                 Ok(())
@@ -525,13 +523,12 @@ impl<T: io::Write> WriteEfiExt for T {
                 Ok(())
             }
 
-            dp::DevPathNode::MediaFilePath { path } => {
+            dp::DevPathNode::MediaFilePath(path) => {
                 let mut w = Cursor::new(Vec::new());
                 w.write_efi_string(&path.0)?;
 
-                self.write_u8(dp::TYPE_MEDIA)?;
-                self.write_u8(dp::TYPE_MEDIA_FILEPATH)?;
-                self.write_u16::<LE>(4 + w.position() as u16)?;
+                let hdr = dp::DevPathHeader::new_media_filepath(w.position() as usize);
+                hdr.write_to_io(&mut *self)?;
                 self.write_all(&w.into_inner())?;
                 Ok(())
             }

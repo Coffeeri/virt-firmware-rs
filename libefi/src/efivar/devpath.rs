@@ -115,6 +115,10 @@ impl DevPathHeader {
         )
     }
 
+    pub fn new_msg_uri(bytes: usize) -> Self {
+        DevPathHeader::new(TYPE_MSG, TYPE_MSG_URI, bytes)
+    }
+
     pub fn new_media_hd() -> Self {
         DevPathHeader::new(TYPE_MEDIA, TYPE_MEDIA_HD, 38)
     }
@@ -129,6 +133,10 @@ impl DevPathHeader {
 
     pub fn new_media_fw_vol() -> Self {
         DevPathHeader::new(TYPE_MEDIA, TYPE_MEDIA_FW_VOL, size_of::<Guid>())
+    }
+
+    pub fn new_media_filepath(bytes: usize) -> Self {
+        DevPathHeader::new(TYPE_MEDIA, TYPE_MEDIA_FILEPATH, bytes)
     }
 }
 
@@ -225,6 +233,11 @@ pub struct DevPathMsgUsbClass {
 }
 
 #[derive(Debug, PartialEq)]
+pub struct DevPathMsgUri {
+    pub uri: Option<String>,
+}
+
+#[derive(Debug, PartialEq)]
 pub struct DevPathMediaHd {
     pub nr: u32,
     pub start: u64,
@@ -232,11 +245,6 @@ pub struct DevPathMediaHd {
     pub signature: Guid,
     pub mbrtype: u8, // use enum ?
     pub sigtype: u8, // use enum ?
-}
-
-#[derive(Debug, PartialEq)]
-pub struct DevPathMsgUri {
-    pub uri: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -259,9 +267,7 @@ pub enum DevPathNode {
 
     MediaHd(DevPathMediaHd),
     MediaVendor(Guid),
-    MediaFilePath {
-        path: NoCaseString,
-    },
+    MediaFilePath(NoCaseString),
     MediaFwFile(Guid),
     MediaFwVol(Guid),
 
@@ -353,7 +359,7 @@ impl fmt::Display for DevPathNode {
                 write!(f, "Vendor({})", guid)
             }
 
-            DevPathNode::MediaFilePath { path } => {
+            DevPathNode::MediaFilePath(path) => {
                 write!(f, "File(\"{}\")", path)
             }
 
@@ -418,13 +424,13 @@ impl fmt::Display for DevPath {
 fn test_struct_sizes() {
     use core::mem::size_of;
 
-    assert_eq!(size_of::<DevPathHwPci>(), 2);
+    assert_eq!(size_of::<Guid>(), 16);
 
+    assert_eq!(size_of::<DevPathHwPci>(), 2);
     assert_eq!(size_of::<DevPathAcpiDp>(), 8);
 
     assert_eq!(size_of::<DevPathMsgScsi>(), 4);
     assert_eq!(size_of::<DevPathMsgUsb>(), 2);
-    assert_eq!(size_of::<DevPathMsgVendor>(), 16);
     assert_eq!(size_of::<DevPathMsgMac>(), 33);
     assert_eq!(size_of::<DevPathMsgSata>(), 6);
     assert_eq!(size_of::<DevPathMsgUart>(), 15);
