@@ -84,7 +84,7 @@ impl DevPathHeader {
     }
 
     pub fn new_msg_vendor() -> Self {
-        DevPathHeader::new(TYPE_MSG, TYPE_MSG_VENDOR, size_of::<DevPathMsgVendor>())
+        DevPathHeader::new(TYPE_MSG, TYPE_MSG_VENDOR, size_of::<Guid>())
     }
 
     pub fn new_msg_mac() -> Self {
@@ -151,12 +151,6 @@ pub struct DevPathMsgScsi {
 pub struct DevPathMsgUsb {
     pub port: u8,
     pub interface: u8,
-}
-
-#[repr(C)]
-#[derive(Debug, PartialEq)]
-pub struct DevPathMsgVendor {
-    pub guid: Guid,
 }
 
 #[repr(C)]
@@ -242,7 +236,7 @@ pub enum DevPathNode {
 
     MsgScsi(DevPathMsgScsi),
     MsgUsb(DevPathMsgUsb),
-    MsgVendor(DevPathMsgVendor),
+    MsgVendor(Guid),
     MsgMac(DevPathMsgMac),
     MsgIPv4(DevPathMsgIPv4),
     MsgIPv6(DevPathMsgIPv6),
@@ -306,8 +300,8 @@ impl fmt::Display for DevPathNode {
                 write!(f, "Usb(port={},if={})", usb.port, usb.interface)
             }
 
-            DevPathNode::MsgVendor(v) => {
-                write!(f, "Vendor({})", v.guid)
+            DevPathNode::MsgVendor(guid) => {
+                write!(f, "Vendor({})", guid)
             }
 
             DevPathNode::MsgMac(_) => {
