@@ -3,9 +3,11 @@ use uguid::Guid;
 use zerocopy::FromBytes;
 use zerocopy_derive::FromBytes;
 
-use uefi::{Error, Status};
+use uefi::{CStr16, Error, Status};
 
 use virtfw_libefi::efivar::types::EfiVarAttr;
+
+use crate::mm::util;
 
 pub const GET_VARIABLE: u64 = 1;
 pub const GET_NEXT_VARIABLE_NAME: u64 = 2;
@@ -24,6 +26,15 @@ pub struct MmVariableHeader {
     pub status: u64,
 }
 
+impl MmVariableHeader {
+    pub fn new(data: &[u8]) -> Result<(Self, &[u8]), Error<&'static str>> {
+        Self::read_from_prefix(data).or(Err(Error::new(
+            Status::BAD_BUFFER_SIZE,
+            "read MmVariableHeader",
+        )))
+    }
+}
+
 // SMM_VARIABLE_COMMUNICATE_ACCESS_VARIABLE
 #[repr(C, packed)]
 #[derive(Debug, FromBytes)]
@@ -36,6 +47,15 @@ pub struct MmVariableAccess {
     // Data
 }
 
+impl MmVariableAccess {
+    pub fn new(data: &[u8]) -> Result<(Self, &[u8]), Error<&'static str>> {
+        Self::read_from_prefix(data).or(Err(Error::new(
+            Status::BAD_BUFFER_SIZE,
+            "read MmVariableAccess",
+        )))
+    }
+}
+
 // SMM_VARIABLE_COMMUNICATE_GET_NEXT_VARIABLE_NAME
 #[repr(C, packed)]
 #[derive(Debug, FromBytes)]
@@ -43,6 +63,15 @@ pub struct MmNextVariable {
     pub guid: [u8; 16],
     pub name_size: u64,
     // Name
+}
+
+impl MmNextVariable {
+    pub fn new(data: &[u8]) -> Result<(Self, &[u8]), Error<&'static str>> {
+        Self::read_from_prefix(data).or(Err(Error::new(
+            Status::BAD_BUFFER_SIZE,
+            "read MmNextvariable",
+        )))
+    }
 }
 
 // SMM_VARIABLE_COMMUNICATE_QUERY_VARIABLE_INFO
@@ -63,9 +92,9 @@ pub struct MmGetPayloadSize {
 }
 
 #[derive(Debug)]
-pub enum MmVariableRequest {
-    GetVariable { guid: Guid, attr: EfiVarAttr },
-    // GetNextVariableName = 2,
+pub enum MmVariableRequest<'a> {
+    GetVariable { guid: Guid, name: &'a CStr16 },
+    GetNextVariableName { guid: Guid, name: &'a CStr16 },
     // SetVariable = 3,
     // QueryVariableInfo = 4,
     ReadyToBoot,
@@ -75,19 +104,23 @@ pub enum MmVariableRequest {
     Unknown { function: u64 },
 }
 
-impl MmVariableRequest {
-    pub fn new(data: &[u8]) -> Result<Self, Error> {
-        let (header, body) = MmVariableHeader::read_from_prefix(data)
-            .or::<Error>(Err(Status::BAD_BUFFER_SIZE.into()))?;
+impl<'a> MmVariableRequest<'a> {
+    pub fn new(data: &'a [u8]) -> Result<Self, Error<&'static str>> {
+        let (header, body) = MmVariableHeader::new(data)?;
         let req = match header.function {
             GET_VARIABLE => {
-                let (access, _namedata) = MmVariableAccess::read_from_prefix(body)
-                    .or::<Error>(Err(Status::BAD_BUFFER_SIZE.into()))?;
+                let (access, namedata) = MmVariableAccess::new(body)?;
+                let ns = access.name_size as usize;
+                let name = util::cstr16_from_bytes_with_nul(&namedata[0..ns])?;
                 let guid = Guid::from_bytes(access.guid);
-                MmVariableRequest::GetVariable {
-                    guid,
-                    attr: access.attributes,
-                }
+                MmVariableRequest::GetVariable { guid, name }
+            }
+            GET_NEXT_VARIABLE_NAME => {
+                let (next, namebytes) = MmNextVariable::new(body)?;
+                let ns = next.name_size as usize;
+                let name = util::cstr16_from_bytes_until_nul(&namebytes[0..ns])?;
+                let guid = Guid::from_bytes(next.guid);
+                MmVariableRequest::GetNextVariableName { guid, name }
             }
             READY_TO_BOOT => MmVariableRequest::ReadyToBoot,
             EXIT_BOOT_SERVICE => MmVariableRequest::ExitBootService,
@@ -99,11 +132,14 @@ impl MmVariableRequest {
     }
 }
 
-impl Display for MmVariableRequest {
+impl Display for MmVariableRequest<'_> {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         match self {
-            MmVariableRequest::GetVariable { guid, attr } => {
-                write!(f, "request/var: get-variable {guid} {attr}",)
+            MmVariableRequest::GetVariable { guid: _, name } => {
+                write!(f, "request/var: get-variable {name}",)
+            }
+            MmVariableRequest::GetNextVariableName { guid: _, name } => {
+                write!(f, "request/var: get-next-variable-name {name}",)
             }
             MmVariableRequest::ReadyToBoot => {
                 write!(f, "request/var: ready-to-boot")

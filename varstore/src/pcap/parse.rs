@@ -1,5 +1,10 @@
+#![cfg(feature = "std")]
+
+extern crate std;
 use std::fs::File;
 use std::io::{Error, ErrorKind, Read};
+use std::vec;
+use std::vec::Vec;
 use zerocopy::FromBytes;
 
 use crate::pcap::types::{PcapFileHeader, PcapPacketHeader, PCAP_MAGIC};

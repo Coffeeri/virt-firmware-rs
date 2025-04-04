@@ -36,7 +36,8 @@ fn loginit(cfg: &getopts::Matches) {
     };
     stderrlog::new()
         .module(module_path!())
-        .module("libefi")
+        .module("virtfw_libefi")
+        .module("virtfw_varstore")
         .verbosity(loglevel)
         .init()
         .unwrap();
@@ -46,8 +47,11 @@ fn print_request(data: &[u8]) {
     let core = MmCore::new(data).unwrap();
     match core.guid {
         guids::EfiSmmVariableProtocol => {
-            let var = MmVariableRequest::new(core.data).unwrap();
-            println!("request/var: {}", var);
+            let var_res = MmVariableRequest::new(core.data);
+            if let Err(e) = var_res.as_ref() {
+                error!("{e}");
+            }
+            println!("request/var: {}", var_res.unwrap());
         }
         _ => {
             println!("request/core: {}", core);
@@ -62,6 +66,9 @@ fn print_pcap(filename: &str) -> std::io::Result<()> {
         match p {
             VarstorePcapItem::Request(d) => {
                 print_request(&d);
+            }
+            VarstorePcapItem::Reply(_) => {
+                // ignore for now
             }
             _ => {
                 println!("{}", p);
