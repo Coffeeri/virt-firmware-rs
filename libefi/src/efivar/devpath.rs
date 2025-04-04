@@ -114,6 +114,10 @@ impl DevPathHeader {
             size_of::<DevPathMsgUsbClass>(),
         )
     }
+
+    pub fn new_media_hd() -> Self {
+        DevPathHeader::new(TYPE_MEDIA, TYPE_MEDIA_HD, 38)
+    }
 }
 
 #[repr(C)]
@@ -215,6 +219,16 @@ pub struct DevPathMsgUsbClass {
 }
 
 #[derive(Debug, PartialEq)]
+pub struct DevPathMediaHd {
+    pub nr: u32,
+    pub start: u64,
+    pub size: u64,
+    pub signature: Guid,
+    pub mbrtype: u8, // use enum ?
+    pub sigtype: u8, // use enum ?
+}
+
+#[derive(Debug, PartialEq)]
 pub struct DevPathMsgUri {
     pub uri: Option<String>,
 }
@@ -237,14 +251,7 @@ pub enum DevPathNode {
     MsgUsbClass(DevPathMsgUsbClass),
     MsgUri(DevPathMsgUri),
 
-    MediaHd {
-        nr: u32,
-        start: u64,
-        size: u64,
-        signature: Guid,
-        mbrtype: u8, // use enum ?
-        sigtype: u8, // use enum ?
-    },
+    MediaHd(DevPathMediaHd),
     MediaVendor {
         guid: Guid,
     },
@@ -338,15 +345,8 @@ impl fmt::Display for DevPathNode {
                 Some(u) => write!(f, "URI(\"{}\")", u),
             },
 
-            DevPathNode::MediaHd {
-                nr,
-                start: _,
-                size: _,
-                signature: _,
-                mbrtype: _,
-                sigtype: _,
-            } => {
-                write!(f, "HD({})", nr)
+            DevPathNode::MediaHd(part) => {
+                write!(f, "HD({})", part.nr)
             }
 
             DevPathNode::MediaVendor { guid } => {

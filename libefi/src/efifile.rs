@@ -87,14 +87,14 @@ impl EfiFile {
         let size: u64 = self.udev_prop("ID_PART_ENTRY_SIZE")?.parse().ok()?;
         let guid_str = self.udev_prop("ID_PART_ENTRY_UUID")?;
         let guid = Guid::try_parse(&guid_str).ok()?;
-        Some(devpath::DevPathNode::MediaHd {
+        Some(devpath::DevPathNode::MediaHd(devpath::DevPathMediaHd {
             nr,
             start,
             size,
             signature: guid,
             mbrtype: 2, // GPT
             sigtype: 2, // UUID
-        })
+        }))
     }
 
     pub fn devpathnode_file(&self) -> Option<devpath::DevPathNode> {

@@ -272,14 +272,14 @@ impl<T: io::Read> ReadEfiExt for T {
                 let guid = self.read_efi_guid()?;
                 let mbrtype = self.read_u8()?;
                 let sigtype = self.read_u8()?;
-                Ok(dp::DevPathNode::MediaHd {
+                Ok(dp::DevPathNode::MediaHd(dp::DevPathMediaHd {
                     nr,
                     start,
                     size,
                     signature: guid,
                     mbrtype,
                     sigtype,
-                })
+                }))
             }
 
             (dp::TYPE_MEDIA, dp::TYPE_MEDIA_VENDOR, 16) => {
@@ -506,23 +506,15 @@ impl<T: io::Write> WriteEfiExt for T {
                 Ok(())
             }
 
-            dp::DevPathNode::MediaHd {
-                nr,
-                start,
-                size,
-                signature,
-                mbrtype,
-                sigtype,
-            } => {
-                self.write_u8(dp::TYPE_MEDIA)?;
-                self.write_u8(dp::TYPE_MEDIA_HD)?;
-                self.write_u16::<LE>(4 + 38)?;
-                self.write_u32::<LE>(*nr)?;
-                self.write_u64::<LE>(*start)?;
-                self.write_u64::<LE>(*size)?;
-                self.write_efi_guid(signature)?;
-                self.write_u8(*mbrtype)?;
-                self.write_u8(*sigtype)?;
+            dp::DevPathNode::MediaHd(part) => {
+                let hdr = dp::DevPathHeader::new_media_hd();
+                hdr.write_to_io(&mut *self)?;
+                self.write_u32::<LE>(part.nr)?;
+                self.write_u64::<LE>(part.start)?;
+                self.write_u64::<LE>(part.size)?;
+                self.write_efi_guid(&part.signature)?;
+                self.write_u8(part.mbrtype)?;
+                self.write_u8(part.sigtype)?;
                 Ok(())
             }
 
