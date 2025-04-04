@@ -284,7 +284,7 @@ impl<T: io::Read> ReadEfiExt for T {
 
             (dp::TYPE_MEDIA, dp::TYPE_MEDIA_VENDOR, 16) => {
                 let guid = self.read_efi_guid()?;
-                Ok(dp::DevPathNode::MediaVendor { guid })
+                Ok(dp::DevPathNode::MediaVendor(guid))
             }
 
             (dp::TYPE_MEDIA, dp::TYPE_MEDIA_FILEPATH, len) => {
@@ -297,12 +297,12 @@ impl<T: io::Read> ReadEfiExt for T {
 
             (dp::TYPE_MEDIA, dp::TYPE_MEDIA_FW_FILE, 16) => {
                 let filename = self.read_efi_guid()?;
-                Ok(dp::DevPathNode::MediaFwFile { filename })
+                Ok(dp::DevPathNode::MediaFwFile(filename))
             }
 
             (dp::TYPE_MEDIA, dp::TYPE_MEDIA_FW_VOL, 16) => {
                 let volume = self.read_efi_guid()?;
-                Ok(dp::DevPathNode::MediaFwVol { volume })
+                Ok(dp::DevPathNode::MediaFwVol(volume))
             }
 
             (dp::TYPE_END, subtype, 0) => Ok(dp::DevPathNode::End { subtype }),
@@ -518,10 +518,9 @@ impl<T: io::Write> WriteEfiExt for T {
                 Ok(())
             }
 
-            dp::DevPathNode::MediaVendor { guid } => {
-                self.write_u8(dp::TYPE_MEDIA)?;
-                self.write_u8(dp::TYPE_MEDIA_VENDOR)?;
-                self.write_u16::<LE>(4 + 16)?;
+            dp::DevPathNode::MediaVendor(guid) => {
+                let hdr = dp::DevPathHeader::new_media_vendor();
+                hdr.write_to_io(&mut *self)?;
                 self.write_efi_guid(guid)?;
                 Ok(())
             }
@@ -537,18 +536,16 @@ impl<T: io::Write> WriteEfiExt for T {
                 Ok(())
             }
 
-            dp::DevPathNode::MediaFwFile { filename } => {
-                self.write_u8(dp::TYPE_MEDIA)?;
-                self.write_u8(dp::TYPE_MEDIA_FW_FILE)?;
-                self.write_u16::<LE>(4 + 16)?;
+            dp::DevPathNode::MediaFwFile(filename) => {
+                let hdr = dp::DevPathHeader::new_media_fw_file();
+                hdr.write_to_io(&mut *self)?;
                 self.write_efi_guid(filename)?;
                 Ok(())
             }
 
-            dp::DevPathNode::MediaFwVol { volume } => {
-                self.write_u8(dp::TYPE_MEDIA)?;
-                self.write_u8(dp::TYPE_MEDIA_FW_VOL)?;
-                self.write_u16::<LE>(4 + 16)?;
+            dp::DevPathNode::MediaFwVol(volume) => {
+                let hdr = dp::DevPathHeader::new_media_fw_vol();
+                hdr.write_to_io(&mut *self)?;
                 self.write_efi_guid(volume)?;
                 Ok(())
             }

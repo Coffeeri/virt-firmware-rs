@@ -118,6 +118,18 @@ impl DevPathHeader {
     pub fn new_media_hd() -> Self {
         DevPathHeader::new(TYPE_MEDIA, TYPE_MEDIA_HD, 38)
     }
+
+    pub fn new_media_vendor() -> Self {
+        DevPathHeader::new(TYPE_MEDIA, TYPE_MEDIA_VENDOR, size_of::<Guid>())
+    }
+
+    pub fn new_media_fw_file() -> Self {
+        DevPathHeader::new(TYPE_MEDIA, TYPE_MEDIA_FW_FILE, size_of::<Guid>())
+    }
+
+    pub fn new_media_fw_vol() -> Self {
+        DevPathHeader::new(TYPE_MEDIA, TYPE_MEDIA_FW_VOL, size_of::<Guid>())
+    }
 }
 
 #[repr(C)]
@@ -246,18 +258,12 @@ pub enum DevPathNode {
     MsgUri(DevPathMsgUri),
 
     MediaHd(DevPathMediaHd),
-    MediaVendor {
-        guid: Guid,
-    },
+    MediaVendor(Guid),
     MediaFilePath {
         path: NoCaseString,
     },
-    MediaFwFile {
-        filename: Guid,
-    },
-    MediaFwVol {
-        volume: Guid,
-    },
+    MediaFwFile(Guid),
+    MediaFwVol(Guid),
 
     End {
         subtype: u8,
@@ -343,7 +349,7 @@ impl fmt::Display for DevPathNode {
                 write!(f, "HD({})", part.nr)
             }
 
-            DevPathNode::MediaVendor { guid } => {
+            DevPathNode::MediaVendor(guid) => {
                 write!(f, "Vendor({})", guid)
             }
 
@@ -351,11 +357,11 @@ impl fmt::Display for DevPathNode {
                 write!(f, "File(\"{}\")", path)
             }
 
-            DevPathNode::MediaFwFile { filename } => {
+            DevPathNode::MediaFwFile(filename) => {
                 write!(f, "FwFile({})", filename)
             }
 
-            DevPathNode::MediaFwVol { volume } => {
+            DevPathNode::MediaFwVol(volume) => {
                 write!(f, "FwVol({})", volume)
             }
 
