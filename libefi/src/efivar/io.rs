@@ -192,7 +192,9 @@ impl<T: io::Read> ReadEfiExt for T {
 
             (devpath::TYPE_MSG, devpath::TYPE_MSG_VENDOR, 16) => {
                 let guid = self.read_efi_guid()?;
-                Ok(devpath::DevPathNode::MsgVendor { guid })
+                Ok(devpath::DevPathNode::MsgVendor(devpath::DevPathMsgVendor {
+                    guid,
+                }))
             }
 
             (devpath::TYPE_MSG, devpath::TYPE_MSG_MAC, 33) => {
@@ -447,11 +449,10 @@ impl<T: io::Write> WriteEfiExt for T {
                 Ok(())
             }
 
-            devpath::DevPathNode::MsgVendor { guid } => {
-                self.write_u8(devpath::TYPE_MSG)?;
-                self.write_u8(devpath::TYPE_MSG_VENDOR)?;
-                self.write_u16::<LE>(4 + 16)?;
-                self.write_efi_guid(guid)?;
+            devpath::DevPathNode::MsgVendor(v) => {
+                let hdr = devpath::DevPathHeader::new_msg_vendor();
+                hdr.write_to_io(&mut *self)?;
+                self.write_efi_guid(&v.guid)?;
                 Ok(())
             }
 

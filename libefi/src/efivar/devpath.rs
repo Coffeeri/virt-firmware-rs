@@ -83,6 +83,10 @@ impl DevPathHeader {
         DevPathHeader::new(TYPE_MSG, TYPE_MSG_USB, size_of::<DevPathMsgUsb>())
     }
 
+    pub fn new_msg_vendor() -> Self {
+        DevPathHeader::new(TYPE_MSG, TYPE_MSG_VENDOR, size_of::<DevPathMsgVendor>())
+    }
+
     pub fn new_msg_mac() -> Self {
         DevPathHeader::new(TYPE_MSG, TYPE_MSG_MAC, size_of::<DevPathMsgMac>())
     }
@@ -125,6 +129,11 @@ pub struct DevPathMsgUsb {
     pub interface: u8,
 }
 
+#[derive(Debug, PartialEq)]
+pub struct DevPathMsgVendor {
+    pub guid: Guid,
+}
+
 #[repr(C)]
 #[derive(Debug, PartialEq, FromBytes, IntoBytes, Immutable)]
 pub struct DevPathMsgMac {
@@ -149,9 +158,7 @@ pub enum DevPathNode {
 
     MsgScsi(DevPathMsgScsi),
     MsgUsb(DevPathMsgUsb),
-    MsgVendor {
-        guid: Guid,
-    },
+    MsgVendor(DevPathMsgVendor),
     MsgMac(DevPathMsgMac),
     MsgIPv4 {
         local_addr: Ipv4Addr,
@@ -254,8 +261,8 @@ impl fmt::Display for DevPathNode {
                 write!(f, "Usb(port={},if={})", usb.port, usb.interface)
             }
 
-            DevPathNode::MsgVendor { guid } => {
-                write!(f, "Vendor({})", guid)
+            DevPathNode::MsgVendor(v) => {
+                write!(f, "Vendor({})", v.guid)
             }
 
             DevPathNode::MsgMac(_) => {
@@ -397,4 +404,19 @@ impl fmt::Display for DevPath {
         let s: Vec<String> = self.nodes.iter().map(|a| format!("{}", a)).collect();
         write!(f, "{}", s.join("/"))
     }
+}
+
+#[test]
+fn test_struct_sizes() {
+    use core::mem::size_of;
+
+    assert_eq!(size_of::<DevPathHwPci>(), 2);
+
+    assert_eq!(size_of::<DevPathAcpiDp>(), 8);
+
+    assert_eq!(size_of::<DevPathMsgScsi>(), 4);
+    assert_eq!(size_of::<DevPathMsgUsb>(), 2);
+    assert_eq!(size_of::<DevPathMsgVendor>(), 16);
+    assert_eq!(size_of::<DevPathMsgMac>(), 33);
+    assert_eq!(size_of::<DevPathMsgSata>(), 6);
 }
