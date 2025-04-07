@@ -1,3 +1,6 @@
+//!
+//! [WIP] EfiSmmVariableProtocol reimplementation
+//!
 use core::fmt::Display;
 use uguid::Guid;
 use zerocopy::FromBytes;
@@ -69,7 +72,7 @@ impl MmNextVariable {
     pub fn new(data: &[u8]) -> Result<(Self, &[u8]), Error<&'static str>> {
         Self::read_from_prefix(data).or(Err(Error::new(
             Status::BAD_BUFFER_SIZE,
-            "read MmNextvariable",
+            "read MmNextVariable",
         )))
     }
 }
@@ -91,17 +94,31 @@ pub struct MmGetPayloadSize {
     pub payload_size: u64,
 }
 
+// parsed request
 #[derive(Debug)]
 pub enum MmVariableRequest<'a> {
-    GetVariable { guid: Guid, name: &'a CStr16 },
-    GetNextVariableName { guid: Guid, name: &'a CStr16 },
-    // SetVariable = 3,
+    GetVariable {
+        guid: Guid,
+        name: &'a CStr16,
+    },
+    GetNextVariableName {
+        guid: Guid,
+        name: &'a CStr16,
+    },
+    SetVariable {
+        guid: Guid,
+        name: &'a CStr16,
+        attr: EfiVarAttr,
+        data: &'a [u8],
+    },
     // QueryVariableInfo = 4,
     ReadyToBoot,
     ExitBootService,
     // LockVariable = 8,
     // GetPayloadSize = 11,
-    Unknown { function: u64 },
+    Unknown {
+        function: u64,
+    },
 }
 
 impl<'a> MmVariableRequest<'a> {
@@ -122,6 +139,20 @@ impl<'a> MmVariableRequest<'a> {
                 let guid = Guid::from_bytes(next.guid);
                 MmVariableRequest::GetNextVariableName { guid, name }
             }
+            SET_VARIABLE => {
+                let (access, namedata) = MmVariableAccess::new(body)?;
+                let ns = access.name_size as usize;
+                let ds = access.data_size as usize;
+                let name = util::cstr16_from_bytes_with_nul(&namedata[0..ns])?;
+                let data = &namedata[ns..ns + ds];
+                let guid = Guid::from_bytes(access.guid);
+                MmVariableRequest::SetVariable {
+                    guid,
+                    name,
+                    attr: access.attributes,
+                    data,
+                }
+            }
             READY_TO_BOOT => MmVariableRequest::ReadyToBoot,
             EXIT_BOOT_SERVICE => MmVariableRequest::ExitBootService,
             _ => MmVariableRequest::Unknown {
@@ -140,6 +171,18 @@ impl Display for MmVariableRequest<'_> {
             }
             MmVariableRequest::GetNextVariableName { guid: _, name } => {
                 write!(f, "request/var: get-next-variable-name {name}",)
+            }
+            MmVariableRequest::SetVariable {
+                guid: _,
+                name,
+                attr,
+                data,
+            } => {
+                write!(
+                    f,
+                    "request/var: set-variable {name}  {attr}  {} data bytes",
+                    data.len()
+                )
             }
             MmVariableRequest::ReadyToBoot => {
                 write!(f, "request/var: ready-to-boot")

@@ -51,7 +51,7 @@ fn print_request(data: &[u8]) {
             if let Err(e) = var_res.as_ref() {
                 error!("{e}");
             }
-            println!("request/var: {}", var_res.unwrap());
+            println!("{}", var_res.unwrap());
         }
         _ => {
             println!("request/core: {}", core);
