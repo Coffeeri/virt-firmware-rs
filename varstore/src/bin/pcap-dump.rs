@@ -3,10 +3,9 @@ use std::process::ExitCode;
 
 use log::{error, info};
 
-use uefi::Status;
-
 use virtfw_libefi::guids;
 use virtfw_varstore::mm::core::MmCore;
+use virtfw_varstore::mm::util;
 use virtfw_varstore::mm::variable::{MmVariableHeader, MmVariableRequest};
 use virtfw_varstore::pcap::parse::{VarstorePcapItem, VarstorePcapParser};
 
@@ -69,7 +68,7 @@ fn print_reply(data: &[u8]) {
             if let Err(e) = hdr_res.as_ref() {
                 error!("{e}");
             };
-            let status: Status = unsafe { core::mem::transmute(hdr_res.unwrap().0.status) };
+            let status = util::u64_to_status(hdr_res.unwrap().0.status);
             println!("reply/var: {}", status);
         }
         _ => {
