@@ -3,9 +3,11 @@ use std::process::ExitCode;
 
 use log::{error, info};
 
+use uefi::Status;
+
 use virtfw_libefi::guids;
 use virtfw_varstore::mm::core::MmCore;
-use virtfw_varstore::mm::variable::MmVariableRequest;
+use virtfw_varstore::mm::variable::{MmVariableHeader, MmVariableRequest};
 use virtfw_varstore::pcap::parse::{VarstorePcapItem, VarstorePcapParser};
 
 fn parse_args() -> Option<getopts::Matches> {
@@ -59,6 +61,23 @@ fn print_request(data: &[u8]) {
     }
 }
 
+fn print_reply(data: &[u8]) {
+    let core = MmCore::new(data).unwrap();
+    match core.guid {
+        guids::EfiSmmVariableProtocol => {
+            let hdr_res = MmVariableHeader::new(core.data);
+            if let Err(e) = hdr_res.as_ref() {
+                error!("{e}");
+            };
+            let status: Status = unsafe { core::mem::transmute(hdr_res.unwrap().0.status) };
+            println!("reply/var: {}", status);
+        }
+        _ => {
+            println!("reply/core: {}", core);
+        }
+    }
+}
+
 fn print_pcap(filename: &str) -> std::io::Result<()> {
     let file = File::open(filename)?;
     let parser = VarstorePcapParser::new(&file)?;
@@ -67,8 +86,8 @@ fn print_pcap(filename: &str) -> std::io::Result<()> {
             VarstorePcapItem::Request(d) => {
                 print_request(&d);
             }
-            VarstorePcapItem::Reply(_) => {
-                // ignore for now
+            VarstorePcapItem::Reply(d) => {
+                print_reply(&d);
             }
             _ => {
                 println!("{}", p);
