@@ -1,7 +1,7 @@
 [package]
 name = "virtfw-efi-apps"
-version = "0.0.1"
-publish = false
+version = "0.1.0"
+publish = true
 description = "efi applications, mostly for testing"
 readme = "README.md"
 
