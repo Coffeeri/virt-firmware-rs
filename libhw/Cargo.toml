@@ -2,6 +2,8 @@
 name = "virtfw-libhw"
 version = "0.0.1"
 publish = false
+description = "library for direct hardware access"
+readme = "README.md"
 
 license.workspace = true
 repository.workspace = true
