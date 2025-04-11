@@ -11,7 +11,7 @@ authors.workspace = true
 edition.workspace = true
 
 [dependencies]
-virtfw-libhw = { path = "../libhw" }
+virtfw-libhw = { path = "../libhw", version = "0.1" }
 
 [build-dependencies]
 cc = "1"
