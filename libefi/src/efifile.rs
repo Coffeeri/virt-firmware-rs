@@ -66,7 +66,7 @@ impl EfiFile {
     }
 
     pub fn basename(&self) -> Option<String> {
-        let e = self.rfile.iter().last()?;
+        let e = self.rfile.iter().next_back()?;
         let s = e.to_str()?;
         Some(s.to_string())
     }

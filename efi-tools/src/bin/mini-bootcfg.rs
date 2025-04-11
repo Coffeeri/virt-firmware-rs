@@ -71,7 +71,7 @@ fn create_uri_boot_entry(
     let optdata = cmdline.map(|c| c.to_string());
     let t = match title {
         Some(t) => t,
-        None => uri.split('/').last().unwrap().to_string(),
+        None => uri.split('/').next_back().unwrap().to_string(),
     };
     Some(boot::BootEntry::new_boot(&t, devpath, optdata))
 }

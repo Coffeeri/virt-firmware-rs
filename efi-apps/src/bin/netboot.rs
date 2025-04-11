@@ -214,7 +214,7 @@ fn main() -> Status {
     println!("Creating BootEntry ...");
     println!("  booturi : {}", uri);
 
-    let title = uri.split('/').last().unwrap();
+    let title = uri.split('/').next_back().unwrap();
     println!("  title   : {}", title);
 
     let mut vec = Vec::new();
