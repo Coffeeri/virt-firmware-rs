@@ -88,5 +88,5 @@ package-%:
 	cargo package --package virtfw-$* $(TARGET)
 
 # include makefiles with run-* convinience targets
-include Make.qemu.bare
-include Make.qemu.uefi
+include scripts/Make.qemu.bare
+include scripts/Make.qemu.uefi
