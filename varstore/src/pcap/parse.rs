@@ -1,7 +1,7 @@
 #![cfg(feature = "std")]
 
 extern crate std;
-use std::fs::File;
+use std::boxed::Box;
 use std::io::{Error, ErrorKind, Read};
 use std::vec;
 use std::vec::Vec;
@@ -32,31 +32,31 @@ impl std::fmt::Display for VarstorePcapItem {
     }
 }
 
-pub struct VarstorePcapParser<'f> {
-    file: &'f File,
+pub struct VarstorePcapParser {
+    reader: Box<dyn Read>,
 }
 
-impl VarstorePcapParser<'_> {
-    pub fn new(mut file: &File) -> Result<VarstorePcapParser, std::io::Error> {
-        let fhdr = PcapFileHeader::read_from_io(&mut file)?;
+impl VarstorePcapParser {
+    pub fn new(mut reader: Box<dyn Read>) -> Result<Self, std::io::Error> {
+        let fhdr = PcapFileHeader::read_from_io(&mut *reader)?;
         if fhdr.magic != PCAP_MAGIC {
             return Err(Error::new(ErrorKind::Other, "magic mismatch"));
         }
         if fhdr.network != 147 {
             return Err(Error::new(ErrorKind::Other, "linktype mismatch"));
         }
-        let parser = VarstorePcapParser { file };
+        let parser = VarstorePcapParser { reader };
         Ok(parser)
     }
 }
 
-impl Iterator for VarstorePcapParser<'_> {
+impl Iterator for VarstorePcapParser {
     type Item = VarstorePcapItem;
     fn next(&mut self) -> Option<VarstorePcapItem> {
-        let phdr = PcapPacketHeader::read_from_io(&mut self.file).ok()?;
-        let ptype = u32::read_from_io(&mut self.file).ok()?;
+        let phdr = PcapPacketHeader::read_from_io(&mut *self.reader).ok()?;
+        let ptype = u32::read_from_io(&mut *self.reader).ok()?;
         let mut blob: Vec<u8> = vec![0; phdr.incl_len as usize - 4];
-        self.file.read_exact(&mut blob).ok()?;
+        self.reader.read_exact(&mut blob).ok()?;
         let item = match ptype {
             1 => VarstorePcapItem::Reset,
             2 => VarstorePcapItem::Request(blob),
