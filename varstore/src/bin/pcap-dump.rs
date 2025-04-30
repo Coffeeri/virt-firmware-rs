@@ -9,41 +9,6 @@ use virtfw_varstore::mm::util;
 use virtfw_varstore::mm::variable::{MmVariableHeader, MmVariableRequest};
 use virtfw_varstore::pcap::parse::{VarstorePcapItem, VarstorePcapParser};
 
-fn parse_args() -> Option<getopts::Matches> {
-    let args: Vec<String> = std::env::args().collect();
-    let mut opts = getopts::Options::new();
-    opts.optflag("h", "help", "print this help text");
-    opts.optflag("d", "debug", "turn on debug logging");
-    opts.optopt("", "pcap", "pcap file to parse", "PCAP");
-
-    let cfg_res = opts.parse(&args[1..]);
-    let Ok(cfg) = cfg_res else {
-        println!("{:?}", cfg_res.err());
-        return None;
-    };
-    if cfg.opt_present("help") {
-        print!("{}", opts.usage("dump varstore pcap files"));
-        return None;
-    };
-
-    Some(cfg)
-}
-
-fn loginit(cfg: &getopts::Matches) {
-    let loglevel = if cfg.opt_present("debug") {
-        stderrlog::LogLevelNum::Debug
-    } else {
-        stderrlog::LogLevelNum::Info
-    };
-    stderrlog::new()
-        .module(module_path!())
-        .module("virtfw_libefi")
-        .module("virtfw_varstore")
-        .verbosity(loglevel)
-        .init()
-        .unwrap();
-}
-
 fn print_request(data: &[u8]) {
     let core = MmCore::new(data).unwrap();
     match core.guid {
@@ -96,6 +61,42 @@ fn print_pcap(filename: &str) -> std::io::Result<()> {
     Ok(())
 }
 
+fn parse_args() -> Option<getopts::Matches> {
+    let args: Vec<String> = std::env::args().collect();
+    let mut opts = getopts::Options::new();
+    opts.optflag("h", "help", "print this help text");
+    opts.optflag("d", "debug", "turn on debug logging");
+    opts.optflag("p", "print", "print pcap file");
+    opts.optopt("", "pcap", "pcap file", "PCAP");
+
+    let cfg_res = opts.parse(&args[1..]);
+    let Ok(cfg) = cfg_res else {
+        println!("{:?}", cfg_res.err());
+        return None;
+    };
+    if cfg.opt_present("help") {
+        print!("{}", opts.usage("dump varstore pcap files"));
+        return None;
+    };
+
+    Some(cfg)
+}
+
+fn loginit(cfg: &getopts::Matches) {
+    let loglevel = if cfg.opt_present("debug") {
+        stderrlog::LogLevelNum::Debug
+    } else {
+        stderrlog::LogLevelNum::Info
+    };
+    stderrlog::new()
+        .module(module_path!())
+        .module("virtfw_libefi")
+        .module("virtfw_varstore")
+        .verbosity(loglevel)
+        .init()
+        .unwrap();
+}
+
 fn main() -> ExitCode {
     let Some(cfg) = parse_args() else {
         return ExitCode::from(1);
@@ -103,11 +104,13 @@ fn main() -> ExitCode {
     loginit(&cfg);
 
     if let Some(pcap) = cfg.opt_str("pcap") {
-        let res = print_pcap(&pcap);
-        if let Err(e) = res {
-            error!("{e}");
-        } else {
-            info!("ok");
+        if cfg.opt_present("print") {
+            let res = print_pcap(&pcap);
+            if let Err(e) = res {
+                error!("{e}");
+            } else {
+                info!("ok");
+            }
         }
     }
 
