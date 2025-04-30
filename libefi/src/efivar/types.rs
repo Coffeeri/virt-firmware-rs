@@ -9,7 +9,7 @@ use bitfield_struct::bitfield;
 use uguid::Guid;
 
 #[bitfield(u32)]
-#[derive(FromBytes)]
+#[derive(FromBytes, Eq, PartialEq)]
 pub struct EfiVarAttr {
     pub non_volatile: bool,
     pub bootservice_access: bool,
