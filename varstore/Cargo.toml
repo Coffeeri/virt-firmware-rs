@@ -10,7 +10,7 @@ edition.workspace = true
 
 [features]
 default = [ "std" ]
-std = [ "zerocopy/std" ]
+std = [ "zerocopy/std", "dep:flate2" ]
 
 [dependencies]
 getopts = "0.2"
@@ -24,3 +24,4 @@ zerocopy-derive = "0.8"
 serde = { version = "1", default-features = false, features = [ "alloc", "derive" ] }
 serde_json = { version = "1", default-features = false, features = [ "alloc" ] }
 hex = { version = "0.4", default-features = false, features = [ "alloc" ] }
+flate2 = { version = "1", optional = true }
