@@ -1,6 +1,7 @@
 ///
 /// test utility: dump pcap files
 ///
+use flate2::read::GzDecoder;
 use std::fs::File;
 use std::process::ExitCode;
 
@@ -52,9 +53,21 @@ fn print_reply(data: &[u8]) {
     }
 }
 
-fn print_pcap(filename: &str) -> std::io::Result<()> {
+fn open_pcap(filename: &str) -> std::io::Result<VarstorePcapParser> {
     let file = File::open(filename)?;
-    let parser = VarstorePcapParser::new(&file)?;
+
+    let parser = if filename.ends_with(".gz") {
+        let ungz = GzDecoder::new(file);
+        VarstorePcapParser::new(Box::new(ungz))?
+    } else {
+        VarstorePcapParser::new(Box::new(file))?
+    };
+
+    Ok(parser)
+}
+
+fn print_pcap(filename: &str) -> std::io::Result<()> {
+    let parser = open_pcap(filename)?;
 
     for p in parser {
         match p {
@@ -74,9 +87,7 @@ fn print_pcap(filename: &str) -> std::io::Result<()> {
 
 fn process_pcap(filename: &str) -> std::io::Result<()> {
     let mut store = EfiVarStore::new();
-
-    let file = File::open(filename)?;
-    let parser = VarstorePcapParser::new(&file)?;
+    let parser = open_pcap(filename)?;
 
     let mut rsp = Vec::new();
     for p in parser {
