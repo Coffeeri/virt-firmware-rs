@@ -16,7 +16,7 @@ std = [ "zerocopy/std" ]
 getopts = "0.2"
 log = "0.4"
 uefi = "0.34"
-uguid = "2"
+uguid = { version = "2", features = [ "serde" ] }
 stderrlog = "0.6"
 virtfw-libefi = { path = "../libefi", version = "0.2" }
 zerocopy = "0.8"

@@ -1,12 +1,13 @@
 extern crate alloc;
 use alloc::string::String;
 use alloc::vec::Vec;
+use uguid::Guid;
 
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct JsonEfiVariable {
-    pub guid: String,
+    pub guid: Guid,
     pub name: String,
     pub attr: u32,
     pub data: String,
