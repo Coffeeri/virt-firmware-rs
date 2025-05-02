@@ -6,6 +6,9 @@ use core::fmt;
 use serde::{Deserialize, Serialize};
 use uguid::Guid;
 
+use virtfw_libefi::efivar::types::EfiVarAttr;
+use virtfw_libefi::guids;
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct JsonEfiVariable {
     pub guid: Guid,
@@ -18,7 +21,15 @@ pub struct JsonEfiVariable {
 
 impl fmt::Display for JsonEfiVariable {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} {} {} ", self.guid, self.name, self.attr)
+        let attr = EfiVarAttr::from(self.attr);
+        write!(
+            f,
+            "{} {}, {}, {} byte(s)",
+            guids::pretty_name(&self.guid),
+            self.name,
+            attr,
+            self.data.len() / 2
+        )
     }
 }
 

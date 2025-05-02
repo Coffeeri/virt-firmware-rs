@@ -3,10 +3,10 @@
 extern crate alloc;
 use alloc::string::String;
 use alloc::vec::Vec;
-use zerocopy_derive::FromBytes;
 
 use bitfield_struct::bitfield;
 use uguid::Guid;
+use zerocopy_derive::FromBytes;
 
 #[bitfield(u32)]
 #[derive(FromBytes, Eq, PartialEq)]
