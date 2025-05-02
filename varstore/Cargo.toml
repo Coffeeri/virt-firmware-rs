@@ -21,3 +21,5 @@ stderrlog = "0.6"
 virtfw-libefi = { path = "../libefi", version = "0.2" }
 zerocopy = "0.8"
 zerocopy-derive = "0.8"
+serde = { version = "1", default-features = false, features = [ "alloc", "derive" ] }
+serde_json = { version = "1", default-features = false, features = [ "alloc" ]  }
