@@ -1,5 +1,6 @@
 use log::{error, info};
 
+use virtfw_libefi::efivar::types::EfiVar;
 use virtfw_varstore::json::JsonEfiVarStore;
 
 fn loginit() {
@@ -29,6 +30,7 @@ fn main() {
         };
         for jvar in jstore.variables {
             println!("{}", jvar);
+            EfiVar::try_from(jvar).expect("convert failed");
         }
     }
 }
