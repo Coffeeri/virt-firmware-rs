@@ -24,11 +24,11 @@ impl fmt::Display for JsonEfiVariable {
         let attr = EfiVarAttr::from(self.attr);
         write!(
             f,
-            "{} {}, {}, {} byte(s)",
+            "{:36} {:24} {:3} byte(s)  {}",
             guids::pretty_name(&self.guid),
             self.name,
+            self.data.len() / 2,
             attr,
-            self.data.len() / 2
         )
     }
 }
