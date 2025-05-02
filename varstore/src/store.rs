@@ -1,3 +1,7 @@
+//!
+//! efi variable store implementation [WIP]
+//!
+
 #![allow(clippy::collapsible_else_if)]
 
 extern crate alloc;

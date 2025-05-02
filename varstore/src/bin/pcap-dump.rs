@@ -1,3 +1,6 @@
+///
+/// test utility: dump pcap files
+///
 use std::fs::File;
 use std::process::ExitCode;
 
