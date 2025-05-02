@@ -84,7 +84,7 @@ impl EfiVarStore {
 
     pub fn reset(&mut self) {
         self.exit_boot_service = false;
-        // TODO: drop volatile variables
+        self.variables.retain(|v| v.attr.non_volatile());
     }
 
     pub fn exit_boot_service(&mut self) {
