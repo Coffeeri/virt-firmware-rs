@@ -19,6 +19,8 @@ use uefi::prelude::*;
 use uefi::println;
 use uefi::proto::device_path::build;
 use uefi::proto::device_path::DevicePath;
+use uefi::proto::network::http::{HttpBinding, HttpHelper};
+use uefi::proto::network::ip4config2::Ip4Config2;
 use uefi::runtime::VariableAttributes;
 use uefi::runtime::VariableVendor;
 use uefi::CString16;
@@ -26,8 +28,6 @@ use uefi_raw::protocol::network::http::HttpStatusCode;
 
 use virtfw_efi_apps::distro::coreos;
 use virtfw_efi_apps::misc;
-use virtfw_efi_apps::net::http::{HttpBinding, HttpHelper};
-use virtfw_efi_apps::net::ip4config2::Ip4Config2;
 
 fn init_nic_ip4config2() -> Option<Handle> {
     let Ok(handles) = boot::locate_handle_buffer(boot::SearchType::from_proto::<HttpBinding>())
