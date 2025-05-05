@@ -39,8 +39,8 @@ pub struct JsonEfiVariable {
     pub name: String,
     pub attr: u32,
     pub data: JsonHexString,
-    pub time: Option<String>,
-    pub digest: Option<String>,
+    pub time: Option<JsonHexString>,
+    pub digest: Option<JsonHexString>,
 }
 
 impl TryFrom<JsonEfiVariable> for EfiVar {
