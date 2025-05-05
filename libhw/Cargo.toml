@@ -14,5 +14,5 @@ edition.workspace = true
 alloc = [ "dep:log" ]
 
 [dependencies]
-bitfield-struct = "0.10"
+bitfield-struct = "0.11"
 log = { version = "0.4", optional = true }
