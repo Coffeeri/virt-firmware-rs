@@ -142,14 +142,14 @@ impl HttpHelper {
 
     pub fn configure(&mut self) -> uefi::Result<()> {
         let ip4 = HttpV4AccessPoint {
-            use_default_addr: true,
+            use_default_addr: true.into(),
             ..Default::default()
         };
 
         let config = HttpConfigData {
             http_version: HttpVersion::HTTP_VERSION_10,
             time_out_millisec: 10_000,
-            local_addr_is_ipv6: false,
+            local_addr_is_ipv6: false.into(),
             access_point: HttpAccessPoint { ipv4_node: &ip4 },
         };
 

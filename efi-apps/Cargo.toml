@@ -11,8 +11,8 @@ authors.workspace = true
 edition.workspace = true
 
 [dependencies]
-uefi = { version = "0.34", features = ["panic_handler", "logger", "log-debugcon", "alloc", "global_allocator" ] }
-uefi-raw = "0.10"
+uefi = { version = "0.35", features = ["panic_handler", "logger", "log-debugcon", "alloc", "global_allocator" ] }
+uefi-raw = "0.11"
 log = "0.4"
 virtfw-libhw = { path = "../libhw", version = "0.1", features = ["alloc"] }
 serde = { version = "1", default-features = false, features = [ "alloc", "derive" ] }
