@@ -15,6 +15,7 @@ pub const VMMBootOrder: Guid = guid!("668f4529-63d0-4bb5-b65d-6fbb9d36a44a");
 
 // mm protocols
 pub const EfiSmmVariableProtocol: Guid = guid!("ed32d533-99e6-4209-9cc0-2d72cdd998a7");
+pub const VarCheckPolicyLibMmiHandler: Guid = guid!("da1b0d11-d1a7-46c4-9dc9-f3714875c6eb");
 
 pub fn pretty_name(guid: &Guid) -> String {
     match *guid {
@@ -23,6 +24,7 @@ pub fn pretty_name(guid: &Guid) -> String {
         VMMBootOrder => "VMMBootOrder".to_string(),
 
         EfiSmmVariableProtocol => "EfiSmmVariableProtocol".to_string(),
+        VarCheckPolicyLibMmiHandler => "VarCheckPolicyLibMmiHandler".to_string(),
 
         _ => format!("{guid}"),
     }
