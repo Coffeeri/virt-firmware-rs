@@ -117,7 +117,10 @@ pub enum MmVariableParsedRequest<'a> {
     // QueryVariableInfo = 4,
     ReadyToBoot,
     ExitBootService,
-    // LockVariable = 8,
+    LockVariable {
+        guid: Guid,
+        name: &'a CStr16,
+    },
     GetPayloadSize,
     Unknown {
         function: u64,
@@ -134,12 +137,16 @@ impl<'a> MmVariableParsedRequest<'a> {
                 let guid = Guid::from_bytes(access.guid);
                 MmVariableParsedRequest::GetVariable { guid, name }
             }
-            GET_NEXT_VARIABLE_NAME => {
+            GET_NEXT_VARIABLE_NAME | LOCK_VARIABLE => {
                 let (next, namebytes) = MmNextVariable::new(body)?;
                 let ns = next.name_size as usize;
                 let name = util::cstr16_from_bytes_until_nul(&namebytes[0..ns])?;
                 let guid = Guid::from_bytes(next.guid);
-                MmVariableParsedRequest::GetNextVariableName { guid, name }
+                if function == GET_NEXT_VARIABLE_NAME {
+                    MmVariableParsedRequest::GetNextVariableName { guid, name }
+                } else {
+                    MmVariableParsedRequest::LockVariable { guid, name }
+                }
             }
             SET_VARIABLE => {
                 let (access, namedata) = MmVariableAccess::new(body)?;
@@ -190,6 +197,9 @@ impl Display for MmVariableParsedRequest<'_> {
             }
             MmVariableParsedRequest::ExitBootService => {
                 write!(f, "request/var: exit-boot-service")
+            }
+            MmVariableParsedRequest::LockVariable { guid: _, name } => {
+                write!(f, "request/var: lock-variable {name}")
             }
             MmVariableParsedRequest::GetPayloadSize => {
                 write!(f, "request/var: get-payload-size")
