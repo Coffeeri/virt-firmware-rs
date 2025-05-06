@@ -7,6 +7,7 @@ use zerocopy_derive::FromBytes;
 use uefi::{Error, Status};
 use virtfw_libefi::guids;
 
+use crate::mm::policy::policy_request;
 use crate::mm::variable::variable_request;
 use crate::store::EfiVarStore;
 
@@ -57,6 +58,17 @@ pub fn core_request(store: &mut EfiVarStore, req: &mut [u8]) {
             // change the buffer wile we are processing it.
             #[allow(clippy::unnecessary_to_owned)]
             let rsp = variable_request(store, &creq.data.to_vec());
+            assert!(rsp.len() <= creq.data.len());
+            let start = core::mem::size_of::<MmCoreHeader>();
+            let end = start + rsp.len();
+            req[start..end].copy_from_slice(&rsp);
+        }
+        guids::VarCheckPolicyLibMmiHandler => {
+            // We'll go operate on a owned copy of the data for
+            // security reasons, to avoid the guest being able to
+            // change the buffer wile we are processing it.
+            #[allow(clippy::unnecessary_to_owned)]
+            let rsp = policy_request(store, &creq.data.to_vec());
             assert!(rsp.len() <= creq.data.len());
             let start = core::mem::size_of::<MmCoreHeader>();
             let end = start + rsp.len();
