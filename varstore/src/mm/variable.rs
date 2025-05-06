@@ -319,6 +319,11 @@ impl<'a> MmVariableRequest<'a> {
         self.response(Status::SUCCESS, None)
     }
 
+    fn lock_variable(&self, _store: &EfiVarStore, _guid: &Guid, _name: &CStr16) -> Vec<u8> {
+        debug!("TODO: implement lock-variable");
+        self.response(Status::SUCCESS, None)
+    }
+
     fn get_payload_size(&self) -> Vec<u8> {
         let reply = MmGetPayloadSize {
             payload_size: 64 * 1024,
@@ -342,6 +347,9 @@ impl<'a> MmVariableRequest<'a> {
                 attr,
                 data,
             } => self.set_variable(store, guid, name, attr, data),
+            MmVariableParsedRequest::LockVariable { guid, name } => {
+                self.lock_variable(store, guid, name)
+            }
             MmVariableParsedRequest::GetPayloadSize => self.get_payload_size(),
             _ => {
                 error!("variable/unknown: {}", parsed);
