@@ -20,13 +20,13 @@ impl std::fmt::Display for VarstorePcapItem {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             VarstorePcapItem::Reset => {
-                write!(f, "reset/pcap")
+                write!(f, "pcap/reset")
             }
             VarstorePcapItem::Request(d) => {
-                write!(f, "request/pcap: {} bytes", d.len())
+                write!(f, "pcap/req: {} bytes", d.len())
             }
             VarstorePcapItem::Reply(d) => {
-                write!(f, "reply/pcap: {} bytes", d.len())
+                write!(f, "pcap/res: {} bytes", d.len())
             }
         }
     }
