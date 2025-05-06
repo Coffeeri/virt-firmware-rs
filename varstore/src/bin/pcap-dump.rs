@@ -97,7 +97,18 @@ fn process_pcap(filename: &str) -> std::io::Result<()> {
                 core_request(&mut store, &mut rsp);
             }
             VarstorePcapItem::Reply(d) => {
-                assert_eq!(rsp, d);
+                if rsp != d {
+                    error!("reply mismatch");
+                    for i in 0..rsp.len() {
+                        if rsp[i] != d[i] {
+                            error!(
+                                "  offset 0x{:x}: actual 0x{:x}, expected 0x{:x}",
+                                i, rsp[i], d[i]
+                            );
+                        }
+                    }
+                    panic!();
+                }
             }
             VarstorePcapItem::Reset => {
                 debug!("reset");
