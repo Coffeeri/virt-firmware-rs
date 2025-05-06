@@ -42,7 +42,7 @@ impl Display for MmCore<'_> {
     }
 }
 
-pub fn core_request(store: &EfiVarStore, req: &mut [u8]) {
+pub fn core_request(store: &mut EfiVarStore, req: &mut [u8]) {
     let res = MmCore::new(req);
     if let Err(e) = res {
         error!("parse core: {}", e);

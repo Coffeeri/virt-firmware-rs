@@ -83,7 +83,7 @@ fn process_pcap(filename: &str) -> std::io::Result<()> {
         match p {
             VarstorePcapItem::Request(d) => {
                 rsp = d.clone();
-                core_request(&store, &mut rsp);
+                core_request(&mut store, &mut rsp);
             }
             VarstorePcapItem::Reply(d) => {
                 assert_eq!(rsp, d);

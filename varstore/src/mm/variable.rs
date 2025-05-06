@@ -10,7 +10,7 @@ use zerocopy::{FromBytes, IntoBytes};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes};
 
 use uefi::{CStr16, Error, Status};
-use virtfw_libefi::efivar::types::EfiVarAttr;
+use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr};
 
 use crate::mm::util;
 use crate::store::EfiVarStore;
@@ -269,6 +269,7 @@ impl<'a> MmVariableRequest<'a> {
         let n = String::from(name);
         let res = store.get(&n, guid);
         if let Err(e) = res {
+            debug!("variable/get/error: {e}");
             return self.response(e.status(), None);
         }
 
@@ -286,6 +287,28 @@ impl<'a> MmVariableRequest<'a> {
         self.response(Status::SUCCESS, Some(&reply))
     }
 
+    fn set_variable(
+        &self,
+        store: &mut EfiVarStore,
+        guid: &Guid,
+        name: &CStr16,
+        attr: &EfiVarAttr,
+        data: &[u8],
+    ) -> Vec<u8> {
+        let var = EfiVar {
+            guid: *guid,
+            name: String::from(name),
+            attr: *attr,
+            data: data.to_vec(),
+        };
+        let res = store.set(var);
+        if let Err(e) = res {
+            debug!("variable/set/error: {e}");
+            return self.response(e.status(), None);
+        }
+        self.response(Status::SUCCESS, None)
+    }
+
     fn get_payload_size(&self) -> Vec<u8> {
         let reply = MmGetPayloadSize {
             payload_size: 64 * 1024,
@@ -293,7 +316,7 @@ impl<'a> MmVariableRequest<'a> {
         self.response(Status::SUCCESS, Some(reply.as_bytes()))
     }
 
-    fn process(&self, store: &EfiVarStore) -> Vec<u8> {
+    fn process(&self, store: &mut EfiVarStore) -> Vec<u8> {
         if self.parsed.is_none() {
             error!("variable: req parse error");
             panic!();
@@ -303,6 +326,12 @@ impl<'a> MmVariableRequest<'a> {
             MmVariableParsedRequest::GetVariable { guid, name } => {
                 self.get_variable(store, guid, name)
             }
+            MmVariableParsedRequest::SetVariable {
+                guid,
+                name,
+                attr,
+                data,
+            } => self.set_variable(store, guid, name, attr, data),
             MmVariableParsedRequest::GetPayloadSize => self.get_payload_size(),
             _ => {
                 error!("variable/unknown: {}", parsed);
@@ -312,13 +341,13 @@ impl<'a> MmVariableRequest<'a> {
     }
 }
 
-pub fn variable_request(store: &EfiVarStore, req: &[u8]) -> Vec<u8> {
+pub fn variable_request(store: &mut EfiVarStore, req: &[u8]) -> Vec<u8> {
     let res = MmVariableRequest::new(req);
     if let Err(e) = res.as_ref() {
         error!("{e}");
         return Vec::new();
     }
-    let vreq = res.unwrap();
 
+    let vreq = res.unwrap();
     vreq.process(store)
 }

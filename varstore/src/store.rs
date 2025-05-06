@@ -75,7 +75,20 @@ impl EfiVarStore {
         Err(Error::new(Status::NOT_FOUND, "variable not found"))
     }
 
+    pub fn delete(&mut self, new: EfiVar) -> Result<(), Error<&'static str>> {
+        let old_opt = self.get_unchecked(&new.name, &new.guid);
+        if let Some(old) = old_opt {
+            self.check_service(old)?;
+            self.variables
+                .retain(|v| v.name != new.name || v.guid != new.guid);
+        }
+        Ok(())
+    }
+
     pub fn set(&mut self, new: EfiVar) -> Result<(), Error<&'static str>> {
+        if new.data.is_empty() {
+            return self.delete(new);
+        }
         let old_opt = self.get_unchecked(&new.name, &new.guid);
         if let Some(old) = old_opt {
             Self::check_old_new(old, &new)?;
