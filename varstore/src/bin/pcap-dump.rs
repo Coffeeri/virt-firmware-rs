@@ -4,13 +4,14 @@
 use std::fs::File;
 use std::process::ExitCode;
 
-use log::{error, info};
+use log::{debug, error, info};
 
 use virtfw_libefi::guids;
-use virtfw_varstore::mm::core::MmCore;
+use virtfw_varstore::mm::core::{core_request, MmCore};
 use virtfw_varstore::mm::util;
 use virtfw_varstore::mm::variable::{MmVariableHeader, MmVariableRequest};
 use virtfw_varstore::pcap::parse::{VarstorePcapItem, VarstorePcapParser};
+use virtfw_varstore::store::EfiVarStore;
 
 fn print_request(data: &[u8]) {
     let core = MmCore::new(data).unwrap();
@@ -18,12 +19,18 @@ fn print_request(data: &[u8]) {
         guids::EfiSmmVariableProtocol => {
             let var_res = MmVariableRequest::new(core.data);
             if let Err(e) = var_res.as_ref() {
-                error!("{e}");
+                error!("variable/req/parse: {e}");
+                return;
             }
-            println!("{}", var_res.unwrap());
+            let parsed = var_res.unwrap().parsed;
+            if parsed.is_none() {
+                error!("variable/req/parse: error");
+                return;
+            }
+            println!("variable/req: {}", parsed.unwrap());
         }
         _ => {
-            println!("request/core: {}", core);
+            println!("core/req: {}", core);
         }
     }
 }
@@ -37,10 +44,10 @@ fn print_reply(data: &[u8]) {
                 error!("{e}");
             };
             let status = util::u64_to_status(hdr_res.unwrap().0.status);
-            println!("reply/var: {}", status);
+            println!("variable/rsp: {}", status);
         }
         _ => {
-            println!("reply/core: {}", core);
+            println!("core/rsp: {}", core);
         }
     }
 }
@@ -48,6 +55,7 @@ fn print_reply(data: &[u8]) {
 fn print_pcap(filename: &str) -> std::io::Result<()> {
     let file = File::open(filename)?;
     let parser = VarstorePcapParser::new(&file)?;
+
     for p in parser {
         match p {
             VarstorePcapItem::Request(d) => {
@@ -64,12 +72,38 @@ fn print_pcap(filename: &str) -> std::io::Result<()> {
     Ok(())
 }
 
+fn process_pcap(filename: &str) -> std::io::Result<()> {
+    let mut store = EfiVarStore::new();
+
+    let file = File::open(filename)?;
+    let parser = VarstorePcapParser::new(&file)?;
+
+    let mut rsp = Vec::new();
+    for p in parser {
+        match p {
+            VarstorePcapItem::Request(d) => {
+                rsp = d.clone();
+                core_request(&store, &mut rsp);
+            }
+            VarstorePcapItem::Reply(d) => {
+                assert_eq!(rsp, d);
+            }
+            VarstorePcapItem::Reset => {
+                debug!("reset");
+                store.reset();
+            }
+        }
+    }
+    Ok(())
+}
+
 fn parse_args() -> Option<getopts::Matches> {
     let args: Vec<String> = std::env::args().collect();
     let mut opts = getopts::Options::new();
     opts.optflag("h", "help", "print this help text");
     opts.optflag("d", "debug", "turn on debug logging");
     opts.optflag("p", "print", "print pcap file");
+    opts.optflag("", "run", "print pcap file");
     opts.optopt("", "pcap", "pcap file", "PCAP");
 
     let cfg_res = opts.parse(&args[1..]);
@@ -109,6 +143,14 @@ fn main() -> ExitCode {
     if let Some(pcap) = cfg.opt_str("pcap") {
         if cfg.opt_present("print") {
             let res = print_pcap(&pcap);
+            if let Err(e) = res {
+                error!("{e}");
+            } else {
+                info!("ok");
+            }
+        }
+        if cfg.opt_present("run") {
+            let res = process_pcap(&pcap);
             if let Err(e) = res {
                 error!("{e}");
             } else {

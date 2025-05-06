@@ -3,7 +3,6 @@
 //!
 //! https://gitlab.com/qemu-project/qemu/-/blob/master/qapi/uefi.json
 //!
-extern crate alloc;
 use alloc::string::String;
 use alloc::vec::Vec;
 use core::convert::From;

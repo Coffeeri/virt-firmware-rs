@@ -3,13 +3,12 @@
 //!
 
 #![allow(clippy::collapsible_else_if)]
-
-extern crate alloc;
 use alloc::vec::Vec;
 use uguid::Guid;
 
 use uefi::{Error, Status};
-use virtfw_libefi::efivar::types::EfiVar;
+use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr};
+use virtfw_libefi::guids;
 
 pub struct EfiVarStore {
     exit_boot_service: bool,
@@ -89,10 +88,29 @@ impl EfiVarStore {
     pub fn reset(&mut self) {
         self.exit_boot_service = false;
         self.variables.retain(|v| v.attr.non_volatile());
+        self.auth_init();
     }
 
     pub fn exit_boot_service(&mut self) {
         self.exit_boot_service = true;
+    }
+
+    fn set_secure_boot(&mut self, enable: bool) {
+        let b = if enable { [1] } else { [0] };
+        let var = EfiVar {
+            guid: guids::EfiGlobalVariable,
+            name: "SecureBoot".into(),
+            attr: EfiVarAttr::new()
+                .with_bootservice_access(true)
+                .with_runtime_access(true),
+            data: b.to_vec(),
+        };
+        self.set_unchecked(var);
+    }
+
+    pub fn auth_init(&mut self) {
+        // TODO: implement secure boot support
+        self.set_secure_boot(false);
     }
 }
 
