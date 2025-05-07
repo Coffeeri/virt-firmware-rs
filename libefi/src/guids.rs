@@ -19,6 +19,9 @@ pub const VMMBootOrder: Guid = guid!("668f4529-63d0-4bb5-b65d-6fbb9d36a44a");
 // efi signatures
 pub const EfiCertPkcs7: Guid = guid!("4aafd29d-68df-49ee-8aa9-347d375665a7");
 pub const EfiCertSha256: Guid = guid!("c1c41626-504c-4092-aca9-41f936934328");
+pub const EfiCertSha384: Guid = guid!("ff3e5307-9fd0-48c9-85f1-8ad56c701e01");
+pub const EfiCertSha512: Guid = guid!("093e0fae-a6c4-4f50-9f1b-d41e2b89c19a");
+pub const EfiCertRsa2048: Guid = guid!("3c5766e8-269c-4e34-aa14-ed776e85b3b6");
 pub const EfiCertX509: Guid = guid!("a5c059a1-94e4-4aa7-87b5-ab155c2bf072");
 
 // efi events
@@ -41,6 +44,9 @@ pub fn pretty_name(guid: &Guid) -> String {
 
         EfiCertPkcs7 => "EfiCertPkcs7".to_string(),
         EfiCertSha256 => "EfiCertSha256".to_string(),
+        EfiCertSha384 => "EfiCertSha384".to_string(),
+        EfiCertSha512 => "EfiCertSha512".to_string(),
+        EfiCertRsa2048 => "EfiCertRsa2048".to_string(),
         EfiCertX509 => "EfiCertX509".to_string(),
 
         EfiEndOfDxeEventGroup => "EfiEndOfDxeEventGroup".to_string(),
