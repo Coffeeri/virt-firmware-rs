@@ -9,9 +9,17 @@ use alloc::string::{String, ToString};
 use uguid::{guid, Guid};
 
 // efi variable namespaces
+pub const EfiCustomModeEnable: Guid = guid!("c076ec0c-7028-4399-a072-71ee5c448b9f");
 pub const EfiGlobalVariable: Guid = guid!("8be4df61-93ca-11d2-aa0d-00e098032b8c");
+pub const EfiImageSecurityDatabase: Guid = guid!("d719b2cb-3d3a-4596-a3bc-dad00e67656f");
+pub const EfiSecureBootEnable: Guid = guid!("f0a30bc7-af08-4556-99c4-001009c93a44");
 pub const LoaderInfo: Guid = guid!("4a67b082-0a4c-41cf-b6c7-440b29bb8c4f");
 pub const VMMBootOrder: Guid = guid!("668f4529-63d0-4bb5-b65d-6fbb9d36a44a");
+
+// efi signatures
+pub const EfiCertPkcs7: Guid = guid!("4aafd29d-68df-49ee-8aa9-347d375665a7");
+pub const EfiCertSha256: Guid = guid!("c1c41626-504c-4092-aca9-41f936934328");
+pub const EfiCertX509: Guid = guid!("a5c059a1-94e4-4aa7-87b5-ab155c2bf072");
 
 // mm protocols
 pub const EfiSmmVariableProtocol: Guid = guid!("ed32d533-99e6-4209-9cc0-2d72cdd998a7");
@@ -19,9 +27,16 @@ pub const VarCheckPolicyLibMmiHandler: Guid = guid!("da1b0d11-d1a7-46c4-9dc9-f37
 
 pub fn pretty_name(guid: &Guid) -> String {
     match *guid {
+        EfiCustomModeEnable => "EfiCustomModeEnable".to_string(),
         EfiGlobalVariable => "EfiGlobalVariable".to_string(),
+        EfiImageSecurityDatabase => "EfiImageSecurityDatabase".to_string(),
+        EfiSecureBootEnable => "EfiSecureBootEnable".to_string(),
         LoaderInfo => "LoaderInfo".to_string(),
         VMMBootOrder => "VMMBootOrder".to_string(),
+
+        EfiCertPkcs7 => "EfiCertPkcs7".to_string(),
+        EfiCertSha256 => "EfiCertSha256".to_string(),
+        EfiCertX509 => "EfiCertX509".to_string(),
 
         EfiSmmVariableProtocol => "EfiSmmVariableProtocol".to_string(),
         VarCheckPolicyLibMmiHandler => "VarCheckPolicyLibMmiHandler".to_string(),
