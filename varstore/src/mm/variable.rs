@@ -83,7 +83,7 @@ impl MmNextVariable {
 
 // SMM_VARIABLE_COMMUNICATE_QUERY_VARIABLE_INFO
 #[repr(C, packed)]
-#[derive(Debug, FromBytes)]
+#[derive(Debug, FromBytes, IntoBytes, Immutable)]
 pub struct MmVariableInfo {
     pub max_storage_size: u64,
     pub free_storage_size: u64,
@@ -115,7 +115,7 @@ pub enum MmVariableParsedRequest<'a> {
         attr: EfiVarAttr,
         data: &'a [u8],
     },
-    // QueryVariableInfo = 4,
+    QueryVariableInfo,
     ReadyToBoot,
     ExitBootService,
     LockVariable {
@@ -163,6 +163,7 @@ impl<'a> MmVariableParsedRequest<'a> {
                     data,
                 }
             }
+            QUERY_VARIABLE_INFO => MmVariableParsedRequest::QueryVariableInfo,
             READY_TO_BOOT => MmVariableParsedRequest::ReadyToBoot,
             EXIT_BOOT_SERVICE => MmVariableParsedRequest::ExitBootService,
             GET_PAYLOAD_SIZE => MmVariableParsedRequest::GetPayloadSize,
@@ -192,6 +193,9 @@ impl Display for MmVariableParsedRequest<'_> {
                     "request/var: set-variable {name}  {attr}  {} data bytes",
                     data.len()
                 )
+            }
+            MmVariableParsedRequest::QueryVariableInfo => {
+                write!(f, "request/var: query-variable-info")
             }
             MmVariableParsedRequest::ReadyToBoot => {
                 write!(f, "request/var: ready-to-boot")
@@ -345,6 +349,16 @@ impl<'a> MmVariableRequest<'a> {
         self.response(Status::SUCCESS, None)
     }
 
+    fn query_variable_info(&self, _store: &EfiVarStore) -> Vec<u8> {
+        let reply = MmVariableInfo {
+            max_storage_size: 256 * 1024, // qemu default
+            free_storage_size: 0,         // FIXME
+            max_variable_size: 64 * 1024, // qemu default
+            attributes: 0,
+        };
+        self.response(Status::SUCCESS, Some(reply.as_bytes()))
+    }
+
     fn lock_variable(&self, _store: &EfiVarStore, _guid: &Guid, _name: &CStr16) -> Vec<u8> {
         debug!("TODO: implement lock-variable");
         self.response(Status::SUCCESS, None)
@@ -372,7 +386,7 @@ impl<'a> MmVariableRequest<'a> {
 
     fn get_payload_size(&self) -> Vec<u8> {
         let reply = MmGetPayloadSize {
-            payload_size: 64 * 1024,
+            payload_size: 64 * 1024, // qemu max
         };
         self.response(Status::SUCCESS, Some(reply.as_bytes()))
     }
@@ -396,6 +410,7 @@ impl<'a> MmVariableRequest<'a> {
                 attr,
                 data,
             } => self.set_variable(store, guid, name, attr, data),
+            MmVariableParsedRequest::QueryVariableInfo => self.query_variable_info(store),
             MmVariableParsedRequest::ReadyToBoot => self.ready_to_boot(store),
             MmVariableParsedRequest::ExitBootService => self.exit_boot_service(store),
             MmVariableParsedRequest::LockVariable { guid, name } => {
