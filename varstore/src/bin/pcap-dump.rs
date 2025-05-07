@@ -115,7 +115,14 @@ fn process_pcap(filename: &str) -> std::io::Result<()> {
                                 rsp[i],
                                 pchar(rsp[i]),
                                 d[i],
-                                pchar(d[i])
+                                pchar(d[i]),
+                            );
+                        } else {
+                            error!(
+                                "  offset 0x{:x}: actual 0x{:02x} {}",
+                                i,
+                                rsp[i],
+                                pchar(rsp[i]),
                             );
                         }
                     }
