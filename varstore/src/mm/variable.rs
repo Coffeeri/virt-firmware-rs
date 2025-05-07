@@ -350,6 +350,26 @@ impl<'a> MmVariableRequest<'a> {
         self.response(Status::SUCCESS, None)
     }
 
+    fn ready_to_boot(&self, store: &mut EfiVarStore) -> Vec<u8> {
+        store.ready_to_boot();
+        if false {
+            self.response(Status::SUCCESS, None)
+        } else {
+            // qemu compatible
+            Vec::new()
+        }
+    }
+
+    fn exit_boot_service(&self, store: &mut EfiVarStore) -> Vec<u8> {
+        store.exit_boot_service();
+        if false {
+            self.response(Status::SUCCESS, None)
+        } else {
+            // qemu compatible
+            Vec::new()
+        }
+    }
+
     fn get_payload_size(&self) -> Vec<u8> {
         let reply = MmGetPayloadSize {
             payload_size: 64 * 1024,
@@ -376,6 +396,8 @@ impl<'a> MmVariableRequest<'a> {
                 attr,
                 data,
             } => self.set_variable(store, guid, name, attr, data),
+            MmVariableParsedRequest::ReadyToBoot => self.ready_to_boot(store),
+            MmVariableParsedRequest::ExitBootService => self.exit_boot_service(store),
             MmVariableParsedRequest::LockVariable { guid, name } => {
                 self.lock_variable(store, guid, name)
             }

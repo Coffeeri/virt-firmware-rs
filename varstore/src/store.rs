@@ -11,6 +11,8 @@ use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr};
 use virtfw_libefi::guids;
 
 pub struct EfiVarStore {
+    end_of_dxe: bool,
+    ready_to_boot: bool,
     exit_boot_service: bool,
     variables: Vec<EfiVar>,
 }
@@ -18,10 +20,11 @@ pub struct EfiVarStore {
 impl EfiVarStore {
     pub fn new() -> Self {
         let variables = Vec::new();
-        let exit_boot_service = false;
         Self {
+            end_of_dxe: false,
+            ready_to_boot: false,
+            exit_boot_service: false,
             variables,
-            exit_boot_service,
         }
     }
 
@@ -137,9 +140,19 @@ impl EfiVarStore {
     }
 
     pub fn reset(&mut self) {
+        self.end_of_dxe = false;
+        self.ready_to_boot = false;
         self.exit_boot_service = false;
         self.variables.retain(|v| v.attr.non_volatile());
         self.auth_init();
+    }
+
+    pub fn end_of_dxe(&mut self) {
+        self.end_of_dxe = true;
+    }
+
+    pub fn ready_to_boot(&mut self) {
+        self.ready_to_boot = true;
     }
 
     pub fn exit_boot_service(&mut self) {

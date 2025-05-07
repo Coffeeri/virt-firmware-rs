@@ -21,6 +21,11 @@ pub const EfiCertPkcs7: Guid = guid!("4aafd29d-68df-49ee-8aa9-347d375665a7");
 pub const EfiCertSha256: Guid = guid!("c1c41626-504c-4092-aca9-41f936934328");
 pub const EfiCertX509: Guid = guid!("a5c059a1-94e4-4aa7-87b5-ab155c2bf072");
 
+// efi events
+pub const EfiEndOfDxeEventGroup: Guid = guid!("02ce967a-dd7e-4ffc-9ee7-810cf0470880");
+pub const EfiEventExitBootServices: Guid = guid!("27abf055-b1b8-4c26-8048-748f37baa2df");
+pub const EfiEventReadyToBoot: Guid = guid!("7ce88fb3-4bd7-4679-87a8-a8d8dee50d2b");
+
 // mm protocols
 pub const EfiSmmVariableProtocol: Guid = guid!("ed32d533-99e6-4209-9cc0-2d72cdd998a7");
 pub const VarCheckPolicyLibMmiHandler: Guid = guid!("da1b0d11-d1a7-46c4-9dc9-f3714875c6eb");
@@ -37,6 +42,10 @@ pub fn pretty_name(guid: &Guid) -> String {
         EfiCertPkcs7 => "EfiCertPkcs7".to_string(),
         EfiCertSha256 => "EfiCertSha256".to_string(),
         EfiCertX509 => "EfiCertX509".to_string(),
+
+        EfiEndOfDxeEventGroup => "EfiEndOfDxeEventGroup".to_string(),
+        EfiEventExitBootServices => "EfiEventExitBootServices".to_string(),
+        EfiEventReadyToBoot => "EfiEventReadyToBoot".to_string(),
 
         EfiSmmVariableProtocol => "EfiSmmVariableProtocol".to_string(),
         VarCheckPolicyLibMmiHandler => "VarCheckPolicyLibMmiHandler".to_string(),

@@ -74,6 +74,15 @@ pub fn core_request(store: &mut EfiVarStore, req: &mut [u8]) {
             let end = start + rsp.len();
             req[start..end].copy_from_slice(&rsp);
         }
+        guids::EfiEndOfDxeEventGroup => {
+            store.end_of_dxe();
+        }
+        guids::EfiEventReadyToBoot => {
+            store.ready_to_boot();
+        }
+        guids::EfiEventExitBootServices => {
+            store.exit_boot_service();
+        }
         _ => {
             error!("core/unknown: {}", guids::pretty_name(&creq.guid));
             panic!()
