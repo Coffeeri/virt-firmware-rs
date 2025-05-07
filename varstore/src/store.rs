@@ -197,8 +197,8 @@ impl EfiVarStore {
             &guids::EfiCustomModeEnable,
             "CustomMode",
             EfiVarAttr::new()
-                .with_bootservice_access(true)
-                .with_runtime_access(true),
+                .with_non_volatile(true)
+                .with_bootservice_access(true),
             enabled,
         );
     }
