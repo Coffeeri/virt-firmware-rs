@@ -206,9 +206,9 @@ impl EfiVarStore {
     fn set_signature_support(&mut self) {
         let mut sigs = Vec::new();
         sigs.extend_from_slice(&guids::EfiCertSha256.to_bytes());
-        // SHA384
-        // SHA512
-        // RSA2048
+        sigs.extend_from_slice(&guids::EfiCertSha384.to_bytes());
+        sigs.extend_from_slice(&guids::EfiCertSha512.to_bytes());
+        sigs.extend_from_slice(&guids::EfiCertRsa2048.to_bytes());
         sigs.extend_from_slice(&guids::EfiCertX509.to_bytes());
         let var = EfiVar {
             guid: guids::EfiGlobalVariable,
