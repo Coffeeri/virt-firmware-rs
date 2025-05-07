@@ -85,6 +85,14 @@ fn print_pcap(filename: &str) -> std::io::Result<()> {
     Ok(())
 }
 
+fn pchar(byte: u8) -> char {
+    if byte.is_ascii() && byte > 0x20 {
+        byte as char
+    } else {
+        '.'
+    }
+}
+
 fn process_pcap(filename: &str) -> std::io::Result<()> {
     let mut store = EfiVarStore::new();
     let parser = open_pcap(filename)?;
@@ -102,8 +110,12 @@ fn process_pcap(filename: &str) -> std::io::Result<()> {
                     for i in 0..rsp.len() {
                         if rsp[i] != d[i] {
                             error!(
-                                "  offset 0x{:x}: actual 0x{:x}, expected 0x{:x}",
-                                i, rsp[i], d[i]
+                                "  offset 0x{:x}: actual 0x{:02x} {} (expected 0x{:02x} {})",
+                                i,
+                                rsp[i],
+                                pchar(rsp[i]),
+                                d[i],
+                                pchar(d[i])
                             );
                         }
                     }
