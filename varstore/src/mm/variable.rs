@@ -2,6 +2,7 @@
 //! [WIP] EfiSmmVariableProtocol reimplementation
 //!
 use alloc::string::String;
+use alloc::vec;
 use alloc::vec::Vec;
 use core::fmt::Display;
 use log::{debug, error};
@@ -64,7 +65,7 @@ impl MmVariableAccess {
 
 // SMM_VARIABLE_COMMUNICATE_GET_NEXT_VARIABLE_NAME
 #[repr(C, packed)]
-#[derive(Debug, FromBytes)]
+#[derive(Debug, FromBytes, IntoBytes, Immutable)]
 pub struct MmNextVariable {
     pub guid: [u8; 16],
     pub name_size: u64,
@@ -297,6 +298,31 @@ impl<'a> MmVariableRequest<'a> {
         self.response(Status::SUCCESS, Some(&reply))
     }
 
+    fn get_next_variable_name(&self, store: &EfiVarStore, guid: &Guid, name: &CStr16) -> Vec<u8> {
+        let n = String::from(name);
+        let res = store.get_next(&n, guid);
+        if let Err(e) = res {
+            return self.response(e.status(), None);
+        }
+        let (next_name, next_guid) = res.unwrap();
+        debug!("variable/next: {} -> {}", name, next_name);
+
+        let mut buffer: Vec<u16> = vec![0; next_name.len() + 1];
+        let Ok(cstr16) = CStr16::from_str_with_buf(next_name, &mut buffer) else {
+            // should not happen
+            return self.response(Status::DEVICE_ERROR, None);
+        };
+
+        let next_var = MmNextVariable {
+            guid: next_guid.to_bytes(),
+            name_size: cstr16.num_bytes() as u64,
+        };
+        let mut reply = Vec::new();
+        reply.extend_from_slice(next_var.as_bytes());
+        reply.extend_from_slice(cstr16.as_bytes());
+        self.response(Status::SUCCESS, Some(&reply))
+    }
+
     fn set_variable(
         &self,
         store: &mut EfiVarStore,
@@ -340,6 +366,9 @@ impl<'a> MmVariableRequest<'a> {
         match parsed {
             MmVariableParsedRequest::GetVariable { guid, name } => {
                 self.get_variable(store, guid, name)
+            }
+            MmVariableParsedRequest::GetNextVariableName { guid, name } => {
+                self.get_next_variable_name(store, guid, name)
             }
             MmVariableParsedRequest::SetVariable {
                 guid,

@@ -25,20 +25,28 @@ impl EfiVarStore {
         }
     }
 
-    fn get_unchecked(&self, name: &str, guid: &Guid) -> Option<&EfiVar> {
+    fn get_position(&self, name: &str, guid: &Guid) -> Option<usize> {
         self.variables
             .iter()
-            .find(|&v| v.name == name && v.guid == *guid)
+            .position(|v| v.name == name && v.guid == *guid)
+    }
+
+    fn get_unchecked(&self, name: &str, guid: &Guid) -> Option<&EfiVar> {
+        let index = self.get_position(name, guid)?;
+        Some(&self.variables[index])
     }
 
     fn set_unchecked(&mut self, variable: EfiVar) {
-        let pos = self
-            .variables
-            .iter()
-            .position(|v| v.name == variable.name && v.guid == variable.guid);
-        if let Some(index) = pos {
+        let index = self.get_position(&variable.name, &variable.guid);
+        if let Some(i) = index {
             // replace
-            self.variables[index] = variable;
+            if false {
+                self.variables[i] = variable;
+            } else {
+                // qemu compatible ordering
+                self.variables.remove(i);
+                self.variables.push(variable);
+            }
         } else {
             // append
             self.variables.push(variable);
@@ -75,6 +83,36 @@ impl EfiVarStore {
         Err(Error::new(Status::NOT_FOUND, "variable not found"))
     }
 
+    pub fn get_next(&self, name: &str, guid: &Guid) -> Result<(&str, &Guid), Error<&'static str>> {
+        if name.is_empty() {
+            // first
+            if let Some(var) = self.variables.first() {
+                return Ok((&var.name, &var.guid));
+            } else {
+                return Err(Error::new(Status::NOT_FOUND, "variable store is empty"));
+            }
+        }
+
+        let Some(mut index) = self.get_position(name, guid) else {
+            return Err(Error::new(Status::NOT_FOUND, "variable not found"));
+        };
+        let var = self.variables.get(index).unwrap();
+        self.check_service(var)?;
+
+        loop {
+            index += 1;
+            let var_opt = self.variables.get(index);
+            if var_opt.is_none() {
+                return Err(Error::new(Status::NOT_FOUND, "end of list"));
+            }
+            let var = var_opt.unwrap();
+            if self.check_service(var).is_err() {
+                continue;
+            }
+            return Ok((&var.name, &var.guid));
+        }
+    }
+
     pub fn delete(&mut self, new: EfiVar) -> Result<(), Error<&'static str>> {
         let old_opt = self.get_unchecked(&new.name, &new.guid);
         if let Some(old) = old_opt {
@@ -108,22 +146,95 @@ impl EfiVarStore {
         self.exit_boot_service = true;
     }
 
-    fn set_secure_boot(&mut self, enable: bool) {
-        let b = if enable { [1] } else { [0] };
+    fn set_boolean(&mut self, guid: &Guid, name: &str, attr: EfiVarAttr, boolean: bool) {
+        let b = if boolean { [1] } else { [0] };
         let var = EfiVar {
-            guid: guids::EfiGlobalVariable,
-            name: "SecureBoot".into(),
-            attr: EfiVarAttr::new()
-                .with_bootservice_access(true)
-                .with_runtime_access(true),
+            guid: *guid,
+            name: name.into(),
+            attr,
             data: b.to_vec(),
         };
         self.set_unchecked(var);
     }
 
+    fn set_setup_mode(&mut self, enabled: bool) {
+        self.set_boolean(
+            &guids::EfiGlobalVariable,
+            "SetupMode",
+            EfiVarAttr::new()
+                .with_bootservice_access(true)
+                .with_runtime_access(true),
+            enabled,
+        );
+    }
+
+    fn set_secure_boot(&mut self, enabled: bool) {
+        self.set_boolean(
+            &guids::EfiGlobalVariable,
+            "SecureBoot",
+            EfiVarAttr::new()
+                .with_bootservice_access(true)
+                .with_runtime_access(true),
+            enabled,
+        );
+    }
+
+    fn set_custom_mode(&mut self, enabled: bool) {
+        self.set_boolean(
+            &guids::EfiCustomModeEnable,
+            "CustomMode",
+            EfiVarAttr::new()
+                .with_bootservice_access(true)
+                .with_runtime_access(true),
+            enabled,
+        );
+    }
+
+    fn set_signature_support(&mut self) {
+        let mut sigs = Vec::new();
+        sigs.extend_from_slice(&guids::EfiCertSha256.to_bytes());
+        // SHA384
+        // SHA512
+        // RSA2048
+        sigs.extend_from_slice(&guids::EfiCertX509.to_bytes());
+        let var = EfiVar {
+            guid: guids::EfiGlobalVariable,
+            name: "SignatureSupport".into(),
+            attr: EfiVarAttr::new()
+                .with_bootservice_access(true)
+                .with_runtime_access(true),
+            data: sigs,
+        };
+        self.set_unchecked(var);
+    }
+
+    fn set_vendor_keys(&mut self) {
+        self.set_boolean(
+            &guids::EfiGlobalVariable,
+            "VendorKeysNv",
+            EfiVarAttr::new()
+                .with_non_volatile(true)
+                .with_bootservice_access(true)
+                .with_time_auth_wr_access(true),
+            false,
+        );
+        self.set_boolean(
+            &guids::EfiGlobalVariable,
+            "VendorKeys",
+            EfiVarAttr::new()
+                .with_bootservice_access(true)
+                .with_runtime_access(true),
+            false,
+        );
+    }
+
     pub fn auth_init(&mut self) {
         // TODO: implement secure boot support
+        self.set_setup_mode(true);
+        self.set_signature_support();
         self.set_secure_boot(false);
+        self.set_custom_mode(false);
+        self.set_vendor_keys();
     }
 }
 
