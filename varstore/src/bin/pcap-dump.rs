@@ -123,12 +123,8 @@ fn main() -> ExitCode {
             }
         }
         if cfg.opt_present("run") {
-            let res = replay_pcap(&pcap);
-            if let Err(e) = res {
-                error!("{e}");
-            } else {
-                info!("ok");
-            }
+            let parser = VarstorePcapParser::new_file(&pcap).expect("open pcap file");
+            replay_pcap(parser);
         }
     }
 
