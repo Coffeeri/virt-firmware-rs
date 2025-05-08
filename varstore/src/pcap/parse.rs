@@ -63,6 +63,13 @@ impl VarstorePcapParser {
 
         Ok(parser)
     }
+
+    pub fn new_data_gz(data: &'static [u8]) -> Result<Self, std::io::Error> {
+        let ungz = GzDecoder::new(data);
+        let parser = Self::new(Box::new(ungz))?;
+
+        Ok(parser)
+    }
 }
 
 impl Iterator for VarstorePcapParser {

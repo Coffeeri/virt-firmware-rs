@@ -53,7 +53,7 @@ fn diff_buffer(actual: &[u8], expect: &[u8]) {
     }
 }
 
-pub fn replay_pcap(parser: VarstorePcapParser) {
+pub fn replay_pcap(parser: VarstorePcapParser) -> EfiVarStore {
     let mut store = EfiVarStore::new();
 
     let mut rsp = Vec::new();
@@ -80,4 +80,6 @@ pub fn replay_pcap(parser: VarstorePcapParser) {
             }
         }
     }
+
+    store
 }

@@ -55,13 +55,13 @@ impl core::fmt::Display for EfiVarAttr {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct EfiVarId {
     pub name: String,
     pub guid: Guid,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct EfiVar {
     pub name: String,
     pub guid: Guid,
