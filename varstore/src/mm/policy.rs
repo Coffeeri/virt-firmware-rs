@@ -1,23 +1,33 @@
+#![allow(dead_code)] // temporary
+
+//!
+//! [WIP] VarCheckPolicyLibMmiHandler + Edk2VariablePolicyProtocol reimplementation
+//!
+use alloc::string::String;
 use alloc::vec::Vec;
 use log::{debug, error};
+use uguid::Guid;
 use zerocopy::byteorder::little_endian::{U32, U64};
 use zerocopy::{FromBytes, IntoBytes, Unalign};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, Unaligned};
 
 use uefi::{Error, Status};
+use virtfw_libefi::efivar::types::EfiVarAttr;
 
 use crate::store::EfiVarStore;
 
-pub const VAR_CHECK_POLICY_COMMAND_DISABLE: u32 = 0x01;
-pub const VAR_CHECK_POLICY_COMMAND_IS_ENABLED: u32 = 0x02;
-pub const VAR_CHECK_POLICY_COMMAND_REGISTER: u32 = 0x03;
-pub const VAR_CHECK_POLICY_COMMAND_DUMP: u32 = 0x04;
-pub const VAR_CHECK_POLICY_COMMAND_LOCK: u32 = 0x05;
+// ----- VarCheckPolicyLibMmiHandler structs -----
+
+const VAR_CHECK_POLICY_COMMAND_DISABLE: u32 = 0x01;
+const VAR_CHECK_POLICY_COMMAND_IS_ENABLED: u32 = 0x02;
+const VAR_CHECK_POLICY_COMMAND_REGISTER: u32 = 0x03;
+const VAR_CHECK_POLICY_COMMAND_DUMP: u32 = 0x04;
+const VAR_CHECK_POLICY_COMMAND_LOCK: u32 = 0x05;
 
 // VAR_CHECK_POLICY_COMM_HEADER
 #[repr(C, packed)]
 #[derive(Debug, FromBytes, IntoBytes, Immutable, Unaligned, Clone)]
-pub struct MmVarCheckPolicy {
+struct MmVarCheckPolicy {
     signature: u32,
     revision: u32,
     command: Unalign<U32>,
@@ -33,10 +43,65 @@ impl MmVarCheckPolicy {
     }
 }
 
+// VAR_CHECK_POLICY_COMM_IS_ENABLED_PARAMS
+#[repr(C, packed)]
+#[derive(Debug, IntoBytes, Immutable)]
+struct MmVarCheckPolicyEnabled {
+    state: u8,
+}
+
+// ----- Edk2VariablePolicyProtocol structs -----
+
+const VARIABLE_POLICY_ENTRY_REVISION: u32 = 0x00010000;
+
+const VARIABLE_POLICY_TYPE_NO_LOCK: u32 = 0;
+const VARIABLE_POLICY_TYPE_LOCK_NOW: u32 = 1;
+const VARIABLE_POLICY_TYPE_LOCK_ON_CREATE: u32 = 2;
+const VARIABLE_POLICY_TYPE_LOCK_ON_VAR_STATE: u32 = 3;
+
+// VARIABLE_POLICY_ENTRY
+#[repr(C, packed)]
+#[derive(Debug, FromBytes)]
+struct VariablePolicyEntry {
+    version: u32,
+    size: u16,
+    offset_to_name: u16,
+    namespace: [u8; 16],
+    min_size: u32,
+    max_size: u32,
+    attr_must_have: u32,
+    attr_cant_have: u32,
+    lock_policy_type: u8,
+    _padding: [u8; 3],
+    // LockPolicy
+    // Name
+}
+
+// VARIABLE_LOCK_ON_VAR_STATE_POLICY
+#[repr(C, packed)]
+#[derive(Debug, FromBytes)]
+struct VariableLockOnVarState {
+    namespace: [u8; 16],
+    value: u8,
+    _padding: u8,
+    // Name
+}
+
+// ----- implementation structs -----
+
+pub struct ParsedVariablePolicyEntry {
+    pub namespace: Guid,
+    pub name: String,
+    pub min_size: u32,
+    pub max_size: u32,
+    pub attr_must_have: EfiVarAttr,
+    pub attr_cant_have: EfiVarAttr,
+}
+
 // request state
 #[derive(Debug)]
 pub struct MmVarPolicyRequest<'a> {
-    pub hdr: MmVarCheckPolicy,
+    hdr: MmVarCheckPolicy,
     pub data: &'a [u8],
 }
 
