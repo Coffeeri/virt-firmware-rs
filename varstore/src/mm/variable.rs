@@ -227,24 +227,21 @@ pub struct MmVariableRequest<'a> {
 impl<'a> MmVariableRequest<'a> {
     pub fn new(data: &'a [u8]) -> Result<Self, Error<&'static str>> {
         let (header, body) = MmVariableHeader::new(data)?;
-        match MmVariableParsedRequest::new(header.function, body) {
+        let req = match MmVariableParsedRequest::new(header.function, body) {
             Ok(req) => {
                 debug!("variable/req/ok: {}", req);
-                Ok(MmVariableRequest {
-                    data,
-                    function: header.function,
-                    parsed: Some(req),
-                })
+                Some(req)
             }
             Err(e) => {
                 debug!("variable/req/err: {}", e);
-                Ok(MmVariableRequest {
-                    data,
-                    function: header.function,
-                    parsed: None,
-                })
+                None
             }
-        }
+        };
+        Ok(MmVariableRequest {
+            data,
+            function: header.function,
+            parsed: req,
+        })
     }
 
     fn response(&self, status: Status, reply: Option<&[u8]>) -> Vec<u8> {
