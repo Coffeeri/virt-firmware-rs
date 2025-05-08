@@ -53,15 +53,13 @@ fn diff_buffer(actual: &[u8], expect: &[u8]) {
     }
 }
 
-pub fn replay_pcap(parser: VarstorePcapParser) -> EfiVarStore {
-    let mut store = EfiVarStore::new();
-
+pub fn replay_pcap(parser: VarstorePcapParser, store: &mut EfiVarStore) {
     let mut rsp = Vec::new();
     for p in parser {
         match p {
             VarstorePcapItem::Request(d) => {
                 rsp = d.clone();
-                core_request(&mut store, &mut rsp);
+                core_request(store, &mut rsp);
             }
             VarstorePcapItem::Reply(d) => {
                 if rsp != d {
@@ -80,6 +78,4 @@ pub fn replay_pcap(parser: VarstorePcapParser) -> EfiVarStore {
             }
         }
     }
-
-    store
 }

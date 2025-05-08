@@ -11,6 +11,7 @@ use virtfw_varstore::mm::util;
 use virtfw_varstore::mm::variable::{MmVariableHeader, MmVariableRequest};
 use virtfw_varstore::pcap::parse::{VarstorePcapItem, VarstorePcapParser};
 use virtfw_varstore::pcap::replay::replay_pcap;
+use virtfw_varstore::store::EfiVarStore;
 
 fn print_request(data: &[u8]) {
     let core = MmCore::new(data).unwrap();
@@ -123,8 +124,9 @@ fn main() -> ExitCode {
             }
         }
         if cfg.opt_present("run") {
+            let mut store = EfiVarStore::new();
             let parser = VarstorePcapParser::new_file(&pcap).expect("open pcap file");
-            replay_pcap(parser);
+            replay_pcap(parser, &mut store);
         }
     }
 
