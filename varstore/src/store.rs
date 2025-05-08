@@ -87,29 +87,24 @@ impl EfiVarStore {
     }
 
     pub fn get_next(&self, name: &str, guid: &Guid) -> Result<(&str, &Guid), Error<&'static str>> {
-        if name.is_empty() {
-            // first
-            if let Some(var) = self.variables.first() {
-                return Ok((&var.name, &var.guid));
-            } else {
-                return Err(Error::new(Status::NOT_FOUND, "variable store is empty"));
-            }
+        let mut next_index = 0;
+        if !name.is_empty() {
+            let Some(index) = self.get_position(name, guid) else {
+                return Err(Error::new(Status::NOT_FOUND, "variable not found"));
+            };
+            let var = self.variables.get(index).unwrap();
+            self.check_service(var)?;
+            next_index = index + 1;
         }
 
-        let Some(mut index) = self.get_position(name, guid) else {
-            return Err(Error::new(Status::NOT_FOUND, "variable not found"));
-        };
-        let var = self.variables.get(index).unwrap();
-        self.check_service(var)?;
-
         loop {
-            index += 1;
-            let var_opt = self.variables.get(index);
+            let var_opt = self.variables.get(next_index);
             if var_opt.is_none() {
                 return Err(Error::new(Status::NOT_FOUND, "end of list"));
             }
             let var = var_opt.unwrap();
             if self.check_service(var).is_err() {
+                next_index += 1;
                 continue;
             }
             return Ok((&var.name, &var.guid));
