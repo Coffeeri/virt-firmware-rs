@@ -77,6 +77,15 @@ struct VariablePolicyEntry {
     // Name
 }
 
+impl VariablePolicyEntry {
+    pub fn new(data: &[u8]) -> Result<(Self, &[u8]), Error<&'static str>> {
+        Self::read_from_prefix(data).or(Err(Error::new(
+            Status::BAD_BUFFER_SIZE,
+            "read VariablePolicyEntry",
+        )))
+    }
+}
+
 // VARIABLE_LOCK_ON_VAR_STATE_POLICY
 #[repr(C, packed)]
 #[derive(Debug, FromBytes)]
@@ -87,8 +96,18 @@ struct VariableLockOnVarState {
     // Name
 }
 
+impl VariableLockOnVarState {
+    pub fn new(data: &[u8]) -> Result<(Self, &[u8]), Error<&'static str>> {
+        Self::read_from_prefix(data).or(Err(Error::new(
+            Status::BAD_BUFFER_SIZE,
+            "read VariableLockOnVarState",
+        )))
+    }
+}
+
 // ----- implementation structs -----
 
+#[derive(Debug)]
 pub struct ParsedVariablePolicyEntry {
     pub namespace: Guid,
     pub name: String,
@@ -98,7 +117,6 @@ pub struct ParsedVariablePolicyEntry {
     pub attr_cant_have: EfiVarAttr,
 }
 
-// request state
 #[derive(Debug)]
 pub struct MmVarPolicyRequest<'a> {
     hdr: MmVarCheckPolicy,
