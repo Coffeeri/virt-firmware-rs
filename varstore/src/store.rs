@@ -10,6 +10,8 @@ use uefi::{Error, Status};
 use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr};
 use virtfw_libefi::guids;
 
+use crate::json::JsonEfiVarStore;
+
 pub struct EfiVarStore {
     end_of_dxe: bool,
     ready_to_boot: bool,
@@ -25,6 +27,13 @@ impl EfiVarStore {
             ready_to_boot: false,
             exit_boot_service: false,
             variables,
+        }
+    }
+
+    pub fn json_import(&mut self, jstore: &JsonEfiVarStore) {
+        for jvar in &jstore.variables {
+            let var = EfiVar::try_from(jvar).unwrap();
+            self.set_unchecked(var);
         }
     }
 

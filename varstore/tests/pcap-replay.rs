@@ -11,7 +11,7 @@ fn compare_store(jstore: JsonEfiVarStore, store: &mut EfiVarStore) {
     store.reset();
     for jvar in jstore.variables {
         let var1 = store.get(&jvar.name, &jvar.guid).unwrap();
-        let var2 = &EfiVar::try_from(jvar).unwrap();
+        let var2 = &EfiVar::try_from(&jvar).unwrap();
         assert_eq!(var1, var2);
     }
 }

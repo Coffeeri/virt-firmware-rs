@@ -6,6 +6,7 @@ use std::process::ExitCode;
 use log::{error, info};
 
 use virtfw_libefi::guids;
+use virtfw_varstore::json::JsonEfiVarStore;
 use virtfw_varstore::mm::core::MmCore;
 use virtfw_varstore::mm::util;
 use virtfw_varstore::mm::variable::{MmVariableHeader, MmVariableRequest};
@@ -77,8 +78,9 @@ fn parse_args() -> Option<getopts::Matches> {
     opts.optflag("h", "help", "print this help text");
     opts.optflag("d", "debug", "turn on debug logging");
     opts.optflag("p", "print", "print pcap file");
-    opts.optflag("", "run", "print pcap file");
-    opts.optopt("", "pcap", "pcap file", "PCAP");
+    opts.optflag("", "replay", "replay pcap file");
+    opts.optopt("", "pcap", "pcap file (print or replay)", "PCAP");
+    opts.optopt("", "json", "json file (initial replay state)", "JSON");
 
     let cfg_res = opts.parse(&args[1..]);
     let Ok(cfg) = cfg_res else {
@@ -123,8 +125,22 @@ fn main() -> ExitCode {
                 info!("ok");
             }
         }
-        if cfg.opt_present("run") {
+
+        if cfg.opt_present("replay") {
             let mut store = EfiVarStore::new();
+
+            if let Some(filename) = cfg.opt_str("json") {
+                let Ok(content) = std::fs::read_to_string(filename) else {
+                    error!("read json file");
+                    return ExitCode::from(1);
+                };
+                let Ok(jstore) = serde_json::from_str::<JsonEfiVarStore>(&content) else {
+                    error!("parse json file");
+                    return ExitCode::from(1);
+                };
+                store.json_import(&jstore);
+            }
+
             let parser = VarstorePcapParser::new_file(&pcap).expect("open pcap file");
             replay_pcap(parser, &mut store);
         }

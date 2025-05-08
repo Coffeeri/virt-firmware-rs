@@ -15,7 +15,7 @@ use uguid::Guid;
 use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr};
 use virtfw_libefi::guids;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct JsonHexString(String);
 
 impl Deref for JsonHexString {
@@ -42,14 +42,14 @@ pub struct JsonEfiVariable {
     pub digest: Option<JsonHexString>,
 }
 
-impl TryFrom<JsonEfiVariable> for EfiVar {
+impl TryFrom<&JsonEfiVariable> for EfiVar {
     type Error = hex::FromHexError;
-    fn try_from(v: JsonEfiVariable) -> Result<Self, Self::Error> {
+    fn try_from(v: &JsonEfiVariable) -> Result<Self, Self::Error> {
         let attr = EfiVarAttr::from(v.attr);
-        let data = Vec::<u8>::try_from(v.data)?;
+        let data = Vec::<u8>::try_from(v.data.clone())?;
         Ok(EfiVar {
             guid: v.guid,
-            name: v.name,
+            name: v.name.clone(),
             attr,
             data,
         })

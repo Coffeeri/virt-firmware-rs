@@ -30,7 +30,7 @@ fn main() {
         };
         for jvar in jstore.variables {
             println!("{}", jvar);
-            EfiVar::try_from(jvar).expect("convert failed");
+            EfiVar::try_from(&jvar).expect("convert failed");
         }
     }
 }
