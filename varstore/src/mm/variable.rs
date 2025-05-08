@@ -16,14 +16,14 @@ use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr};
 use crate::mm::util;
 use crate::store::EfiVarStore;
 
-pub const GET_VARIABLE: u64 = 1;
-pub const GET_NEXT_VARIABLE_NAME: u64 = 2;
-pub const SET_VARIABLE: u64 = 3;
-pub const QUERY_VARIABLE_INFO: u64 = 4;
-pub const READY_TO_BOOT: u64 = 5;
-pub const EXIT_BOOT_SERVICE: u64 = 6;
-pub const LOCK_VARIABLE: u64 = 8;
-pub const GET_PAYLOAD_SIZE: u64 = 11;
+const GET_VARIABLE: u64 = 1;
+const GET_NEXT_VARIABLE_NAME: u64 = 2;
+const SET_VARIABLE: u64 = 3;
+const QUERY_VARIABLE_INFO: u64 = 4;
+const READY_TO_BOOT: u64 = 5;
+const EXIT_BOOT_SERVICE: u64 = 6;
+const LOCK_VARIABLE: u64 = 8;
+const GET_PAYLOAD_SIZE: u64 = 11;
 
 // SMM_VARIABLE_COMMUNICATE_HEADER
 #[repr(C)]
@@ -45,17 +45,17 @@ impl MmVariableHeader {
 // SMM_VARIABLE_COMMUNICATE_ACCESS_VARIABLE
 #[repr(C, packed)]
 #[derive(Debug, FromBytes, IntoBytes, Immutable)]
-pub struct MmVariableAccess {
-    pub guid: [u8; 16],
-    pub data_size: u64,
-    pub name_size: u64,
-    pub attributes: EfiVarAttr,
+struct MmVariableAccess {
+    guid: [u8; 16],
+    data_size: u64,
+    name_size: u64,
+    attributes: EfiVarAttr,
     // Name
     // Data
 }
 
 impl MmVariableAccess {
-    pub fn new(data: &[u8]) -> Result<(Self, &[u8]), Error<&'static str>> {
+    fn new(data: &[u8]) -> Result<(Self, &[u8]), Error<&'static str>> {
         Self::read_from_prefix(data).or(Err(Error::new(
             Status::BAD_BUFFER_SIZE,
             "read MmVariableAccess",
@@ -66,14 +66,14 @@ impl MmVariableAccess {
 // SMM_VARIABLE_COMMUNICATE_GET_NEXT_VARIABLE_NAME
 #[repr(C, packed)]
 #[derive(Debug, FromBytes, IntoBytes, Immutable)]
-pub struct MmNextVariable {
-    pub guid: [u8; 16],
-    pub name_size: u64,
+struct MmNextVariable {
+    guid: [u8; 16],
+    name_size: u64,
     // Name
 }
 
 impl MmNextVariable {
-    pub fn new(data: &[u8]) -> Result<(Self, &[u8]), Error<&'static str>> {
+    fn new(data: &[u8]) -> Result<(Self, &[u8]), Error<&'static str>> {
         Self::read_from_prefix(data).or(Err(Error::new(
             Status::BAD_BUFFER_SIZE,
             "read MmNextVariable",
@@ -84,18 +84,18 @@ impl MmNextVariable {
 // SMM_VARIABLE_COMMUNICATE_QUERY_VARIABLE_INFO
 #[repr(C, packed)]
 #[derive(Debug, FromBytes, IntoBytes, Immutable)]
-pub struct MmVariableInfo {
-    pub max_storage_size: u64,
-    pub free_storage_size: u64,
-    pub max_variable_size: u64,
-    pub attributes: u32,
+struct MmVariableInfo {
+    max_storage_size: u64,
+    free_storage_size: u64,
+    max_variable_size: u64,
+    attributes: u32,
 }
 
 // SMM_VARIABLE_COMMUNICATE_GET_PAYLOAD_SIZE
 #[repr(C, packed)]
 #[derive(Debug, FromBytes, IntoBytes, Immutable)]
-pub struct MmGetPayloadSize {
-    pub payload_size: u64,
+struct MmGetPayloadSize {
+    payload_size: u64,
 }
 
 // parsed request
