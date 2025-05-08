@@ -2,6 +2,9 @@ use zerocopy_derive::FromBytes;
 
 pub const PCAP_MAGIC: u32 = 0xa1b2c3d4;
 
+pub const LINKTYPE_USER0: u32 = 147;
+pub const LINKTYPE_EDK2_MM: u32 = 302;
+
 #[derive(Debug, FromBytes)]
 #[repr(C)]
 pub struct PcapFileHeader {

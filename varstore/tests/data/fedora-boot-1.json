@@ -114,7 +114,7 @@
             "name": "5254001087CE",
             "guid": "937fe521-95ae-4d1a-8929-48bcd90ad31a",
             "attr": 3,
-            "data": "ffdf4c70236d03003400afaf08000000010000003000afaf04000000020000002c00afaf04000000030000000100000000000000505400fffe1087ce"
+            "data": "f7df0fff67de03003400afaf08000000010000003000afaf04000000020000002c00afaf04000000030000000100000000000000505400fffe1087ce"
         },
         {
             "name": "ClientId",
@@ -168,7 +168,7 @@
             "name": "LoaderSystemToken",
             "guid": "4a67b082-0a4c-41cf-b6c7-440b29bb8c4f",
             "attr": 7,
-            "data": "6dbfe26460227312e7dc26e9a396d771fd69a401d796c248538bdc8e5ab45f2b"
+            "data": "ba54ad4b29349f014e54624b0a45ea35d1946eef56b14fc7993ab58627cb2ce6"
         }
     ]
 }

@@ -366,22 +366,12 @@ impl<'a> MmVariableRequest<'a> {
 
     fn ready_to_boot(&self, store: &mut EfiVarStore) -> Vec<u8> {
         store.ready_to_boot();
-        if false {
-            self.response(Status::SUCCESS, None)
-        } else {
-            // qemu compatible
-            Vec::new()
-        }
+        self.response(Status::SUCCESS, None)
     }
 
     fn exit_boot_service(&self, store: &mut EfiVarStore) -> Vec<u8> {
         store.exit_boot_service();
-        if false {
-            self.response(Status::SUCCESS, None)
-        } else {
-            // qemu compatible
-            Vec::new()
-        }
+        self.response(Status::SUCCESS, None)
     }
 
     fn get_payload_size(&self) -> Vec<u8> {

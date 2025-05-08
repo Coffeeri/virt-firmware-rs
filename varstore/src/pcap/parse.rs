@@ -9,7 +9,7 @@ use std::vec;
 use std::vec::Vec;
 use zerocopy::FromBytes;
 
-use crate::pcap::types::{PcapFileHeader, PcapPacketHeader, PCAP_MAGIC};
+use crate::pcap::types::{PcapFileHeader, PcapPacketHeader, LINKTYPE_EDK2_MM, PCAP_MAGIC};
 
 #[derive(Debug)]
 pub enum VarstorePcapItem {
@@ -44,7 +44,7 @@ impl VarstorePcapParser {
         if fhdr.magic != PCAP_MAGIC {
             return Err(Error::new(ErrorKind::Other, "magic mismatch"));
         }
-        if fhdr.network != 147 {
+        if fhdr.network != LINKTYPE_EDK2_MM {
             return Err(Error::new(ErrorKind::Other, "linktype mismatch"));
         }
         let parser = VarstorePcapParser { reader };
