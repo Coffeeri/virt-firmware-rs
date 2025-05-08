@@ -1,7 +1,9 @@
 #![cfg(feature = "std")]
 
 extern crate std;
+use flate2::read::GzDecoder;
 use std::boxed::Box;
+use std::fs::File;
 use std::io::{Error, ErrorKind, Read};
 use std::vec;
 use std::vec::Vec;
@@ -46,6 +48,19 @@ impl VarstorePcapParser {
             return Err(Error::new(ErrorKind::Other, "linktype mismatch"));
         }
         let parser = VarstorePcapParser { reader };
+        Ok(parser)
+    }
+
+    pub fn new_file(filename: &str) -> Result<Self, std::io::Error> {
+        let file = File::open(filename)?;
+
+        let parser = if filename.ends_with(".gz") {
+            let ungz = GzDecoder::new(file);
+            Self::new(Box::new(ungz))?
+        } else {
+            Self::new(Box::new(file))?
+        };
+
         Ok(parser)
     }
 }
