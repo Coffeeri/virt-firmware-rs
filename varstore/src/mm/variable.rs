@@ -10,7 +10,7 @@ use zerocopy::{FromBytes, IntoBytes};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes};
 
 use uefi::{CStr16, CString16, Error, Status};
-use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr};
+use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr, EfiVarId};
 
 use crate::mm::util;
 use crate::store::EfiVarStore;
@@ -104,10 +104,7 @@ pub enum MmVariableParsedRequest<'a> {
         guid: Guid,
         name: &'a CStr16,
     },
-    GetNextVariableName {
-        guid: Guid,
-        name: &'a CStr16,
-    },
+    GetNextVariableName(EfiVarId),
     SetVariable {
         guid: Guid,
         name: &'a CStr16,
@@ -117,10 +114,7 @@ pub enum MmVariableParsedRequest<'a> {
     QueryVariableInfo,
     ReadyToBoot,
     ExitBootService,
-    LockVariable {
-        guid: Guid,
-        name: &'a CStr16,
-    },
+    LockVariable(EfiVarId),
     GetPayloadSize,
     Unknown {
         function: u64,
@@ -142,10 +136,11 @@ impl<'a> MmVariableParsedRequest<'a> {
                 let ns = next.name_size as usize;
                 let name = util::cstr16_from_bytes_until_nul(&namebytes[0..ns])?;
                 let guid = Guid::from_bytes(next.guid);
+                let id = EfiVarId::new(String::from(name), guid);
                 if function == GET_NEXT_VARIABLE_NAME {
-                    MmVariableParsedRequest::GetNextVariableName { guid, name }
+                    MmVariableParsedRequest::GetNextVariableName(id)
                 } else {
-                    MmVariableParsedRequest::LockVariable { guid, name }
+                    MmVariableParsedRequest::LockVariable(id)
                 }
             }
             SET_VARIABLE => {
@@ -178,8 +173,8 @@ impl Display for MmVariableParsedRequest<'_> {
             MmVariableParsedRequest::GetVariable { guid: _, name } => {
                 write!(f, "request/var: get-variable {name}")
             }
-            MmVariableParsedRequest::GetNextVariableName { guid: _, name } => {
-                write!(f, "request/var: get-next-variable-name {name}")
+            MmVariableParsedRequest::GetNextVariableName(id) => {
+                write!(f, "request/var: get-next-variable-name {}", id.name)
             }
             MmVariableParsedRequest::SetVariable {
                 guid: _,
@@ -202,8 +197,8 @@ impl Display for MmVariableParsedRequest<'_> {
             MmVariableParsedRequest::ExitBootService => {
                 write!(f, "request/var: exit-boot-service")
             }
-            MmVariableParsedRequest::LockVariable { guid: _, name } => {
-                write!(f, "request/var: lock-variable {name}")
+            MmVariableParsedRequest::LockVariable(id) => {
+                write!(f, "request/var: lock-variable {}", id.name)
             }
             MmVariableParsedRequest::GetPayloadSize => {
                 write!(f, "request/var: get-payload-size")
@@ -298,14 +293,13 @@ impl<'a> MmVariableRequest<'a> {
         self.response(Status::SUCCESS, Some(&reply))
     }
 
-    fn get_next_variable_name(&self, store: &EfiVarStore, guid: &Guid, name: &CStr16) -> Vec<u8> {
-        let n = String::from(name);
-        let res = store.get_next(&n, guid);
+    fn get_next_variable_name(&self, store: &EfiVarStore, id: &EfiVarId) -> Vec<u8> {
+        let res = store.get_next(&id.name, &id.guid);
         if let Err(e) = res {
             return self.response(e.status(), None);
         }
         let (next_name, next_guid) = res.unwrap();
-        debug!("variable/next: {} -> {}", name, next_name);
+        debug!("variable/next: {} -> {}", id.name, next_name);
 
         let Ok(cstr16) = CString16::try_from(next_name) else {
             return self.response(Status::DEVICE_ERROR, None);
@@ -353,7 +347,7 @@ impl<'a> MmVariableRequest<'a> {
         self.response(Status::SUCCESS, Some(reply.as_bytes()))
     }
 
-    fn lock_variable(&self, _store: &EfiVarStore, _guid: &Guid, _name: &CStr16) -> Vec<u8> {
+    fn lock_variable(&self, _store: &EfiVarStore, _id: &EfiVarId) -> Vec<u8> {
         debug!("TODO: implement lock-variable");
         self.response(Status::SUCCESS, None)
     }
@@ -385,8 +379,8 @@ impl<'a> MmVariableRequest<'a> {
             MmVariableParsedRequest::GetVariable { guid, name } => {
                 self.get_variable(store, guid, name)
             }
-            MmVariableParsedRequest::GetNextVariableName { guid, name } => {
-                self.get_next_variable_name(store, guid, name)
+            MmVariableParsedRequest::GetNextVariableName(id) => {
+                self.get_next_variable_name(store, id)
             }
             MmVariableParsedRequest::SetVariable {
                 guid,
@@ -397,9 +391,7 @@ impl<'a> MmVariableRequest<'a> {
             MmVariableParsedRequest::QueryVariableInfo => self.query_variable_info(store),
             MmVariableParsedRequest::ReadyToBoot => self.ready_to_boot(store),
             MmVariableParsedRequest::ExitBootService => self.exit_boot_service(store),
-            MmVariableParsedRequest::LockVariable { guid, name } => {
-                self.lock_variable(store, guid, name)
-            }
+            MmVariableParsedRequest::LockVariable(id) => self.lock_variable(store, id),
             MmVariableParsedRequest::GetPayloadSize => self.get_payload_size(),
             _ => {
                 error!("variable/unknown: {}", parsed);
