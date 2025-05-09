@@ -9,7 +9,7 @@ use uguid::Guid;
 use zerocopy::{FromBytes, IntoBytes};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes};
 
-use uefi::{CStr16, CString16, Error, Status};
+use uefi::{CString16, Error, Status};
 use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr, EfiVarId};
 
 use crate::mm::util;
@@ -99,27 +99,20 @@ struct MmGetPayloadSize {
 
 // parsed request
 #[derive(Debug)]
-pub enum MmVariableParsedRequest<'a> {
+pub enum MmVariableParsedRequest {
     GetVariable(EfiVarId),
     GetNextVariableName(EfiVarId),
-    SetVariable {
-        guid: Guid,
-        name: &'a CStr16,
-        attr: EfiVarAttr,
-        data: &'a [u8],
-    },
+    SetVariable(EfiVar),
     QueryVariableInfo,
     ReadyToBoot,
     ExitBootService,
     LockVariable(EfiVarId),
     GetPayloadSize,
-    Unknown {
-        function: u64,
-    },
+    Unknown { function: u64 },
 }
 
-impl<'a> MmVariableParsedRequest<'a> {
-    pub fn new(function: u64, body: &'a [u8]) -> Result<Self, Error<&'static str>> {
+impl MmVariableParsedRequest {
+    pub fn new(function: u64, body: &[u8]) -> Result<Self, Error<&'static str>> {
         let req = match function {
             GET_VARIABLE => {
                 let (access, namedata) = MmVariableAccess::new(body)?;
@@ -148,12 +141,13 @@ impl<'a> MmVariableParsedRequest<'a> {
                 let name = util::cstr16_from_bytes_with_nul(&namedata[0..ns])?;
                 let data = &namedata[ns..ns + ds];
                 let guid = Guid::from_bytes(access.guid);
-                MmVariableParsedRequest::SetVariable {
+                let var = EfiVar {
                     guid,
-                    name,
+                    name: String::from(name),
                     attr: access.attributes,
-                    data,
-                }
+                    data: data.to_vec(),
+                };
+                MmVariableParsedRequest::SetVariable(var)
             }
             QUERY_VARIABLE_INFO => MmVariableParsedRequest::QueryVariableInfo,
             READY_TO_BOOT => MmVariableParsedRequest::ReadyToBoot,
@@ -165,7 +159,7 @@ impl<'a> MmVariableParsedRequest<'a> {
     }
 }
 
-impl Display for MmVariableParsedRequest<'_> {
+impl Display for MmVariableParsedRequest {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         match self {
             MmVariableParsedRequest::GetVariable(id) => {
@@ -174,16 +168,13 @@ impl Display for MmVariableParsedRequest<'_> {
             MmVariableParsedRequest::GetNextVariableName(id) => {
                 write!(f, "request/var: get-next-variable-name {}", id.name)
             }
-            MmVariableParsedRequest::SetVariable {
-                guid: _,
-                name,
-                attr,
-                data,
-            } => {
+            MmVariableParsedRequest::SetVariable(var) => {
                 write!(
                     f,
-                    "request/var: set-variable {name}  {attr}  {} data bytes",
-                    data.len()
+                    "request/var: set-variable {}  {}  {} data bytes",
+                    var.name,
+                    var.attr,
+                    var.data.len()
                 )
             }
             MmVariableParsedRequest::QueryVariableInfo => {
@@ -213,7 +204,7 @@ impl Display for MmVariableParsedRequest<'_> {
 pub struct MmVariableRequest<'a> {
     pub data: &'a [u8],
     pub function: u64,
-    pub parsed: Option<MmVariableParsedRequest<'a>>,
+    pub parsed: Option<MmVariableParsedRequest>,
 }
 
 impl<'a> MmVariableRequest<'a> {
@@ -316,21 +307,8 @@ impl<'a> MmVariableRequest<'a> {
         self.response(Status::SUCCESS, Some(&reply))
     }
 
-    fn set_variable(
-        &self,
-        store: &mut EfiVarStore,
-        guid: &Guid,
-        name: &CStr16,
-        attr: &EfiVarAttr,
-        data: &[u8],
-    ) -> Vec<u8> {
-        let var = EfiVar {
-            guid: *guid,
-            name: String::from(name),
-            attr: *attr,
-            data: data.to_vec(),
-        };
-        let res = store.set(var);
+    fn set_variable(&self, store: &mut EfiVarStore, var: &EfiVar) -> Vec<u8> {
+        let res = store.set(var.clone());
         if let Err(e) = res {
             debug!("variable/set/error: {e}");
             return self.response(e.status(), None);
@@ -381,12 +359,7 @@ impl<'a> MmVariableRequest<'a> {
             MmVariableParsedRequest::GetNextVariableName(id) => {
                 self.get_next_variable_name(store, id)
             }
-            MmVariableParsedRequest::SetVariable {
-                guid,
-                name,
-                attr,
-                data,
-            } => self.set_variable(store, guid, name, attr, data),
+            MmVariableParsedRequest::SetVariable(var) => self.set_variable(store, var),
             MmVariableParsedRequest::QueryVariableInfo => self.query_variable_info(store),
             MmVariableParsedRequest::ReadyToBoot => self.ready_to_boot(store),
             MmVariableParsedRequest::ExitBootService => self.exit_boot_service(store),
