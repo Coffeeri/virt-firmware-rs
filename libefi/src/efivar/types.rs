@@ -61,6 +61,12 @@ pub struct EfiVarId {
     pub guid: Guid,
 }
 
+impl EfiVarId {
+    pub fn new(name: String, guid: Guid) -> Self {
+        EfiVarId { name, guid }
+    }
+}
+
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct EfiVar {
     pub name: String,
