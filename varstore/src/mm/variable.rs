@@ -100,10 +100,7 @@ struct MmGetPayloadSize {
 // parsed request
 #[derive(Debug)]
 pub enum MmVariableParsedRequest<'a> {
-    GetVariable {
-        guid: Guid,
-        name: &'a CStr16,
-    },
+    GetVariable(EfiVarId),
     GetNextVariableName(EfiVarId),
     SetVariable {
         guid: Guid,
@@ -129,7 +126,8 @@ impl<'a> MmVariableParsedRequest<'a> {
                 let ns = access.name_size as usize;
                 let name = util::cstr16_from_bytes_with_nul(&namedata[0..ns])?;
                 let guid = Guid::from_bytes(access.guid);
-                MmVariableParsedRequest::GetVariable { guid, name }
+                let id = EfiVarId::new(String::from(name), guid);
+                MmVariableParsedRequest::GetVariable(id)
             }
             GET_NEXT_VARIABLE_NAME | LOCK_VARIABLE => {
                 let (next, namebytes) = MmNextVariable::new(body)?;
@@ -170,8 +168,8 @@ impl<'a> MmVariableParsedRequest<'a> {
 impl Display for MmVariableParsedRequest<'_> {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         match self {
-            MmVariableParsedRequest::GetVariable { guid: _, name } => {
-                write!(f, "request/var: get-variable {name}")
+            MmVariableParsedRequest::GetVariable(id) => {
+                write!(f, "request/var: get-variable {}", id.name)
             }
             MmVariableParsedRequest::GetNextVariableName(id) => {
                 write!(f, "request/var: get-next-variable-name {}", id.name)
@@ -271,24 +269,27 @@ impl<'a> MmVariableRequest<'a> {
         rsp
     }
 
-    fn get_variable(&self, store: &EfiVarStore, guid: &Guid, name: &CStr16) -> Vec<u8> {
-        let n = String::from(name);
-        let res = store.get(&n, guid);
+    fn get_variable(&self, store: &EfiVarStore, id: &EfiVarId) -> Vec<u8> {
+        let res = store.get(&id.name, &id.guid);
         if let Err(e) = res {
             debug!("variable/get/error: {e}");
             return self.response(e.status(), None);
         }
 
+        let Ok(cstr16) = CString16::try_from(id.name.as_str()) else {
+            return self.response(Status::DEVICE_ERROR, None);
+        };
+
         let var = res.unwrap();
         let access = MmVariableAccess {
-            guid: guid.to_bytes(),
-            name_size: name.num_bytes() as u64,
+            guid: id.guid.to_bytes(),
+            name_size: cstr16.num_bytes() as u64,
             data_size: var.data.len() as u64,
             attributes: var.attr,
         };
         let mut reply = Vec::new();
         reply.extend_from_slice(access.as_bytes());
-        reply.extend_from_slice(name.as_bytes());
+        reply.extend_from_slice(cstr16.as_bytes());
         reply.extend_from_slice(&var.data);
         self.response(Status::SUCCESS, Some(&reply))
     }
@@ -376,9 +377,7 @@ impl<'a> MmVariableRequest<'a> {
         }
         let parsed = self.parsed.as_ref().unwrap();
         match parsed {
-            MmVariableParsedRequest::GetVariable { guid, name } => {
-                self.get_variable(store, guid, name)
-            }
+            MmVariableParsedRequest::GetVariable(id) => self.get_variable(store, id),
             MmVariableParsedRequest::GetNextVariableName(id) => {
                 self.get_next_variable_name(store, id)
             }
