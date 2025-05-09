@@ -14,6 +14,7 @@ use zerocopy_derive::{FromBytes, Immutable, IntoBytes, Unaligned};
 use uefi::{Error, Status};
 use virtfw_libefi::efivar::types::EfiVarAttr;
 
+use crate::mm::util;
 use crate::store::EfiVarStore;
 
 // ----- VarCheckPolicyLibMmiHandler structs -----
@@ -54,15 +55,15 @@ struct MmVarCheckPolicyEnabled {
 
 const VARIABLE_POLICY_ENTRY_REVISION: u32 = 0x00010000;
 
-const VARIABLE_POLICY_TYPE_NO_LOCK: u32 = 0;
-const VARIABLE_POLICY_TYPE_LOCK_NOW: u32 = 1;
-const VARIABLE_POLICY_TYPE_LOCK_ON_CREATE: u32 = 2;
-const VARIABLE_POLICY_TYPE_LOCK_ON_VAR_STATE: u32 = 3;
+const VARIABLE_POLICY_TYPE_NO_LOCK: u8 = 0;
+const VARIABLE_POLICY_TYPE_LOCK_NOW: u8 = 1;
+const VARIABLE_POLICY_TYPE_LOCK_ON_CREATE: u8 = 2;
+const VARIABLE_POLICY_TYPE_LOCK_ON_VAR_STATE: u8 = 3;
 
 // VARIABLE_POLICY_ENTRY
 #[repr(C, packed)]
 #[derive(Debug, FromBytes)]
-struct VariablePolicyEntry {
+struct MmVariablePolicyEntry {
     version: u32,
     size: u16,
     offset_to_name: u16,
@@ -77,7 +78,7 @@ struct VariablePolicyEntry {
     // Name
 }
 
-impl VariablePolicyEntry {
+impl MmVariablePolicyEntry {
     pub fn new(data: &[u8]) -> Result<(Self, &[u8]), Error<&'static str>> {
         Self::read_from_prefix(data).or(Err(Error::new(
             Status::BAD_BUFFER_SIZE,
@@ -89,14 +90,14 @@ impl VariablePolicyEntry {
 // VARIABLE_LOCK_ON_VAR_STATE_POLICY
 #[repr(C, packed)]
 #[derive(Debug, FromBytes)]
-struct VariableLockOnVarState {
+struct MmVariableLockOnVarState {
     namespace: [u8; 16],
     value: u8,
     _padding: u8,
     // Name
 }
 
-impl VariableLockOnVarState {
+impl MmVariableLockOnVarState {
     pub fn new(data: &[u8]) -> Result<(Self, &[u8]), Error<&'static str>> {
         Self::read_from_prefix(data).or(Err(Error::new(
             Status::BAD_BUFFER_SIZE,
@@ -108,13 +109,78 @@ impl VariableLockOnVarState {
 // ----- implementation structs -----
 
 #[derive(Debug)]
-pub struct ParsedVariablePolicyEntry {
+pub enum VariablePolicyType {
+    NoLock,
+    LockNow,
+    LockOnCreate,
+    LockOnVarState {
+        namespace: Guid,
+        name: String,
+        value: u8,
+    },
+}
+
+#[derive(Debug)]
+pub struct VariablePolicyEntry {
     pub namespace: Guid,
     pub name: String,
     pub min_size: u32,
     pub max_size: u32,
     pub attr_must_have: EfiVarAttr,
     pub attr_cant_have: EfiVarAttr,
+    pub lock_policy_type: VariablePolicyType,
+}
+
+impl VariablePolicyEntry {
+    pub fn new(data: &[u8]) -> Result<Self, Error<&'static str>> {
+        let (policy, _) = MmVariablePolicyEntry::new(data)?;
+        let pst = core::mem::size_of::<MmVariablePolicyEntry>();
+        let nst = policy.offset_to_name as usize;
+        let end = policy.size as usize;
+        let name = util::cstr16_from_bytes_with_nul(&data[nst..end])?;
+        let policy_type = match policy.lock_policy_type {
+            VARIABLE_POLICY_TYPE_NO_LOCK => VariablePolicyType::NoLock,
+            VARIABLE_POLICY_TYPE_LOCK_NOW => VariablePolicyType::LockNow,
+            VARIABLE_POLICY_TYPE_LOCK_ON_CREATE => VariablePolicyType::LockOnCreate,
+            VARIABLE_POLICY_TYPE_LOCK_ON_VAR_STATE => {
+                let (vstate, more) = MmVariableLockOnVarState::new(&data[pst..nst])?;
+                let vname = util::cstr16_from_bytes_with_nul(more)?;
+                VariablePolicyType::LockOnVarState {
+                    namespace: Guid::from_bytes(vstate.namespace),
+                    name: String::from(vname),
+                    value: vstate.value,
+                }
+            }
+            _ => {
+                return Err(Error::new(
+                    Status::INVALID_PARAMETER,
+                    "invalid variable policy type",
+                ))
+            }
+        };
+
+        Ok(VariablePolicyEntry {
+            namespace: Guid::from_bytes(policy.namespace),
+            name: String::from(name),
+            min_size: policy.min_size,
+            max_size: policy.max_size,
+            attr_must_have: policy.attr_must_have.into(),
+            attr_cant_have: policy.attr_cant_have.into(),
+            lock_policy_type: policy_type,
+        })
+    }
+}
+
+impl core::fmt::Display for VariablePolicyEntry {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "policy")?;
+        write!(f, " name={}", self.name)?;
+        write!(f, " size=0x{:x}-0x{:x}", self.min_size, self.max_size)?;
+        write!(f, " must={}", self.attr_must_have)?;
+        write!(f, " cant={}", self.attr_cant_have)?;
+        write!(f, " type={:?}", self.lock_policy_type)?;
+        Ok(())
+    }
 }
 
 #[derive(Debug)]
@@ -125,7 +191,12 @@ pub struct MmVarPolicyRequest<'a> {
 
 impl<'a> MmVarPolicyRequest<'a> {
     pub fn new(data: &'a [u8]) -> Result<Self, Error<&'static str>> {
-        let (hdr, _body) = MmVarCheckPolicy::new(data)?;
+        let (hdr, body) = MmVarCheckPolicy::new(data)?;
+        if hdr.command.get() == VAR_CHECK_POLICY_COMMAND_REGISTER {
+            let p = VariablePolicyEntry::new(body)?;
+            debug!("{}", p);
+            // panic!();
+        }
         Ok(MmVarPolicyRequest { hdr, data })
     }
 
