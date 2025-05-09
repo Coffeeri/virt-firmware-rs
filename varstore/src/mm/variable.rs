@@ -2,7 +2,6 @@
 //! [WIP] EfiSmmVariableProtocol reimplementation
 //!
 use alloc::string::String;
-use alloc::vec;
 use alloc::vec::Vec;
 use core::fmt::Display;
 use log::{debug, error};
@@ -10,7 +9,7 @@ use uguid::Guid;
 use zerocopy::{FromBytes, IntoBytes};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes};
 
-use uefi::{CStr16, Error, Status};
+use uefi::{CStr16, CString16, Error, Status};
 use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr};
 
 use crate::mm::util;
@@ -308,9 +307,7 @@ impl<'a> MmVariableRequest<'a> {
         let (next_name, next_guid) = res.unwrap();
         debug!("variable/next: {} -> {}", name, next_name);
 
-        let mut buffer: Vec<u16> = vec![0; next_name.len() + 1];
-        let Ok(cstr16) = CStr16::from_str_with_buf(next_name, &mut buffer) else {
-            // should not happen
+        let Ok(cstr16) = CString16::try_from(next_name) else {
             return self.response(Status::DEVICE_ERROR, None);
         };
 
