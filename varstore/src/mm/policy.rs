@@ -186,18 +186,13 @@ impl core::fmt::Display for VariablePolicyEntry {
 #[derive(Debug)]
 pub struct MmVarPolicyRequest<'a> {
     hdr: MmVarCheckPolicy,
-    pub data: &'a [u8],
+    pub body: &'a [u8],
 }
 
 impl<'a> MmVarPolicyRequest<'a> {
     pub fn new(data: &'a [u8]) -> Result<Self, Error<&'static str>> {
         let (hdr, body) = MmVarCheckPolicy::new(data)?;
-        if hdr.command.get() == VAR_CHECK_POLICY_COMMAND_REGISTER {
-            let p = VariablePolicyEntry::new(body)?;
-            debug!("{}", p);
-            // panic!();
-        }
-        Ok(MmVarPolicyRequest { hdr, data })
+        Ok(MmVarPolicyRequest { hdr, body })
     }
 
     fn response(&self, status: Status, _reply: Option<&[u8]>) -> Vec<u8> {
@@ -211,13 +206,38 @@ impl<'a> MmVarPolicyRequest<'a> {
     }
 
     fn process(&self, _store: &mut EfiVarStore) -> Vec<u8> {
-        let cmd = self.hdr.command.get();
-        if cmd == VAR_CHECK_POLICY_COMMAND_REGISTER {
-            debug!("policy/req: register [TODO]");
-            self.response(Status::SUCCESS, None)
-        } else {
-            debug!("policy/req: command 0x{:x} [TODO]", cmd);
-            Vec::new()
+        let cmd: u32 = self.hdr.command.get().into();
+        match cmd {
+            VAR_CHECK_POLICY_COMMAND_DISABLE => {
+                debug!("policy/req: disable [TODO]");
+                self.response(Status::SUCCESS, None)
+            }
+            VAR_CHECK_POLICY_COMMAND_IS_ENABLED => {
+                debug!("policy/req: is-enabled [TODO]");
+                let enabled = MmVarCheckPolicyEnabled {
+                    state: 0, // disabled
+                };
+                self.response(Status::SUCCESS, Some(enabled.as_bytes()))
+            }
+            VAR_CHECK_POLICY_COMMAND_REGISTER => {
+                debug!("policy/req: register [TODO]");
+                let res = VariablePolicyEntry::new(self.body);
+                if let Err(e) = res {
+                    return self.response(e.status(), None);
+                }
+                let policy = res.unwrap();
+                debug!("{}", policy);
+                // TODO: register actually
+                self.response(Status::SUCCESS, None)
+            }
+            VAR_CHECK_POLICY_COMMAND_LOCK => {
+                debug!("policy/req: lock [TODO]");
+                self.response(Status::SUCCESS, None)
+            }
+            _ => {
+                debug!("policy/req: unsupported command 0x{:x}", cmd);
+                self.response(Status::UNSUPPORTED, None)
+            }
         }
     }
 }
