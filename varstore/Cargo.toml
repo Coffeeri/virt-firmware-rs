@@ -18,7 +18,7 @@ log = "0.4"
 uefi = { version = "0.35", features = [ "alloc" ] }
 uguid = { version = "2", features = [ "serde" ] }
 stderrlog = "0.6"
-virtfw-libefi = { path = "../libefi", version = "0.2" }
+virtfw-libefi = { path = "../libefi", version = "0.2.1" }
 zerocopy = "0.8"
 zerocopy-derive = "0.8"
 serde = { version = "1", default-features = false, features = [ "alloc", "derive" ] }
