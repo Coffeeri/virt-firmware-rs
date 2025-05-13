@@ -20,7 +20,7 @@ pub struct EfiVarStore {
 }
 
 impl EfiVarStore {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         let variables = Vec::new();
         Self {
             end_of_dxe: false,
