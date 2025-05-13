@@ -15,6 +15,8 @@ use uguid::Guid;
 use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr};
 use virtfw_libefi::guids;
 
+use crate::store::EfiVarStore;
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct JsonHexString(String);
 
@@ -74,4 +76,13 @@ impl fmt::Display for JsonEfiVariable {
 pub struct JsonEfiVarStore {
     pub version: u32,
     pub variables: Vec<JsonEfiVariable>,
+}
+
+impl EfiVarStore {
+    pub fn json_import(&mut self, jstore: &JsonEfiVarStore) {
+        for jvar in &jstore.variables {
+            let var = EfiVar::try_from(jvar).unwrap();
+            self.set_unchecked(var);
+        }
+    }
 }

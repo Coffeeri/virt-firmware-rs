@@ -10,7 +10,6 @@ use uefi::{Error, Status};
 use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr};
 use virtfw_libefi::guids;
 
-use crate::json::JsonEfiVarStore;
 use crate::policy::VariablePolicyEntry;
 
 pub struct EfiVarStore {
@@ -45,13 +44,6 @@ impl EfiVarStore {
         }
     }
 
-    pub fn json_import(&mut self, jstore: &JsonEfiVarStore) {
-        for jvar in &jstore.variables {
-            let var = EfiVar::try_from(jvar).unwrap();
-            self.set_unchecked(var);
-        }
-    }
-
     fn get_position(&self, name: &str, guid: &Guid) -> Option<usize> {
         self.variables
             .iter()
@@ -63,7 +55,7 @@ impl EfiVarStore {
         Some(&self.variables[index])
     }
 
-    fn set_unchecked(&mut self, variable: EfiVar) {
+    pub(crate) fn set_unchecked(&mut self, variable: EfiVar) {
         let index = self.get_position(&variable.name, &variable.guid);
         if let Some(i) = index {
             // replace
