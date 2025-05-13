@@ -11,9 +11,12 @@ for cargo in */Cargo.toml; do
     name="${desc%-*}"
     vers="${desc##*-}"
 
+    commits=$(git rev-list $desc.. -- $subdir | wc -l)
+    test "$commits" = "0" && continue
+
     echo
     echo "#"
-    echo "# $name -- $vers"
+    echo "# $name -- $vers [$commits commits]"
     echo "#"
     git log --oneline $desc.. -- $subdir
 done
