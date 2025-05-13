@@ -10,6 +10,14 @@ repository.workspace = true
 authors.workspace = true
 edition.workspace = true
 
+[[bin]]
+name = "pcap-replay"
+required-features = [ "std" ]
+
+[[bin]]
+name = "json-read"
+required-features = [ "std" ]
+
 [features]
 default = [ "std" ]
 std = [ "zerocopy/std", "dep:flate2" ]
