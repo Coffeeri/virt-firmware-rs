@@ -15,8 +15,8 @@ doc-bios-64 build-bios-64 clippy-bios-64 release-bios-64 : TARGET := --target $(
 doc-efi-apps build-efi-apps clippy-efi-apps release-efi-apps : TARGET := --target $(ARCH)-unknown-uefi
 
 # targets
-default: build clippy $(POST64)
-all: build clippy test package $(POST64)
+default: build build-none clippy $(POST64)
+all: build build-none clippy test package $(POST64)
 doc docs: cargo-doc
 test tests: cargo-test
 build: $(BIOS32) cargo-build
@@ -74,6 +74,10 @@ test-%:
 
 build-%:
 	cargo build --package virtfw-$* $(TARGET)
+
+build-none:
+	cargo build --package virtfw-libefi --no-default-features --target $(ARCH)-unknown-none
+	cargo build --package virtfw-varstore --no-default-features --target $(ARCH)-unknown-none
 
 clippy-%:
 	cargo clippy --package virtfw-$* $(TARGET)
