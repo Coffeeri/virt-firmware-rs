@@ -39,3 +39,6 @@ echo "# uploading package ..."
 echo "# tagging release ..."
 (set -x; git tag "$tag")				|| exit 1
 (set -x; git push gitlab "$tag")			|| exit 1
+
+echo "# watching ci build ..."
+(set -x; sleep 10; gitlab-ci)
