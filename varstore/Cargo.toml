@@ -1,6 +1,6 @@
 [package]
 name = "virtfw-varstore"
-version = "0.1.0"
+version = "0.2.0"
 publish = true
 description = "efi variable store"
 readme = "README.md"
@@ -27,7 +27,7 @@ log = { version = "0.4", default-features = false }
 uefi = { version = "0.35", features = [ "alloc" ] }
 uguid = { version = "2", features = [ "serde" ] }
 stderrlog = { version = "0.6", optional = true }
-virtfw-libefi = { path = "../libefi", version = "0.2.1" }
+virtfw-libefi = { path = "../libefi", version = "0.2.2" }
 zerocopy = "0.8"
 zerocopy-derive = "0.8"
 serde = { version = "1", default-features = false, features = [ "alloc", "derive" ] }
