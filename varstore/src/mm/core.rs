@@ -2,7 +2,6 @@ use core::fmt::Display;
 use log::error;
 use uguid::Guid;
 use zerocopy::FromBytes;
-use zerocopy_derive::FromBytes;
 
 use uefi::{Error, Status};
 use virtfw_libefi::guids;

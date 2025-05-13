@@ -8,8 +8,7 @@ use alloc::vec::Vec;
 use log::{debug, error};
 use uguid::Guid;
 use zerocopy::byteorder::little_endian::{U32, U64};
-use zerocopy::{FromBytes, IntoBytes, Unalign};
-use zerocopy_derive::{FromBytes, Immutable, IntoBytes, Unaligned};
+use zerocopy::{FromBytes, Immutable, IntoBytes, Unalign, Unaligned};
 
 use uefi::{Error, Status};
 use virtfw_libefi::efivar::types::EfiVarAttr;

@@ -6,8 +6,7 @@ use alloc::vec::Vec;
 use core::fmt::Display;
 use log::{debug, error};
 use uguid::Guid;
-use zerocopy::{FromBytes, IntoBytes};
-use zerocopy_derive::{FromBytes, Immutable, IntoBytes};
+use zerocopy::{FromBytes, Immutable, IntoBytes};
 
 use uefi::{CString16, Error, Status};
 use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr, EfiVarId};

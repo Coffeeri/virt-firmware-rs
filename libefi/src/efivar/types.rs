@@ -6,7 +6,7 @@ use alloc::vec::Vec;
 
 use bitfield_struct::bitfield;
 use uguid::Guid;
-use zerocopy_derive::{FromBytes, Immutable, IntoBytes};
+use zerocopy::{FromBytes, Immutable, IntoBytes};
 
 #[bitfield(u32)]
 #[derive(FromBytes, IntoBytes, Immutable, Eq, PartialEq)]

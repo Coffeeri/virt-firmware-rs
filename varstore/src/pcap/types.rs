@@ -1,4 +1,4 @@
-use zerocopy_derive::FromBytes;
+use zerocopy::FromBytes;
 
 pub const PCAP_MAGIC: u32 = 0xa1b2c3d4;
 

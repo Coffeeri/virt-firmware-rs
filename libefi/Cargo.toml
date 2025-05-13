@@ -19,5 +19,4 @@ byteorder = { version = "1", default-features = false }
 log = { version = "0.4", default-features = false }
 udev = { version = "0.9", optional = true }
 uguid = "2"
-zerocopy = "0.8"
-zerocopy-derive = "0.8"
+zerocopy = { version = "0.8", features = [ "derive" ] }

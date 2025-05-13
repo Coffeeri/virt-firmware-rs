@@ -10,7 +10,7 @@ use core::mem::size_of;
 use core::net::{Ipv4Addr, Ipv6Addr};
 
 use uguid::Guid;
-use zerocopy_derive::{FromBytes, Immutable, IntoBytes};
+use zerocopy::{FromBytes, Immutable, IntoBytes};
 
 use crate::nocasestr::NoCaseString;
 
