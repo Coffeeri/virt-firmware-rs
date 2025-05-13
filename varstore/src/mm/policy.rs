@@ -130,46 +130,6 @@ pub struct VariablePolicyEntry {
     pub lock_policy_type: VariablePolicyType,
 }
 
-impl VariablePolicyEntry {
-    pub fn new(data: &[u8]) -> Result<Self, Error<&'static str>> {
-        let (policy, _) = MmVariablePolicyEntry::new(data)?;
-        let pst = core::mem::size_of::<MmVariablePolicyEntry>();
-        let nst = policy.offset_to_name as usize;
-        let end = policy.size as usize;
-        let name = util::cstr16_from_bytes_with_nul(&data[nst..end])?;
-        let policy_type = match policy.lock_policy_type {
-            VARIABLE_POLICY_TYPE_NO_LOCK => VariablePolicyType::NoLock,
-            VARIABLE_POLICY_TYPE_LOCK_NOW => VariablePolicyType::LockNow,
-            VARIABLE_POLICY_TYPE_LOCK_ON_CREATE => VariablePolicyType::LockOnCreate,
-            VARIABLE_POLICY_TYPE_LOCK_ON_VAR_STATE => {
-                let (vstate, more) = MmVariableLockOnVarState::new(&data[pst..nst])?;
-                let vname = util::cstr16_from_bytes_with_nul(more)?;
-                VariablePolicyType::LockOnVarState {
-                    namespace: Guid::from_bytes(vstate.namespace),
-                    name: String::from(vname),
-                    value: vstate.value,
-                }
-            }
-            _ => {
-                return Err(Error::new(
-                    Status::INVALID_PARAMETER,
-                    "invalid variable policy type",
-                ))
-            }
-        };
-
-        Ok(VariablePolicyEntry {
-            namespace: Guid::from_bytes(policy.namespace),
-            name: String::from(name),
-            min_size: policy.min_size,
-            max_size: policy.max_size,
-            attr_must_have: policy.attr_must_have.into(),
-            attr_cant_have: policy.attr_cant_have.into(),
-            lock_policy_type: policy_type,
-        })
-    }
-}
-
 impl core::fmt::Display for VariablePolicyEntry {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "policy")?;
@@ -204,6 +164,44 @@ impl<'a> MmVarPolicyRequest<'a> {
         rsp
     }
 
+    fn parse_entry(&self) -> Result<VariablePolicyEntry, Error<&'static str>> {
+        let (policy, _) = MmVariablePolicyEntry::new(self.body)?;
+        let pst = core::mem::size_of::<MmVariablePolicyEntry>();
+        let nst = policy.offset_to_name as usize;
+        let end = policy.size as usize;
+        let name = util::cstr16_from_bytes_with_nul(&self.body[nst..end])?;
+        let policy_type = match policy.lock_policy_type {
+            VARIABLE_POLICY_TYPE_NO_LOCK => VariablePolicyType::NoLock,
+            VARIABLE_POLICY_TYPE_LOCK_NOW => VariablePolicyType::LockNow,
+            VARIABLE_POLICY_TYPE_LOCK_ON_CREATE => VariablePolicyType::LockOnCreate,
+            VARIABLE_POLICY_TYPE_LOCK_ON_VAR_STATE => {
+                let (vstate, more) = MmVariableLockOnVarState::new(&self.body[pst..nst])?;
+                let vname = util::cstr16_from_bytes_with_nul(more)?;
+                VariablePolicyType::LockOnVarState {
+                    namespace: Guid::from_bytes(vstate.namespace),
+                    name: String::from(vname),
+                    value: vstate.value,
+                }
+            }
+            _ => {
+                return Err(Error::new(
+                    Status::INVALID_PARAMETER,
+                    "invalid variable policy type",
+                ))
+            }
+        };
+
+        Ok(VariablePolicyEntry {
+            namespace: Guid::from_bytes(policy.namespace),
+            name: String::from(name),
+            min_size: policy.min_size,
+            max_size: policy.max_size,
+            attr_must_have: policy.attr_must_have.into(),
+            attr_cant_have: policy.attr_cant_have.into(),
+            lock_policy_type: policy_type,
+        })
+    }
+
     fn process(&self, _store: &mut EfiVarStore) -> Vec<u8> {
         let cmd: u32 = self.hdr.command.get().into();
         match cmd {
@@ -220,7 +218,7 @@ impl<'a> MmVarPolicyRequest<'a> {
             }
             VAR_CHECK_POLICY_COMMAND_REGISTER => {
                 debug!("policy/req: register [TODO]");
-                let res = VariablePolicyEntry::new(self.body);
+                let res = self.parse_entry();
                 if let Err(e) = res {
                     return self.response(e.status(), None);
                 }
