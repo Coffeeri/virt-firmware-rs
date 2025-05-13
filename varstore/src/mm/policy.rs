@@ -1,5 +1,3 @@
-#![allow(dead_code)] // temporary
-
 //!
 //! [WIP] VarCheckPolicyLibMmiHandler + Edk2VariablePolicyProtocol reimplementation
 //!
@@ -21,7 +19,7 @@ use crate::store::EfiVarStore;
 const VAR_CHECK_POLICY_COMMAND_DISABLE: u32 = 0x01;
 const VAR_CHECK_POLICY_COMMAND_IS_ENABLED: u32 = 0x02;
 const VAR_CHECK_POLICY_COMMAND_REGISTER: u32 = 0x03;
-const VAR_CHECK_POLICY_COMMAND_DUMP: u32 = 0x04;
+//const VAR_CHECK_POLICY_COMMAND_DUMP: u32 = 0x04;
 const VAR_CHECK_POLICY_COMMAND_LOCK: u32 = 0x05;
 
 // VAR_CHECK_POLICY_COMM_HEADER
@@ -131,6 +129,9 @@ impl<'a> MmVarPolicyRequest<'a> {
 
     fn parse_entry(&self) -> Result<VariablePolicyEntry, Error<&'static str>> {
         let (policy, _) = MmVariablePolicyEntry::new(self.body)?;
+        if policy.version != VARIABLE_POLICY_ENTRY_REVISION {
+            return Err(Error::new(Status::UNSUPPORTED, "unknown policy version"));
+        }
         let pst = core::mem::size_of::<MmVariablePolicyEntry>();
         let nst = policy.offset_to_name as usize;
         let end = policy.size as usize;
