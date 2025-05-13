@@ -19,7 +19,6 @@ name = "json-read"
 required-features = [ "std" ]
 
 [features]
-default = [ "std" ]
 std = [ "zerocopy/std", "dep:flate2", "dep:getopts", "dep:stderrlog" ]
 
 [dependencies]

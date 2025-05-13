@@ -13,6 +13,7 @@ endif
 # target specific variables
 doc-bios-64 build-bios-64 clippy-bios-64 release-bios-64 : TARGET := --target $(ARCH)-unknown-none
 doc-efi-apps build-efi-apps clippy-efi-apps release-efi-apps : TARGET := --target $(ARCH)-unknown-uefi
+doc-varstore build-varstore clippy-varstore release-varstore : TARGET := --features std
 
 # targets
 default: build clippy $(POST64)
@@ -76,8 +77,8 @@ build-%:
 	cargo build --package virtfw-$* $(TARGET)
 
 build-none:
-	cargo build --package virtfw-libefi --no-default-features --target $(ARCH)-unknown-none
-	cargo build --package virtfw-varstore --no-default-features --target $(ARCH)-unknown-none
+	cargo build --package virtfw-libefi --target $(ARCH)-unknown-none
+	cargo build --package virtfw-varstore --target $(ARCH)-unknown-none
 
 clippy-%:
 	cargo clippy --package virtfw-$* $(TARGET)
