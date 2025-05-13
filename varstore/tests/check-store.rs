@@ -1,3 +1,5 @@
+#![cfg(feature = "std")]
+
 use uefi::Status;
 use uguid::{guid, Guid};
 

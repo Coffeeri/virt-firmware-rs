@@ -1,3 +1,5 @@
+#![cfg(feature = "std")]
+
 use virtfw_libefi::efivar::types::EfiVar;
 use virtfw_varstore::json::JsonEfiVarStore;
 use virtfw_varstore::pcap::parse::VarstorePcapParser;
