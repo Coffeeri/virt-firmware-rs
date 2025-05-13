@@ -6,7 +6,9 @@ POST64	:=
 
 ifeq ($(ARCH),x86_64)
 PKGS	+= bios-64
-BIOS32	+= build-bios-32 build-none
+BIOS32	+= build-bios-32
+BIOS32	+= build-none-libefi
+BIOS32	+= build-none-varstore
 POST64	+= cargo-post
 endif
 
@@ -76,9 +78,8 @@ test-%:
 build-%:
 	cargo build --package virtfw-$* $(TARGET)
 
-build-none:
-	cargo build --package virtfw-libefi --target $(ARCH)-unknown-none
-	cargo build --package virtfw-varstore --target $(ARCH)-unknown-none
+build-none-%:
+	cargo build --package virtfw-$* --target $(ARCH)-unknown-none
 
 clippy-%:
 	cargo clippy --package virtfw-$* $(TARGET)
