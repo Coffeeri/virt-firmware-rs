@@ -3,6 +3,8 @@ use uguid::Guid;
 
 use virtfw_libefi::efivar::types::EfiVarAttr;
 
+use crate::store::EfiVarStore;
+
 #[derive(Debug)]
 pub enum VariablePolicyType {
     NoLock,
@@ -35,5 +37,25 @@ impl core::fmt::Display for VariablePolicyEntry {
         write!(f, " cant={}", self.attr_cant_have)?;
         write!(f, " type={:?}", self.lock_policy_type)?;
         Ok(())
+    }
+}
+
+impl EfiVarStore {
+    pub fn policy_disable(&mut self) {
+        self.policy_disabled = true
+    }
+
+    pub fn policy_is_enabled(&self) -> bool {
+        !self.policy_disabled
+    }
+
+    pub fn policy_register(&mut self, entry: VariablePolicyEntry) {
+        // FIXME: check for existing entry
+        // FIXME: check for lock
+        self.policies.push(entry);
+    }
+
+    pub fn policy_lock(&mut self) {
+        self.policy_locked = true
     }
 }

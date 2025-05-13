@@ -11,22 +11,37 @@ use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr};
 use virtfw_libefi::guids;
 
 use crate::json::JsonEfiVarStore;
+use crate::policy::VariablePolicyEntry;
 
 pub struct EfiVarStore {
+    // boot phases
     end_of_dxe: bool,
     ready_to_boot: bool,
     exit_boot_service: bool,
+
+    // efi variables
     variables: Vec<EfiVar>,
+
+    // variable Policies
+    pub(crate) policy_disabled: bool,
+    pub(crate) policy_locked: bool,
+    pub(crate) policies: Vec<VariablePolicyEntry>,
 }
 
 impl EfiVarStore {
     pub const fn new() -> Self {
         let variables = Vec::new();
+        let policies = Vec::new();
         Self {
             end_of_dxe: false,
             ready_to_boot: false,
             exit_boot_service: false,
+
             variables,
+
+            policy_disabled: false,
+            policy_locked: false,
+            policies,
         }
     }
 
@@ -147,8 +162,13 @@ impl EfiVarStore {
         self.end_of_dxe = false;
         self.ready_to_boot = false;
         self.exit_boot_service = false;
+
         self.variables.retain(|v| v.attr.non_volatile());
         self.auth_init();
+
+        self.policy_disabled = false;
+        self.policy_locked = false;
+        self.policies.clear();
     }
 
     pub fn end_of_dxe(&mut self) {

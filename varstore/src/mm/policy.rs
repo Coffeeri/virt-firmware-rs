@@ -167,33 +167,33 @@ impl<'a> MmVarPolicyRequest<'a> {
         })
     }
 
-    fn process(&self, _store: &mut EfiVarStore) -> Vec<u8> {
+    fn process(&self, store: &mut EfiVarStore) -> Vec<u8> {
         let cmd: u32 = self.hdr.command.get().into();
         match cmd {
             VAR_CHECK_POLICY_COMMAND_DISABLE => {
-                debug!("policy/req: disable [TODO]");
+                debug!("policy/req/disable");
+                store.policy_disable();
                 self.response(Status::SUCCESS, None)
             }
             VAR_CHECK_POLICY_COMMAND_IS_ENABLED => {
-                debug!("policy/req: is-enabled [TODO]");
                 let enabled = MmVarCheckPolicyEnabled {
-                    state: 0, // disabled
+                    state: if store.policy_is_enabled() { 1 } else { 0 },
                 };
                 self.response(Status::SUCCESS, Some(enabled.as_bytes()))
             }
             VAR_CHECK_POLICY_COMMAND_REGISTER => {
-                debug!("policy/req: register [TODO]");
                 let res = self.parse_entry();
                 if let Err(e) = res {
                     return self.response(e.status(), None);
                 }
                 let policy = res.unwrap();
-                debug!("{}", policy);
-                // TODO: register actually
+                debug!("policy/req/register: {}", policy);
+                store.policy_register(policy);
                 self.response(Status::SUCCESS, None)
             }
             VAR_CHECK_POLICY_COMMAND_LOCK => {
-                debug!("policy/req: lock [TODO]");
+                debug!("policy/req/lock");
+                store.policy_lock();
                 self.response(Status::SUCCESS, None)
             }
             _ => {
