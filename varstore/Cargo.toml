@@ -3,8 +3,10 @@ name = "virtfw-varstore"
 version = "0.1.0"
 publish = true
 description = "efi variable store"
+readme = "README.md"
 
 license.workspace = true
+repository.workspace = true
 authors.workspace = true
 edition.workspace = true
 
