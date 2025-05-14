@@ -1,15 +1,16 @@
-image: registry.fedoraproject.org/fedora:latest
+#image: registry.fedoraproject.org/fedora:latest
+image: registry.gitlab.com/kraxel/rpm-package-builder:rust
 
 stages:
   - build
   - publish
 
-before_script:
-  - dnf install -y make gcc tree systemd-devel
-    seabios-bin edk2-ovmf edk2-experimental
-    cargo rustc rustfmt clippy
-    rust-std-static-x86_64-unknown-uefi
-    rust-std-static-x86_64-unknown-none
+#before_script:
+#  - dnf install -y make gcc tree systemd-devel
+#    seabios-bin edk2-ovmf edk2-experimental
+#    cargo rustc rustfmt clippy
+#    rust-std-static-x86_64-unknown-uefi
+#    rust-std-static-x86_64-unknown-none
 
 compile:
   stage: build
