@@ -68,7 +68,7 @@ impl EfiVarStore {
         self.set_boolean(
             &guids::EfiGlobalVariable,
             "VendorKeysNv",
-            EfiVarAttr::new_nv_bs_rt(),
+            EfiVarAttr::new_nv_bs().with_time_auth_wr_access(true),
             false,
         );
         self.set_boolean(
