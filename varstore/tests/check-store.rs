@@ -1,6 +1,6 @@
 #![cfg(feature = "std")]
 
-se uefi::Status;
+use uefi::Status;
 use uguid::{guid, Guid};
 
 use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr};
