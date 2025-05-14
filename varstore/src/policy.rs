@@ -1,3 +1,6 @@
+//!
+//! efi variable store implementation -- variable policies
+//!
 use alloc::string::String;
 use uguid::Guid;
 
