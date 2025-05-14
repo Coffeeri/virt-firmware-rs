@@ -25,9 +25,7 @@ impl EfiVarStore {
         self.set_boolean(
             &guids::EfiGlobalVariable,
             "SetupMode",
-            EfiVarAttr::new()
-                .with_bootservice_access(true)
-                .with_runtime_access(true),
+            EfiVarAttr::new_bs_rt(),
             enabled,
         );
     }
@@ -36,9 +34,7 @@ impl EfiVarStore {
         self.set_boolean(
             &guids::EfiGlobalVariable,
             "SecureBoot",
-            EfiVarAttr::new()
-                .with_bootservice_access(true)
-                .with_runtime_access(true),
+            EfiVarAttr::new_bs_rt(),
             enabled,
         );
     }
@@ -47,9 +43,7 @@ impl EfiVarStore {
         self.set_boolean(
             &guids::EfiCustomModeEnable,
             "CustomMode",
-            EfiVarAttr::new()
-                .with_non_volatile(true)
-                .with_bootservice_access(true),
+            EfiVarAttr::new_nv_bs(),
             enabled,
         );
     }
@@ -64,9 +58,7 @@ impl EfiVarStore {
         let var = EfiVar {
             guid: guids::EfiGlobalVariable,
             name: "SignatureSupport".into(),
-            attr: EfiVarAttr::new()
-                .with_bootservice_access(true)
-                .with_runtime_access(true),
+            attr: EfiVarAttr::new_bs_rt(),
             data: sigs,
         };
         self.set_unchecked(var);
@@ -76,18 +68,13 @@ impl EfiVarStore {
         self.set_boolean(
             &guids::EfiGlobalVariable,
             "VendorKeysNv",
-            EfiVarAttr::new()
-                .with_non_volatile(true)
-                .with_bootservice_access(true)
-                .with_time_auth_wr_access(true),
+            EfiVarAttr::new_nv_bs_rt(),
             false,
         );
         self.set_boolean(
             &guids::EfiGlobalVariable,
             "VendorKeys",
-            EfiVarAttr::new()
-                .with_bootservice_access(true)
-                .with_runtime_access(true),
+            EfiVarAttr::new_bs_rt(),
             false,
         );
     }

@@ -1,6 +1,6 @@
 #![cfg(feature = "std")]
 
-use uefi::Status;
+se uefi::Status;
 use uguid::{guid, Guid};
 
 use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr};
@@ -14,9 +14,7 @@ fn read_write_nv_bs() {
     let tvar = EfiVar {
         guid: EfiVarStoreTests,
         name: "test-nv-bs".into(),
-        attr: EfiVarAttr::new()
-            .with_non_volatile(true)
-            .with_bootservice_access(true),
+        attr: EfiVarAttr::new_nv_bs(),
         data: [23].to_vec(),
     };
 
@@ -43,9 +41,7 @@ fn read_write_bs_rt() {
     let tvar = EfiVar {
         guid: EfiVarStoreTests,
         name: "test-bs-rt".into(),
-        attr: EfiVarAttr::new()
-            .with_bootservice_access(true)
-            .with_runtime_access(true),
+        attr: EfiVarAttr::new_bs_rt(),
         data: [42].to_vec(),
     };
 
