@@ -25,9 +25,21 @@ pub struct EfiVarAttr {
 }
 
 impl EfiVarAttr {
+    pub fn new_nv_bs() -> EfiVarAttr {
+        EfiVarAttr::new()
+            .with_non_volatile(true)
+            .with_bootservice_access(true)
+    }
+
     pub fn new_nv_bs_rt() -> EfiVarAttr {
         EfiVarAttr::new()
             .with_non_volatile(true)
+            .with_bootservice_access(true)
+            .with_runtime_access(true)
+    }
+
+    pub fn new_bs_rt() -> EfiVarAttr {
+        EfiVarAttr::new()
             .with_bootservice_access(true)
             .with_runtime_access(true)
     }
