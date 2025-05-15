@@ -1,6 +1,6 @@
 [package]
 name = "virtfw-libefi"
-version = "0.2.4"
+version = "0.2.5"
 publish = true
 description = "library to read + write efi data structures"
 readme = "README.md"
