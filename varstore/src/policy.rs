@@ -4,6 +4,7 @@
 use alloc::string::String;
 use uguid::Guid;
 
+use uefi::{Error, Status};
 use virtfw_libefi::efivar::types::EfiVarAttr;
 
 use crate::store::EfiVarStore;
@@ -44,6 +45,30 @@ impl core::fmt::Display for VariablePolicyEntry {
 }
 
 impl EfiVarStore {
+    fn policy_find(&self, name: &str, guid: &Guid) -> Option<&VariablePolicyEntry> {
+        self.policies
+            .iter()
+            .find(|p| p.name == name && p.namespace == *guid)
+    }
+
+    fn policies_sort(&mut self) {
+        // sort by count of '#' wildcard chars
+        // less wildcards (more specific matches) go first
+        self.policies.sort_by(|a, b| {
+            let aw = a.name.chars().filter(|c| *c == '#').count();
+            let bw = b.name.chars().filter(|c| *c == '#').count();
+            aw.cmp(&bw)
+        });
+    }
+
+    fn policies_dump(&self) {
+        log::debug!("---");
+        for p in self.policies.iter() {
+            log::debug!("  {p}");
+        }
+        log::debug!("---");
+    }
+
     pub fn policy_disable(&mut self) {
         self.policy_disabled = true
     }
@@ -52,10 +77,20 @@ impl EfiVarStore {
         !self.policy_disabled
     }
 
-    pub fn policy_register(&mut self, entry: VariablePolicyEntry) {
-        // FIXME: check for existing entry
-        // FIXME: check for lock
+    pub fn policy_register(
+        &mut self,
+        entry: VariablePolicyEntry,
+    ) -> Result<(), Error<&'static str>> {
+        if self.policy_locked {
+            return Err(Error::new(Status::WRITE_PROTECTED, "policies locked"));
+        }
+        if self.policy_find(&entry.name, &entry.namespace).is_some() {
+            return Err(Error::new(Status::ALREADY_STARTED, "duplicate entry"));
+        }
         self.policies.push(entry);
+        self.policies_sort();
+        self.policies_dump();
+        Ok(())
     }
 
     pub fn policy_lock(&mut self) {

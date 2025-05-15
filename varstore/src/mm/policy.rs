@@ -189,7 +189,10 @@ impl<'a> MmVarPolicyRequest<'a> {
                 }
                 let policy = res.unwrap();
                 debug!("policy/req/register: {}", policy);
-                store.policy_register(policy);
+                let res = store.policy_register(policy);
+                if let Err(e) = res {
+                    return self.response(e.status(), None);
+                }
                 self.response(Status::SUCCESS, None)
             }
             VAR_CHECK_POLICY_COMMAND_LOCK => {
