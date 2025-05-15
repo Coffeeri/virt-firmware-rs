@@ -325,8 +325,12 @@ impl<'a> MmVariableRequest<'a> {
         self.response(Status::SUCCESS, Some(reply.as_bytes()))
     }
 
-    fn lock_variable(&self, _store: &EfiVarStore, _id: &EfiVarId) -> Vec<u8> {
-        debug!("TODO: implement lock-variable");
+    fn lock_variable(&self, store: &mut EfiVarStore, id: &EfiVarId) -> Vec<u8> {
+        let res = store.lock(&id.name, &id.guid);
+        if let Err(e) = res {
+            debug!("variable/lock/error: {e}");
+            return self.response(e.status(), None);
+        }
         self.response(Status::SUCCESS, None)
     }
 

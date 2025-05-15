@@ -9,7 +9,7 @@ use uguid::Guid;
 use uefi::{Error, Status};
 use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr};
 
-use crate::policy::VariablePolicyEntry;
+use crate::policy::{VariablePolicyEntry, VariablePolicyType};
 
 pub struct EfiVarStore {
     // boot phases
@@ -134,6 +134,20 @@ impl EfiVarStore {
             return Ok(var);
         }
         Err(Error::new(Status::NOT_FOUND, "variable not found"))
+    }
+
+    pub fn lock(&mut self, name: &str, guid: &Guid) -> Result<(), Error<&'static str>> {
+        let policy = VariablePolicyEntry {
+            name: name.into(),
+            namespace: *guid,
+            min_size: 0,
+            max_size: u32::MAX,
+            attr_must_have: 0.into(),
+            attr_cant_have: 0.into(),
+            lock_policy_type: VariablePolicyType::LockNow,
+        };
+        self.policy_register(policy)?;
+        Ok(())
     }
 
     pub fn get_next(&self, name: &str, guid: &Guid) -> Result<(&str, &Guid), Error<&'static str>> {
