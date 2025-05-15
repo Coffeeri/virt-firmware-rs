@@ -21,7 +21,6 @@ pub struct EfiVarStore {
     variables: Vec<EfiVar>,
 
     // variable Policies
-    pub(crate) policy_disabled: bool,
     pub(crate) policy_locked: bool,
     pub(crate) policies: Vec<VariablePolicyEntry>,
 }
@@ -37,7 +36,6 @@ impl EfiVarStore {
 
             variables,
 
-            policy_disabled: false,
             policy_locked: false,
             policies,
         }
@@ -212,7 +210,6 @@ impl EfiVarStore {
         self.variables.retain(|v| v.attr.non_volatile());
         self.auth_init();
 
-        self.policy_disabled = false;
         self.policy_locked = false;
         self.policies.clear();
     }

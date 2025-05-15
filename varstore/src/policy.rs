@@ -141,14 +141,6 @@ impl EfiVarStore {
         log::debug!("---");
     }
 
-    pub fn policy_disable(&mut self) {
-        self.policy_disabled = true
-    }
-
-    pub fn policy_is_enabled(&self) -> bool {
-        !self.policy_disabled
-    }
-
     pub fn policy_register(
         &mut self,
         entry: VariablePolicyEntry,

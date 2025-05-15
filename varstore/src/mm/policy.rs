@@ -173,13 +173,10 @@ impl<'a> MmVarPolicyRequest<'a> {
         match cmd {
             VAR_CHECK_POLICY_COMMAND_DISABLE => {
                 debug!("policy/req/disable");
-                store.policy_disable();
-                self.response(Status::SUCCESS, None)
+                self.response(Status::UNSUPPORTED, None)
             }
             VAR_CHECK_POLICY_COMMAND_IS_ENABLED => {
-                let enabled = MmVarCheckPolicyEnabled {
-                    state: if store.policy_is_enabled() { 1 } else { 0 },
-                };
+                let enabled = MmVarCheckPolicyEnabled { state: 1 };
                 self.response(Status::SUCCESS, Some(enabled.as_bytes()))
             }
             VAR_CHECK_POLICY_COMMAND_REGISTER => {
