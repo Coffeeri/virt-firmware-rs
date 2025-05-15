@@ -15,6 +15,7 @@ pub const EfiImageSecurityDatabase: Guid = guid!("d719b2cb-3d3a-4596-a3bc-dad00e
 pub const EfiSecureBootEnable: Guid = guid!("f0a30bc7-af08-4556-99c4-001009c93a44");
 pub const LoaderInfo: Guid = guid!("4a67b082-0a4c-41cf-b6c7-440b29bb8c4f");
 pub const VMMBootOrder: Guid = guid!("668f4529-63d0-4bb5-b65d-6fbb9d36a44a");
+pub const Shim: Guid = guid!("605dab50-e046-4300-abb6-3dd810dd8b23");
 
 // efi signatures
 pub const EfiCertPkcs7: Guid = guid!("4aafd29d-68df-49ee-8aa9-347d375665a7");
