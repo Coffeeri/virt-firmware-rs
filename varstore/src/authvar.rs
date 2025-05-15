@@ -2,7 +2,6 @@
 //! efi variable store implementation -- handle authenticated variables
 //!
 use alloc::vec::Vec;
-use uguid::Guid;
 
 use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr};
 use virtfw_libefi::guids;
@@ -10,19 +9,8 @@ use virtfw_libefi::guids;
 use crate::store::EfiVarStore;
 
 impl EfiVarStore {
-    fn set_boolean(&mut self, guid: &Guid, name: &str, attr: EfiVarAttr, boolean: bool) {
-        let b = if boolean { [1] } else { [0] };
-        let var = EfiVar {
-            guid: *guid,
-            name: name.into(),
-            attr,
-            data: b.to_vec(),
-        };
-        self.set_unchecked(var);
-    }
-
     fn set_setup_mode(&mut self, enabled: bool) {
-        self.set_boolean(
+        self.set_unchecked_bool(
             &guids::EfiGlobalVariable,
             "SetupMode",
             EfiVarAttr::new_bs_rt(),
@@ -31,7 +19,7 @@ impl EfiVarStore {
     }
 
     fn set_secure_boot(&mut self, enabled: bool) {
-        self.set_boolean(
+        self.set_unchecked_bool(
             &guids::EfiGlobalVariable,
             "SecureBoot",
             EfiVarAttr::new_bs_rt(),
@@ -40,7 +28,7 @@ impl EfiVarStore {
     }
 
     fn set_custom_mode(&mut self, enabled: bool) {
-        self.set_boolean(
+        self.set_unchecked_bool(
             &guids::EfiCustomModeEnable,
             "CustomMode",
             EfiVarAttr::new_nv_bs(),
@@ -65,13 +53,13 @@ impl EfiVarStore {
     }
 
     fn set_vendor_keys(&mut self) {
-        self.set_boolean(
+        self.set_unchecked_bool(
             &guids::EfiGlobalVariable,
             "VendorKeysNv",
             EfiVarAttr::new_nv_bs().with_time_auth_wr_access(true),
             false,
         );
-        self.set_boolean(
+        self.set_unchecked_bool(
             &guids::EfiGlobalVariable,
             "VendorKeys",
             EfiVarAttr::new_bs_rt(),

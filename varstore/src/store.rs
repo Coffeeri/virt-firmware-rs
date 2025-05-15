@@ -7,7 +7,7 @@ use alloc::vec::Vec;
 use uguid::Guid;
 
 use uefi::{Error, Status};
-use virtfw_libefi::efivar::types::EfiVar;
+use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr};
 
 use crate::policy::VariablePolicyEntry;
 
@@ -69,6 +69,23 @@ impl EfiVarStore {
             // append
             self.variables.push(variable);
         }
+    }
+
+    pub(crate) fn set_unchecked_bool(
+        &mut self,
+        guid: &Guid,
+        name: &str,
+        attr: EfiVarAttr,
+        boolean: bool,
+    ) {
+        let b = if boolean { [1] } else { [0] };
+        let var = EfiVar {
+            guid: *guid,
+            name: name.into(),
+            attr,
+            data: b.to_vec(),
+        };
+        self.set_unchecked(var);
     }
 
     pub fn check_old_new(old: &EfiVar, new: &EfiVar) -> Result<(), Error<&'static str>> {
