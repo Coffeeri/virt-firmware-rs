@@ -104,3 +104,22 @@ fn attr_auth_obsolete() {
     let res = store.set(tvar.clone());
     assert_eq!(res.err().unwrap().status(), Status::UNSUPPORTED);
 }
+
+#[test]
+fn lock_now() {
+    let tvar = EfiVar {
+        guid: EfiVarStoreTests,
+        name: "test-lock-now".into(),
+        attr: EfiVarAttr::new_nv_bs(),
+        data: [11].to_vec(),
+    };
+
+    let mut store = EfiVarStore::new();
+    store.set(tvar.clone()).expect("set failed");
+
+    store.lock(&tvar.name, &tvar.guid);
+    store.end_of_dxe();
+
+    let res = store.set(tvar.clone());
+    assert_eq!(res.err().unwrap().status(), Status::WRITE_PROTECTED);
+}
