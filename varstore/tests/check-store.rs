@@ -117,7 +117,7 @@ fn lock_now() {
     let mut store = EfiVarStore::new();
     store.set(tvar.clone()).expect("set failed");
 
-    store.lock(&tvar.name, &tvar.guid);
+    store.lock(&tvar.name, &tvar.guid).expect("lock failed");
     store.end_of_dxe();
 
     let res = store.set(tvar.clone());
