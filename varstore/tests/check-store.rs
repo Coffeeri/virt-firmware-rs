@@ -62,3 +62,45 @@ fn read_write_bs_rt() {
     let res = store.get(&tvar.name, &tvar.guid);
     assert_eq!(res.err().unwrap().status(), Status::NOT_FOUND);
 }
+
+#[test]
+fn attr_reserved() {
+    let tvar = EfiVar {
+        guid: EfiVarStoreTests,
+        name: "test-attr-reserved".into(),
+        attr: EfiVarAttr::new_nv_bs().with_reserved(4711),
+        data: [41, 11].to_vec(),
+    };
+
+    let mut store = EfiVarStore::new();
+    let res = store.set(tvar.clone());
+    assert_eq!(res.err().unwrap().status(), Status::INVALID_PARAMETER);
+}
+
+#[test]
+fn attr_hw_error() {
+    let tvar = EfiVar {
+        guid: EfiVarStoreTests,
+        name: "test-attr-hw-error".into(),
+        attr: EfiVarAttr::new_nv_bs().with_hardware_error(true),
+        data: [41, 12].to_vec(),
+    };
+
+    let mut store = EfiVarStore::new();
+    let res = store.set(tvar.clone());
+    assert_eq!(res.err().unwrap().status(), Status::INVALID_PARAMETER);
+}
+
+#[test]
+fn attr_auth_obsolete() {
+    let tvar = EfiVar {
+        guid: EfiVarStoreTests,
+        name: "test-attr-auth-obsolete".into(),
+        attr: EfiVarAttr::new_nv_bs().with_auth_wr_access(true),
+        data: [41, 13].to_vec(),
+    };
+
+    let mut store = EfiVarStore::new();
+    let res = store.set(tvar.clone());
+    assert_eq!(res.err().unwrap().status(), Status::UNSUPPORTED);
+}

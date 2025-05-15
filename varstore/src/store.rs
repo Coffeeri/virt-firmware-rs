@@ -110,6 +110,24 @@ impl EfiVarStore {
         Ok(())
     }
 
+    pub fn check_attributes(&self, variable: &EfiVar) -> Result<(), Error<&'static str>> {
+        if variable.attr.reserved() != 0 {
+            return Err(Error::new(Status::INVALID_PARAMETER, "reserved bit set"));
+        }
+        if variable.attr.hardware_error() {
+            return Err(Error::new(Status::INVALID_PARAMETER, "hw-error bit set"));
+        }
+        if variable.attr.auth_wr_access() {
+            // not used any more
+            return Err(Error::new(Status::UNSUPPORTED, "auth bit set"));
+        }
+        if variable.attr.time_auth_wr_access() {
+            // not implemented yet
+            return Err(Error::new(Status::UNSUPPORTED, "time auth bit set"));
+        }
+        Ok(())
+    }
+
     pub fn get(&self, name: &str, guid: &Guid) -> Result<&EfiVar, Error<&'static str>> {
         if let Some(var) = self.get_unchecked(name, guid) {
             self.check_service(var)?;
@@ -162,6 +180,7 @@ impl EfiVarStore {
             Self::check_old_new(old, &new)?;
         }
         self.check_service(&new)?;
+        self.check_attributes(&new)?;
         self.set_unchecked(new);
         Ok(())
     }
