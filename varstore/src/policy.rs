@@ -5,7 +5,7 @@ use alloc::string::String;
 use uguid::Guid;
 
 use uefi::{Error, Status};
-use virtfw_libefi::efivar::types::EfiVarAttr;
+use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr};
 
 use crate::store::EfiVarStore;
 
@@ -45,6 +45,78 @@ impl core::fmt::Display for VariablePolicyEntry {
 }
 
 impl EfiVarStore {
+    fn match_wildcard(pe: &VariablePolicyEntry, var: &EfiVar) -> bool {
+        if pe.namespace != var.guid {
+            return false;
+        }
+        if pe.name.len() != var.name.len() {
+            return false;
+        }
+        pe.name
+            .chars()
+            .zip(var.name.chars())
+            .all(|(p, v)| p == '#' || p == v)
+    }
+
+    fn policy_find_wildcard(&self, var: &EfiVar) -> Option<&VariablePolicyEntry> {
+        self.policies.iter().find(|p| Self::match_wildcard(p, var))
+    }
+
+    pub fn policy_check(&self, var: &EfiVar, is_new_var: bool) -> Result<(), Error<&'static str>> {
+        if !self.end_of_dxe {
+            return Ok(());
+        };
+
+        let Some(policy) = self.policy_find_wildcard(var) else {
+            return Ok(());
+        };
+
+        if var.data.len() < policy.min_size as usize {
+            return Err(Error::new(Status::INVALID_PARAMETER, "policy min-size"));
+        }
+        if var.data.len() > policy.max_size as usize {
+            return Err(Error::new(Status::INVALID_PARAMETER, "policy max-size"));
+        }
+
+        let attr = u32::from(var.attr);
+        let must = u32::from(policy.attr_must_have);
+        let cant = u32::from(policy.attr_cant_have);
+        if (attr & must) != must {
+            return Err(Error::new(Status::INVALID_PARAMETER, "policy attr must"));
+        }
+        if (attr & cant) != 0 {
+            return Err(Error::new(Status::INVALID_PARAMETER, "policy attr cant"));
+        }
+
+        match &policy.lock_policy_type {
+            VariablePolicyType::NoLock => {}
+            VariablePolicyType::LockNow => {
+                return Err(Error::new(Status::WRITE_PROTECTED, "policy lock-now"));
+            }
+            VariablePolicyType::LockOnCreate => {
+                if !is_new_var {
+                    return Err(Error::new(Status::WRITE_PROTECTED, "policy lock-on-create"));
+                }
+            }
+            VariablePolicyType::LockOnVarState {
+                namespace,
+                name,
+                value,
+            } => {
+                if let Ok(lockvar) = self.get(name, namespace) {
+                    if lockvar.data.len() == 1 && lockvar.data[0] == *value {
+                        return Err(Error::new(
+                            Status::WRITE_PROTECTED,
+                            "policy lock-on-var-state",
+                        ));
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
     fn policy_find(&self, name: &str, guid: &Guid) -> Option<&VariablePolicyEntry> {
         self.policies
             .iter()
