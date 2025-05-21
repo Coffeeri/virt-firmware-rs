@@ -82,13 +82,13 @@ pub struct HobList {
 }
 
 impl HobList {
-    fn findentry(entries: &[ConfigTableEntry]) -> Option<ConfigTableEntry> {
+    fn find_entry(entries: &[ConfigTableEntry]) -> Option<ConfigTableEntry> {
         let e = entries.iter().find(|e| e.guid == HandOffBlockListCfg)?;
         Some(e.clone())
     }
 
     pub fn new() -> Option<Self> {
-        let entry = with_config_table(Self::findentry)?;
+        let entry = with_config_table(Self::find_entry)?;
         Some(HobList {
             address: entry.address,
             offset: 0,
