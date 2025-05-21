@@ -4,3 +4,4 @@ pub mod distro;
 pub mod hobs;
 pub mod misc;
 pub mod qemu;
+pub mod rawhobs;
