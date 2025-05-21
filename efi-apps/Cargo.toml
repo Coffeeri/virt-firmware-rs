@@ -15,5 +15,6 @@ uefi = { version = "0.35", features = ["panic_handler", "logger", "log-debugcon"
 uefi-raw = "0.11"
 log = "0.4"
 virtfw-libhw = { path = "../libhw", version = "0.1", features = ["alloc"] }
+virtfw-libefi = { path = "../libefi", version = "0.2" }
 serde = { version = "1", default-features = false, features = [ "alloc", "derive" ] }
 serde_json = { version = "1", default-features = false, features = [ "alloc" ]  }
