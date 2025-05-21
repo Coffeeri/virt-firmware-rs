@@ -34,6 +34,15 @@ pub const EfiEventReadyToBoot: Guid = guid!("7ce88fb3-4bd7-4679-87a8-a8d8dee50d2
 pub const EfiSmmVariableProtocol: Guid = guid!("ed32d533-99e6-4209-9cc0-2d72cdd998a7");
 pub const VarCheckPolicyLibMmiHandler: Guid = guid!("da1b0d11-d1a7-46c4-9dc9-f3714875c6eb");
 
+// config tables
+pub const Acpi2Cfg: Guid = guid!("8868e871-e4f1-11d3-bc22-0080c73c8881");
+pub const AcpiCfg: Guid = guid!("eb9d2d30-2d88-11d3-9a16-0090273fc14d");
+pub const DebugImageInfoCfg: Guid = guid!("49152e77-1ada-4764-b7a2-7afefed95e8b");
+pub const DxeServicesCfg: Guid = guid!("05ad34ba-6f02-4214-952e-4da0398e2bb9");
+pub const HandOffBlockListCfg: Guid = guid!("7739f24c-93d7-11d4-9a3a-0090273fc14d");
+pub const MemoryTypeInfoCfg: Guid = guid!("4c19049f-4137-4dd3-9c10-8b97a83ffdfa");
+pub const SmbiosCfg: Guid = guid!("eb9d2d31-2d88-11d3-9a16-0090273fc14d");
+
 pub fn pretty_name(guid: &Guid) -> String {
     match *guid {
         EfiCustomModeEnable => "EfiCustomModeEnable".to_string(),
@@ -57,6 +66,14 @@ pub fn pretty_name(guid: &Guid) -> String {
 
         EfiSmmVariableProtocol => "EfiSmmVariableProtocol".to_string(),
         VarCheckPolicyLibMmiHandler => "VarCheckPolicyLibMmiHandler".to_string(),
+
+        Acpi2Cfg => "Acpi2Cfg".to_string(),
+        AcpiCfg => "AcpiCfg".to_string(),
+        DebugImageInfoCfg => "DebugImageInfoCfg".to_string(),
+        DxeServicesCfg => "DxeServicesCfg".to_string(),
+        HandOffBlockListCfg => "HandOffBlockListCfg".to_string(),
+        MemoryTypeInfoCfg => "MemoryTypeInfoCfg".to_string(),
+        SmbiosCfg => "SmbiosCfg".to_string(),
 
         _ => format!("{guid}"),
     }
