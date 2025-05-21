@@ -43,38 +43,56 @@ pub const HandOffBlockListCfg: Guid = guid!("7739f24c-93d7-11d4-9a3a-0090273fc14
 pub const MemoryTypeInfoCfg: Guid = guid!("4c19049f-4137-4dd3-9c10-8b97a83ffdfa");
 pub const SmbiosCfg: Guid = guid!("eb9d2d31-2d88-11d3-9a16-0090273fc14d");
 
-pub fn pretty_name(guid: &Guid) -> String {
+// guid HOBs
+pub const FdtHob: Guid = guid!("16958446-19B7-480B-B047-7485AD3F716D");
+pub const OvmfPkgPlatformInfo: Guid = guid!("dec9b486-1f16-47c7-8f68-df1a41888ba5");
+pub const PcdDatabase: Guid = guid!("9b3ada4f-ae56-4c24-8dea-f03b7558ae50");
+pub const SecPlatformInformation2: Guid = guid!("9e9f374b-8f16-4230-9824-5846ee766a97");
+
+pub fn try_pretty_name(guid: &Guid) -> Option<&'static str> {
     match *guid {
-        EfiCustomModeEnable => "EfiCustomModeEnable".to_string(),
-        EfiGlobalVariable => "EfiGlobalVariable".to_string(),
-        EfiImageSecurityDatabase => "EfiImageSecurityDatabase".to_string(),
-        EfiSecureBootEnable => "EfiSecureBootEnable".to_string(),
-        LoaderInfo => "LoaderInfo".to_string(),
-        ShimVariable => "ShimVariable".to_string(),
-        VMMBootOrder => "VMMBootOrder".to_string(),
+        EfiCustomModeEnable => Some("EfiCustomModeEnable"),
+        EfiGlobalVariable => Some("EfiGlobalVariable"),
+        EfiImageSecurityDatabase => Some("EfiImageSecurityDatabase"),
+        EfiSecureBootEnable => Some("EfiSecureBootEnable"),
+        LoaderInfo => Some("LoaderInfo"),
+        ShimVariable => Some("ShimVariable"),
+        VMMBootOrder => Some("VMMBootOrder"),
 
-        EfiCertPkcs7 => "EfiCertPkcs7".to_string(),
-        EfiCertSha256 => "EfiCertSha256".to_string(),
-        EfiCertSha384 => "EfiCertSha384".to_string(),
-        EfiCertSha512 => "EfiCertSha512".to_string(),
-        EfiCertRsa2048 => "EfiCertRsa2048".to_string(),
-        EfiCertX509 => "EfiCertX509".to_string(),
+        EfiCertPkcs7 => Some("EfiCertPkcs7"),
+        EfiCertSha256 => Some("EfiCertSha256"),
+        EfiCertSha384 => Some("EfiCertSha384"),
+        EfiCertSha512 => Some("EfiCertSha512"),
+        EfiCertRsa2048 => Some("EfiCertRsa2048"),
+        EfiCertX509 => Some("EfiCertX509"),
 
-        EfiEndOfDxeEventGroup => "EfiEndOfDxeEventGroup".to_string(),
-        EfiEventExitBootServices => "EfiEventExitBootServices".to_string(),
-        EfiEventReadyToBoot => "EfiEventReadyToBoot".to_string(),
+        EfiEndOfDxeEventGroup => Some("EfiEndOfDxeEventGroup"),
+        EfiEventExitBootServices => Some("EfiEventExitBootServices"),
+        EfiEventReadyToBoot => Some("EfiEventReadyToBoot"),
 
-        EfiSmmVariableProtocol => "EfiSmmVariableProtocol".to_string(),
-        VarCheckPolicyLibMmiHandler => "VarCheckPolicyLibMmiHandler".to_string(),
+        EfiSmmVariableProtocol => Some("EfiSmmVariableProtocol"),
+        VarCheckPolicyLibMmiHandler => Some("VarCheckPolicyLibMmiHandler"),
 
-        Acpi2Cfg => "Acpi2Cfg".to_string(),
-        AcpiCfg => "AcpiCfg".to_string(),
-        DebugImageInfoCfg => "DebugImageInfoCfg".to_string(),
-        DxeServicesCfg => "DxeServicesCfg".to_string(),
-        HandOffBlockListCfg => "HandOffBlockListCfg".to_string(),
-        MemoryTypeInfoCfg => "MemoryTypeInfoCfg".to_string(),
-        SmbiosCfg => "SmbiosCfg".to_string(),
+        Acpi2Cfg => Some("Acpi2Cfg"),
+        AcpiCfg => Some("AcpiCfg"),
+        DebugImageInfoCfg => Some("DebugImageInfoCfg"),
+        DxeServicesCfg => Some("DxeServicesCfg"),
+        HandOffBlockListCfg => Some("HandOffBlockListCfg"),
+        MemoryTypeInfoCfg => Some("MemoryTypeInfoCfg"),
+        SmbiosCfg => Some("SmbiosCfg"),
 
-        _ => format!("{guid}"),
+        FdtHob => Some("FdtHob"),
+        OvmfPkgPlatformInfo => Some("OvmfPkgPlatformInfo"),
+        PcdDatabase => Some("PcdDatabase"),
+        SecPlatformInformation2 => Some("SecPlatformInformation2"),
+
+        _ => None,
+    }
+}
+
+pub fn pretty_name(guid: &Guid) -> String {
+    match try_pretty_name(guid) {
+        Some(name) => name.to_string(),
+        None => format!("{guid}"),
     }
 }
