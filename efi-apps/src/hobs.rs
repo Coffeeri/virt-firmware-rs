@@ -21,11 +21,14 @@ pub enum Hob {
     ResourceDescriptor(HobResourceDescriptor),
     OtherType { hob_type: u16 },
     OtherGuid { hob_guid: Guid },
+    Broken,
 }
 
 impl Hob {
     fn new_guid(b: &[u8]) -> Hob {
-        let bytes: [u8; 16] = b[0..16].try_into().unwrap();
+        let Ok(bytes) = b[0..16].try_into() else {
+            return Hob::Broken;
+        };
         let guid = Guid::from_bytes(bytes);
         Hob::OtherGuid { hob_guid: guid }
     }
@@ -33,12 +36,16 @@ impl Hob {
     pub fn new(h: &HobHeader, b: &[u8]) -> Hob {
         match h.hob_type {
             EFI_HOB_TYPE_MEMORY_ALLOCATION => {
-                let m = HobMemoryAllocation::read_from_prefix(b);
-                Hob::MemoryAllocation(m.unwrap().0)
+                let Ok(m) = HobMemoryAllocation::read_from_prefix(b) else {
+                    return Hob::Broken;
+                };
+                Hob::MemoryAllocation(m.0)
             }
             EFI_HOB_TYPE_RESOURCE_DESCRIPTOR => {
-                let r = HobResourceDescriptor::read_from_prefix(b);
-                Hob::ResourceDescriptor(r.unwrap().0)
+                let Ok(r) = HobResourceDescriptor::read_from_prefix(b) else {
+                    return Hob::Broken;
+                };
+                Hob::ResourceDescriptor(r.0)
             }
             EFI_HOB_TYPE_GUID_EXTENSION => Self::new_guid(b),
             _ => Hob::OtherType {
@@ -72,6 +79,7 @@ impl core::fmt::Display for Hob {
             }
             Hob::OtherType { hob_type } => write!(f, "other type: {}", hob_type),
             Hob::OtherGuid { hob_guid } => write!(f, "other guid: {}", pretty_name(hob_guid)),
+            Hob::Broken => write!(f, "broken"),
         }
     }
 }
