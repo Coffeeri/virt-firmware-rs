@@ -81,6 +81,7 @@ fn list_hobs() {
             println!("  raw - list all hobs (default)");
             println!("  mem - list memory allocations");
             println!("  res - list resource descriptions");
+            println!("  fdt - check for device tree");
         }
         "mem" | "memory" => list_mem(hl),
         "res" | "resources" => list_res(hl),
