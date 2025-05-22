@@ -58,10 +58,10 @@ fn get_devtree_address(hl: hobs::HobList) -> Option<u64> {
 }
 
 #[cfg(feature = "fdt")]
-fn print_node(node: fdt::node::FdtNode) {
-    println!("{}", node.name);
+fn print_node(node: fdt::node::FdtNode, level: usize) {
+    println!("{:level$}{}", "", node.name, level = level);
     for c in node.children() {
-        print_node(c);
+        print_node(c, level + 2);
     }
 }
 
@@ -77,7 +77,9 @@ fn print_devtree(fdt_addr: u64) {
 
     println!("model: {}", fdt.root().model());
     if let Some(root) = fdt.find_node("/") {
-        print_node(root);
+        for c in root.children() {
+            print_node(c, 2);
+        }
     }
 }
 
