@@ -5,7 +5,6 @@
 #![allow(non_upper_case_globals)]
 
 extern crate alloc;
-use alloc::vec::Vec;
 use core::ffi::c_void;
 use zerocopy::FromBytes;
 
@@ -24,7 +23,7 @@ use crate::rawhobs::{
 pub enum Hob {
     MemoryAllocation(HobMemoryAllocation),
     ResourceDescriptor(HobResourceDescriptor),
-    Fdt(Vec<u8>),
+    Fdt(u64),
     OtherType { hob_type: u16 },
     OtherGuid { hob_guid: Guid },
     Broken,
@@ -32,12 +31,16 @@ pub enum Hob {
 
 impl Hob {
     fn new_guid(b: &[u8]) -> Hob {
-        let Ok(bytes) = b[0..16].try_into() else {
+        let Ok(guid_bytes) = b[0..16].try_into() else {
             return Hob::Broken;
         };
-        let guid = Guid::from_bytes(bytes);
+        let Ok(addr_bytes) = b[16..24].try_into() else {
+            return Hob::Broken;
+        };
+        let guid = Guid::from_bytes(guid_bytes);
+        let addr = u64::from_le_bytes(addr_bytes);
         match guid {
-            FdtHob => Hob::Fdt(b[16..].into()),
+            FdtHob => Hob::Fdt(addr),
             _ => Hob::OtherGuid { hob_guid: guid },
         }
     }

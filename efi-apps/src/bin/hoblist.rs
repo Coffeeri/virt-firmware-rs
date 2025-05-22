@@ -49,7 +49,7 @@ fn list_res(hl: hobs::HobList) {
     }
 }
 
-fn get_devtree(hl: hobs::HobList) -> Option<Vec<u8>> {
+fn get_devtree_address(hl: hobs::HobList) -> Option<u64> {
     let mut iter = hl.filter_map(|h| match h {
         hobs::Hob::Fdt(data) => Some(data),
         _ => None,
@@ -58,8 +58,9 @@ fn get_devtree(hl: hobs::HobList) -> Option<Vec<u8>> {
 }
 
 #[cfg(feature = "fdt")]
-fn print_devtree(rawfdt: &[u8]) {
-    let res = fdt::Fdt::new(rawfdt);
+fn print_devtree(fdt_addr: u64) {
+    println!("device tree address: 0x{:x}", fdt_addr);
+    let res = unsafe { fdt::Fdt::from_ptr(fdt_addr as *const u8) };
     if let Err(e) = res {
         println!("fdt parse error: {e}");
         return;
@@ -76,17 +77,17 @@ fn print_devtree(rawfdt: &[u8]) {
 }
 
 #[cfg(not(feature = "fdt"))]
-fn print_devtree(_rawfdt: &[u8]) {
+fn print_devtree(_fdt_addr: u64) {
     println!("have device tree");
 }
 
 fn devtree(hl: hobs::HobList) {
-    let Some(rawfdt) = get_devtree(hl) else {
+    let Some(fdt_addr) = get_devtree_address(hl) else {
         println!("no device tree");
         return;
     };
 
-    print_devtree(&rawfdt);
+    print_devtree(fdt_addr);
 }
 
 fn list_hobs() {
