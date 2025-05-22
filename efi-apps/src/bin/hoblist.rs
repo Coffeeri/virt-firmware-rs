@@ -58,6 +58,14 @@ fn get_devtree_address(hl: hobs::HobList) -> Option<u64> {
 }
 
 #[cfg(feature = "fdt")]
+fn print_node(node: fdt::node::FdtNode) {
+    println!("{}", node.name);
+    for c in node.children() {
+        print_node(c);
+    }
+}
+
+#[cfg(feature = "fdt")]
 fn print_devtree(fdt_addr: u64) {
     println!("device tree address: 0x{:x}", fdt_addr);
     let res = unsafe { fdt::Fdt::from_ptr(fdt_addr as *const u8) };
@@ -67,12 +75,9 @@ fn print_devtree(fdt_addr: u64) {
     }
     let fdt = res.unwrap();
 
-    println!("device tree");
-    println!("  {}", fdt.root().model());
-    if let Some(soc) = fdt.find_node("/soc") {
-        for dev in soc.children() {
-            println!("    {}", dev.name);
-        }
+    println!("model: {}", fdt.root().model());
+    if let Some(root) = fdt.find_node("/") {
+        print_node(root);
     }
 }
 
