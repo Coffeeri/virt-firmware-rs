@@ -1,6 +1,11 @@
 //!
 //! hob list types
 //!
+
+#![allow(non_upper_case_globals)]
+
+extern crate alloc;
+use alloc::vec::Vec;
 use core::ffi::c_void;
 use zerocopy::FromBytes;
 
@@ -8,7 +13,7 @@ use uefi::system::with_config_table;
 use uefi::table::cfg::ConfigTableEntry;
 use uefi::Guid;
 
-use virtfw_libefi::guids::{pretty_name, HandOffBlockListCfg};
+use virtfw_libefi::guids::{pretty_name, FdtHob, HandOffBlockListCfg};
 
 use crate::rawhobs::{
     HobHeader, HobMemoryAllocation, HobResourceDescriptor, EFI_HOB_TYPE_END_OF_HOB_LIST,
@@ -19,6 +24,7 @@ use crate::rawhobs::{
 pub enum Hob {
     MemoryAllocation(HobMemoryAllocation),
     ResourceDescriptor(HobResourceDescriptor),
+    Fdt(Vec<u8>),
     OtherType { hob_type: u16 },
     OtherGuid { hob_guid: Guid },
     Broken,
@@ -30,7 +36,10 @@ impl Hob {
             return Hob::Broken;
         };
         let guid = Guid::from_bytes(bytes);
-        Hob::OtherGuid { hob_guid: guid }
+        match guid {
+            FdtHob => Hob::Fdt(b[16..].into()),
+            _ => Hob::OtherGuid { hob_guid: guid },
+        }
     }
 
     pub fn new(h: &HobHeader, b: &[u8]) -> Hob {
@@ -77,6 +86,7 @@ impl core::fmt::Display for Hob {
                     r.typename(),
                 )
             }
+            Hob::Fdt(_) => write!(f, "device tree"),
             Hob::OtherType { hob_type } => write!(f, "other type: {}", hob_type),
             Hob::OtherGuid { hob_guid } => write!(f, "other guid: {}", pretty_name(hob_guid)),
             Hob::Broken => write!(f, "broken"),
