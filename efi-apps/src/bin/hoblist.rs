@@ -21,12 +21,9 @@ fn list_raw(hl: hobs::HobList) {
 
 fn list_mem(hl: hobs::HobList) {
     let mut ml: Vec<rawhobs::HobMemoryAllocation> = hl
-        .filter_map(|h| {
-            if let hobs::Hob::MemoryAllocation(m) = h {
-                Some(m)
-            } else {
-                None
-            }
+        .filter_map(|h| match h {
+            hobs::Hob::MemoryAllocation(m) => Some(m),
+            _ => None,
         })
         .collect();
     ml.sort_by_key(|m| m.address);
@@ -39,12 +36,9 @@ fn list_mem(hl: hobs::HobList) {
 
 fn list_res(hl: hobs::HobList) {
     let mut rl: Vec<rawhobs::HobResourceDescriptor> = hl
-        .filter_map(|h| {
-            if let hobs::Hob::ResourceDescriptor(m) = h {
-                Some(m)
-            } else {
-                None
-            }
+        .filter_map(|h| match h {
+            hobs::Hob::ResourceDescriptor(r) => Some(r),
+            _ => None,
         })
         .collect();
     rl.sort_by_key(|r| r.address);
@@ -53,6 +47,20 @@ fn list_res(hl: hobs::HobList) {
     for r in rl {
         println!("  {:08x} +{:08x} {}", r.address, r.length, r.typename());
     }
+}
+
+fn devtree(hl: hobs::HobList) {
+    let mut iter = hl.filter_map(|h| match h {
+        hobs::Hob::Fdt(data) => Some(data),
+        _ => None,
+    });
+
+    let Some(_rawfdt) = iter.next() else {
+        println!("no device tree");
+        return;
+    };
+
+    println!("have device tree");
 }
 
 fn list_hobs() {
@@ -76,6 +84,7 @@ fn list_hobs() {
         }
         "mem" | "memory" => list_mem(hl),
         "res" | "resources" => list_res(hl),
+        "fdt" | "devicetree" => devtree(hl),
         _ => list_raw(hl),
     }
 }
