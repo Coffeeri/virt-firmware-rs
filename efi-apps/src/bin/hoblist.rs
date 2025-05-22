@@ -49,18 +49,44 @@ fn list_res(hl: hobs::HobList) {
     }
 }
 
-fn devtree(hl: hobs::HobList) {
+fn get_devtree(hl: hobs::HobList) -> Option<Vec<u8>> {
     let mut iter = hl.filter_map(|h| match h {
         hobs::Hob::Fdt(data) => Some(data),
         _ => None,
     });
+    iter.next()
+}
 
-    let Some(_rawfdt) = iter.next() else {
+#[cfg(feature = "fdt")]
+fn print_devtree(rawfdt: &[u8]) {
+    let res = fdt::Fdt::new(rawfdt);
+    if let Err(e) = res {
+        println!("fdt parse error: {e}");
+        return;
+    }
+    let fdt = res.unwrap();
+
+    println!("device tree");
+    println!("  {}", fdt.root().model());
+    if let Some(soc) = fdt.find_node("/soc") {
+        for dev in soc.children() {
+            println!("    {}", dev.name);
+        }
+    }
+}
+
+#[cfg(not(feature = "fdt"))]
+fn print_devtree(_rawfdt: &[u8]) {
+    println!("have device tree");
+}
+
+fn devtree(hl: hobs::HobList) {
+    let Some(rawfdt) = get_devtree(hl) else {
         println!("no device tree");
         return;
     };
 
-    println!("have device tree");
+    print_devtree(&rawfdt);
 }
 
 fn list_hobs() {

@@ -10,6 +10,9 @@ repository.workspace = true
 authors.workspace = true
 edition.workspace = true
 
+[features]
+fdt = [ "dep:fdt" ]
+
 [dependencies]
 uefi = { version = "0.35", features = ["panic_handler", "logger", "log-debugcon", "alloc", "global_allocator" ] }
 uefi-raw = "0.11"
@@ -19,3 +22,4 @@ virtfw-libefi = { path = "../libefi", version = "0.2" }
 serde = { version = "1", default-features = false, features = [ "alloc", "derive" ] }
 serde_json = { version = "1", default-features = false, features = [ "alloc" ]  }
 zerocopy = { version = "0.8", features = [ "derive" ] }
+fdt = { version = "0.1", optional = true }
