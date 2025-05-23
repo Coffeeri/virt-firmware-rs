@@ -217,8 +217,12 @@ impl PciDevice {
         match self.class {
             0x0100 => "scsi",
             0x0101 => "ide",
+            0x0105 => "ata",
             0x0106 => "sata",
             0x0180 => "storage",
+
+            0x0200 => "ethernet",
+            0x0280 => "network",
 
             0x0300 => "vga",
             0x0380 => "display",
@@ -228,6 +232,7 @@ impl PciDevice {
             0x0604 => "pci bridge",
 
             0x0c03 => "usb",
+            0x0c05 => "smbus",
 
             _ => "unknown",
         }
