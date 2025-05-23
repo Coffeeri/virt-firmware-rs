@@ -26,7 +26,7 @@ pub fn print_fdt_node(node: fdt::node::FdtNode, level: usize) {
     };
 
     println!(
-        "{:ilen$}{:nlen$}{:20}{}",
+        "{:ilen$}{:nlen$}{:24}{}",
         "",
         node.name,
         compatible,
@@ -36,7 +36,7 @@ pub fn print_fdt_node(node: fdt::node::FdtNode, level: usize) {
             "-"
         },
         ilen = level,
-        nlen = 24 - level
+        nlen = 32 - level
     );
 
     if regs.len() != 1 {
