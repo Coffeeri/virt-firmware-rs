@@ -3,6 +3,7 @@
 
 pub mod fwcfg;
 pub mod ioport;
+pub mod mmio_x86;
 pub mod pci;
 pub mod qemuacpi;
 pub mod serial;
