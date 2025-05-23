@@ -1,11 +1,7 @@
 #![cfg(target_arch = "x86_64")]
 
-use crate::ioport;
 use bitfield_struct::bitfield;
 use core::fmt;
-
-const IOPORT_PCI_CMD: u16 = 0x0cf8;
-const IOPORT_PCI_DATA: u16 = 0x0cfc;
 
 pub const PCI_CFG_VENDOR: u8 = 0x00;
 pub const PCI_CFG_DEVICE: u8 = 0x02;
@@ -35,22 +31,6 @@ pub const PCI_CFG_BRIDGE_CTRL: u8 = 0x3e;
 
 pub const PCI_CFG_SUB_VENDOR: u8 = 0x2c;
 pub const PCI_CFG_SUB_DEVICE: u8 = 0x2e;
-
-#[bitfield(u32)]
-pub struct PciCmd {
-    #[bits(8)]
-    addr: u8,
-    #[bits(3)]
-    func: u8,
-    #[bits(5)]
-    slot: u8,
-    #[bits(8)]
-    bus: u8,
-    #[bits(7)]
-    _pad: u8,
-    #[bits(default = true)]
-    enable: bool,
-}
 
 #[bitfield(u16)]
 pub struct PciCommand {
@@ -144,54 +124,12 @@ pub struct PciDevAddr {
     pub func: u8,
 }
 
-impl PciDevAddr {
-    fn select(&self, addr: u8) {
-        let cmd = PciCmd::new()
-            .with_bus(self.bus)
-            .with_slot(self.slot)
-            .with_func(self.func)
-            .with_addr(addr);
-        ioport::outl(IOPORT_PCI_CMD, cmd.into());
-    }
-
-    pub fn readl(&self, addr: u8) -> u32 {
-        self.select(addr);
-        ioport::inl(IOPORT_PCI_DATA)
-    }
-
-    pub fn readw(&self, addr: u8) -> u16 {
-        self.select(addr);
-        ioport::inw(IOPORT_PCI_DATA)
-    }
-
-    pub fn readb(&self, addr: u8) -> u8 {
-        self.select(addr);
-        ioport::inb(IOPORT_PCI_DATA)
-    }
-
-    pub fn writel(&self, addr: u8, value: u32) {
-        self.select(addr);
-        ioport::outl(IOPORT_PCI_DATA, value);
-    }
-
-    pub fn writew(&self, addr: u8, value: u16) {
-        self.select(addr);
-        ioport::outw(IOPORT_PCI_DATA, value);
-    }
-
-    pub fn writeb(&self, addr: u8, value: u8) {
-        self.select(addr);
-        ioport::outb(IOPORT_PCI_DATA, value);
-    }
-}
-
 impl fmt::Display for PciDevAddr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:02x}:{:02x}.{:x}", self.bus, self.slot, self.func)
     }
 }
 
-#[derive(Debug)]
 pub struct PciDevice {
     pub addr: PciDevAddr,
     pub vendor: u16,
@@ -199,192 +137,22 @@ pub struct PciDevice {
     pub class: u16,
 }
 
+impl fmt::Display for PciDevice {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}  {:04x}:{:04x}  [{:04x} {}]  {}",
+            self.addr,
+            self.vendor,
+            self.device,
+            self.class,
+            self.class_name(),
+            self.device_name(),
+        )
+    }
+}
+
 impl PciDevice {
-    pub fn try_new(bus: u8, slot: u8, func: u8) -> Option<PciDevice> {
-        let addr = PciDevAddr { bus, slot, func };
-        let vendor = addr.readw(PCI_CFG_VENDOR);
-        if (vendor == 0x0000) || (vendor == 0xffff) {
-            return None;
-        }
-        let device = addr.readw(PCI_CFG_DEVICE);
-        let class = addr.readw(PCI_CFG_CLASS_DEVICE);
-        let pcidev = PciDevice {
-            addr,
-            vendor,
-            device,
-            class,
-        };
-        Some(pcidev)
-    }
-
-    pub fn command(&self) -> PciCommand {
-        PciCommand::from(self.addr.readw(PCI_CFG_COMMAND))
-    }
-
-    pub fn revision(&self) -> u8 {
-        self.addr.readb(PCI_CFG_DEVICE)
-    }
-
-    pub fn header_type(&self) -> PciHeaderType {
-        PciHeaderType::from(self.addr.readb(PCI_CFG_HEADER_TYPE))
-    }
-
-    pub fn is_mfd(&self) -> bool {
-        let h = self.header_type();
-        h.mfd()
-    }
-
-    pub fn is_vga(&self) -> bool {
-        self.class == 0x0300
-    }
-
-    pub fn is_device(&self) -> bool {
-        if self.header_type().value() != 0 {
-            return false;
-        }
-        true
-    }
-
-    pub fn bar(&self, nr: u8) -> Option<PciAddrRange> {
-        if nr > 5 {
-            return None;
-        }
-        let mut base = self.addr.readl(0x10 + nr * 4) as u64;
-        if nr > 0 {
-            let prevbase = self.addr.readl(0x10 + (nr - 1) * 4);
-            if (prevbase & 6) == 4 {
-                // previous bar is 64-bit
-                return None;
-            }
-        }
-
-        self.addr.writel(0x10 + nr * 4, !0);
-        let mut size = self.addr.readl(0x10 + nr * 4) as u64;
-        self.addr.writel(0x10 + nr * 4, base as u32);
-
-        if base == 0 {
-            None
-        } else if (base & 1) == 1 {
-            // io
-            base &= !0x03;
-            size &= !0x03;
-            size = !size & 0xffffffff;
-            Some(PciAddrRange {
-                name: "io",
-                base,
-                limit: base + size,
-            })
-        } else if (base & 6) == 0 {
-            // 32 bit mem
-            let prefmem = (base & 0x08) != 0;
-            base &= !0x0f;
-            size &= !0x0f;
-            size = !size & 0xffffffff;
-            Some(PciAddrRange {
-                name: if prefmem { "prefmem32" } else { "mem32" },
-                base,
-                limit: base + size,
-            })
-        } else if (base & 6) == 4 {
-            // 64 bit mem
-            let prefmem = (base & 0x08) != 0;
-            base &= !0x0f;
-            size &= !0x0f;
-
-            let nextbase = self.addr.readl(0x10 + (nr + 1) * 4) as u64;
-            self.addr.writel(0x10 + (nr + 1) * 4, !0);
-            let nextsize = self.addr.readl(0x10 + (nr + 1) * 4) as u64;
-            self.addr.writel(0x10 + (nr + 1) * 4, nextbase as u32);
-
-            base += nextbase << 32;
-            size += nextsize << 32;
-            size = !size;
-
-            Some(PciAddrRange {
-                name: if prefmem { "prefmem64" } else { "mem64" },
-                base,
-                limit: base + size,
-            })
-        } else {
-            Some(PciAddrRange {
-                name: "FIXME",
-                base,
-                limit: 0,
-            })
-        }
-    }
-
-    pub fn is_pci_bridge(&self) -> bool {
-        if self.class != 0x0604 {
-            return false;
-        }
-        if self.header_type().value() != 1 {
-            return false;
-        }
-        true
-    }
-
-    pub fn bridge_ctl(&self) -> PciBridgeCtrl {
-        PciBridgeCtrl::from(self.addr.readb(PCI_CFG_BRIDGE_CTRL))
-    }
-
-    pub fn bridge_secondary(&self) -> u8 {
-        self.addr.readb(PCI_CFG_SECONDARY_BUS)
-    }
-
-    pub fn bridge_io(&self) -> Option<PciAddrRange> {
-        let basereg = self.addr.readb(PCI_CFG_IO_BASE) as u64;
-        let limitreg = self.addr.readb(PCI_CFG_IO_LIMIT) as u64;
-        if limitreg != 0 {
-            let base = (basereg & 0xf0) << 8;
-            let limit = ((limitreg & 0xf0) << 8) + 0xfff;
-            Some(PciAddrRange {
-                name: "io",
-                base,
-                limit,
-            })
-        } else {
-            None
-        }
-    }
-
-    pub fn bridge_mem(&self) -> Option<PciAddrRange> {
-        let basereg = self.addr.readw(PCI_CFG_MEM_BASE) as u64;
-        let limitreg = self.addr.readw(PCI_CFG_MEM_LIMIT) as u64;
-        if limitreg != 0 {
-            let base = (basereg & 0xfff0) << 16;
-            let limit = ((limitreg & 0xfff0) << 16) + 0xfffff;
-            Some(PciAddrRange {
-                name: "mem",
-                base,
-                limit,
-            })
-        } else {
-            None
-        }
-    }
-
-    pub fn bridge_prefmem(&self) -> Option<PciAddrRange> {
-        let basereg = self.addr.readw(PCI_CFG_PREFMEM_BASE) as u64;
-        let limitreg = self.addr.readw(PCI_CFG_PREFMEM_LIMIT) as u64;
-        let basereg_u32 = self.addr.readl(PCI_CFG_PREFMEM_BASE_U32) as u64;
-        let limitreg_u32 = self.addr.readl(PCI_CFG_PREFMEM_LIMIT_U32) as u64;
-        if limitreg != 0 {
-            let mut base = (basereg & 0xfff0) << 16;
-            let mut limit = (limitreg & 0xfff0) << 16;
-            base |= basereg_u32 << 32;
-            limit |= limitreg_u32 << 32;
-            limit += 0xfffff;
-            Some(PciAddrRange {
-                name: "prefmem64",
-                base,
-                limit,
-            })
-        } else {
-            None
-        }
-    }
-
     pub fn device_name(&self) -> &str {
         match (self.vendor, self.device) {
             // 'pc' machine type
@@ -455,17 +223,197 @@ impl PciDevice {
     }
 }
 
-impl fmt::Display for PciDevice {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{}  {:04x}:{:04x}  [{:04x} {}]  {}",
-            self.addr,
-            self.vendor,
-            self.device,
-            self.class,
-            self.class_name(),
-            self.device_name(),
-        )
+pub trait PciHost {
+    fn readl(&self, dev: &PciDevAddr, addr: u8) -> u32;
+    fn readw(&self, dev: &PciDevAddr, addr: u8) -> u16;
+    fn readb(&self, dev: &PciDevAddr, addr: u8) -> u8;
+
+    fn writel(&self, dev: &PciDevAddr, addr: u8, value: u32);
+    fn writew(&self, dev: &PciDevAddr, addr: u8, value: u16);
+    fn writeb(&self, dev: &PciDevAddr, addr: u8, value: u8);
+
+    fn try_device(&self, bus: u8, slot: u8, func: u8) -> Option<PciDevice> {
+        let addr = PciDevAddr { bus, slot, func };
+        let vendor = self.readw(&addr, PCI_CFG_VENDOR);
+        if (vendor == 0x0000) || (vendor == 0xffff) {
+            return None;
+        }
+        let device = self.readw(&addr, PCI_CFG_DEVICE);
+        let class = self.readw(&addr, PCI_CFG_CLASS_DEVICE);
+        let pcidev = PciDevice {
+            addr,
+            vendor,
+            device,
+            class,
+        };
+        Some(pcidev)
+    }
+
+    fn command(&self, dev: &PciDevice) -> PciCommand {
+        PciCommand::from(self.readw(&dev.addr, PCI_CFG_COMMAND))
+    }
+
+    fn revision(&self, dev: &PciDevice) -> u8 {
+        self.readb(&dev.addr, PCI_CFG_DEVICE)
+    }
+
+    fn header_type(&self, dev: &PciDevice) -> PciHeaderType {
+        PciHeaderType::from(self.readb(&dev.addr, PCI_CFG_HEADER_TYPE))
+    }
+
+    fn is_vga(&self, dev: &PciDevice) -> bool {
+        dev.class == 0x0300
+    }
+
+    fn is_mfd(&self, dev: &PciDevice) -> bool {
+        let h = self.header_type(dev);
+        h.mfd()
+    }
+
+    fn is_device(&self, dev: &PciDevice) -> bool {
+        if self.header_type(dev).value() != 0 {
+            return false;
+        }
+        true
+    }
+
+    fn bar(&self, dev: &PciDevice, nr: u8) -> Option<PciAddrRange> {
+        if nr > 5 {
+            return None;
+        }
+        let mut base = self.readl(&dev.addr, 0x10 + nr * 4) as u64;
+        if nr > 0 {
+            let prevbase = self.readl(&dev.addr, 0x10 + (nr - 1) * 4);
+            if (prevbase & 6) == 4 {
+                // previous bar is 64-bit
+                return None;
+            }
+        }
+
+        self.writel(&dev.addr, 0x10 + nr * 4, !0);
+        let mut size = self.readl(&dev.addr, 0x10 + nr * 4) as u64;
+        self.writel(&dev.addr, 0x10 + nr * 4, base as u32);
+
+        if base == 0 {
+            None
+        } else if (base & 1) == 1 {
+            // io
+            base &= !0x03;
+            size &= !0x03;
+            size = !size & 0xffffffff;
+            Some(PciAddrRange {
+                name: "io",
+                base,
+                limit: base + size,
+            })
+        } else if (base & 6) == 0 {
+            // 32 bit mem
+            let prefmem = (base & 0x08) != 0;
+            base &= !0x0f;
+            size &= !0x0f;
+            size = !size & 0xffffffff;
+            Some(PciAddrRange {
+                name: if prefmem { "prefmem32" } else { "mem32" },
+                base,
+                limit: base + size,
+            })
+        } else if (base & 6) == 4 {
+            // 64 bit mem
+            let prefmem = (base & 0x08) != 0;
+            base &= !0x0f;
+            size &= !0x0f;
+
+            let nextbase = self.readl(&dev.addr, 0x10 + (nr + 1) * 4) as u64;
+            self.writel(&dev.addr, 0x10 + (nr + 1) * 4, !0);
+            let nextsize = self.readl(&dev.addr, 0x10 + (nr + 1) * 4) as u64;
+            self.writel(&dev.addr, 0x10 + (nr + 1) * 4, nextbase as u32);
+
+            base += nextbase << 32;
+            size += nextsize << 32;
+            size = !size;
+
+            Some(PciAddrRange {
+                name: if prefmem { "prefmem64" } else { "mem64" },
+                base,
+                limit: base + size,
+            })
+        } else {
+            Some(PciAddrRange {
+                name: "FIXME",
+                base,
+                limit: 0,
+            })
+        }
+    }
+
+    fn is_pci_bridge(&self, dev: &PciDevice) -> bool {
+        if dev.class != 0x0604 {
+            return false;
+        }
+        if self.header_type(dev).value() != 1 {
+            return false;
+        }
+        true
+    }
+
+    fn bridge_ctl(&self, dev: &PciDevice) -> PciBridgeCtrl {
+        PciBridgeCtrl::from(self.readb(&dev.addr, PCI_CFG_BRIDGE_CTRL))
+    }
+
+    fn bridge_secondary(&self, dev: &PciDevice) -> u8 {
+        self.readb(&dev.addr, PCI_CFG_SECONDARY_BUS)
+    }
+
+    fn bridge_io(&self, dev: &PciDevice) -> Option<PciAddrRange> {
+        let basereg = self.readb(&dev.addr, PCI_CFG_IO_BASE) as u64;
+        let limitreg = self.readb(&dev.addr, PCI_CFG_IO_LIMIT) as u64;
+        if limitreg != 0 {
+            let base = (basereg & 0xf0) << 8;
+            let limit = ((limitreg & 0xf0) << 8) + 0xfff;
+            Some(PciAddrRange {
+                name: "io",
+                base,
+                limit,
+            })
+        } else {
+            None
+        }
+    }
+
+    fn bridge_mem(&self, dev: &PciDevice) -> Option<PciAddrRange> {
+        let basereg = self.readw(&dev.addr, PCI_CFG_MEM_BASE) as u64;
+        let limitreg = self.readw(&dev.addr, PCI_CFG_MEM_LIMIT) as u64;
+        if limitreg != 0 {
+            let base = (basereg & 0xfff0) << 16;
+            let limit = ((limitreg & 0xfff0) << 16) + 0xfffff;
+            Some(PciAddrRange {
+                name: "mem",
+                base,
+                limit,
+            })
+        } else {
+            None
+        }
+    }
+
+    fn bridge_prefmem(&self, dev: &PciDevice) -> Option<PciAddrRange> {
+        let basereg = self.readw(&dev.addr, PCI_CFG_PREFMEM_BASE) as u64;
+        let limitreg = self.readw(&dev.addr, PCI_CFG_PREFMEM_LIMIT) as u64;
+        let basereg_u32 = self.readl(&dev.addr, PCI_CFG_PREFMEM_BASE_U32) as u64;
+        let limitreg_u32 = self.readl(&dev.addr, PCI_CFG_PREFMEM_LIMIT_U32) as u64;
+        if limitreg != 0 {
+            let mut base = (basereg & 0xfff0) << 16;
+            let mut limit = (limitreg & 0xfff0) << 16;
+            base |= basereg_u32 << 32;
+            limit |= limitreg_u32 << 32;
+            limit += 0xfffff;
+            Some(PciAddrRange {
+                name: "prefmem64",
+                base,
+                limit,
+            })
+        } else {
+            None
+        }
     }
 }
