@@ -61,10 +61,10 @@ fn scan_one_pci_bus<H: PciHost>(pcihost: &H, bus: u8, indent: usize) {
 }
 
 #[cfg(target_arch = "x86_64")]
-fn scan_pci_bus_x86() {
+fn scan_pci_bus_x86() -> bool {
     let Some(pcihost) = PciHostX86::new() else {
         println!("no x86 pci host bridge");
-        return;
+        return false;
     };
 
     let hostbr = pcihost.try_device(0, 0, 0).unwrap();
@@ -78,23 +78,24 @@ fn scan_pci_bus_x86() {
             println!("q35 ecam at 0x{:x}", addr);
             let Some(pciehost) = PciHostEcam::new(addr) else {
                 println!("no pcie host bridge");
-                return;
+                return false;
             };
             println!("scan ecam pcie bus");
             scan_one_pci_bus(&pciehost, 0, 2);
-            return;
+            return true;
         }
     }
 
     println!("scan x86 pci bus");
     scan_one_pci_bus(&pcihost, 0, 2);
+    true
 }
 
 #[cfg(feature = "fdt")]
-fn scan_pci_bus_fdt() {
+fn scan_pci_bus_fdt() -> bool {
     let Some(hl) = hobs::HobList::new() else {
         println!("failed to get hob list");
-        return;
+        return false;
     };
 
     let mut iter = hl.filter_map(|h| match h {
@@ -103,19 +104,19 @@ fn scan_pci_bus_fdt() {
     });
     let Some(fdt_addr) = iter.next() else {
         println!("no fdt hob found");
-        return;
+        return false;
     };
 
     let res = unsafe { fdt::Fdt::from_ptr(fdt_addr as *const u8) };
     if let Err(e) = res {
         println!("fdt parse error: {e}");
-        return;
+        return false;
     };
     let fdt = res.unwrap();
 
     let Some(ecam) = fdt.find_compatible(&["pci-host-ecam-generic"]) else {
         println!("fdt: no pcie host");
-        return;
+        return false;
     };
 
     let range = ecam.reg().unwrap().next().unwrap();
@@ -123,11 +124,30 @@ fn scan_pci_bus_fdt() {
     println!("pcie ecam at 0x{:x}", addr);
     let Some(pciehost) = PciHostEcam::new(addr) else {
         println!("pcie host bridge probe failed");
-        return;
+        return false;
     };
 
     println!("scan ecam pcie bus");
     scan_one_pci_bus(&pciehost, 0, 2);
+    true
+}
+
+fn scan_pci_bus() {
+    #[cfg(target_arch = "x86_64")]
+    {
+        if scan_pci_bus_x86() {
+            return;
+        }
+    }
+
+    #[cfg(feature = "fdt")]
+    {
+        if scan_pci_bus_fdt() {
+            return;
+        }
+    }
+
+    println!("pci scan not supported on this platform");
 }
 
 #[entry]
@@ -135,14 +155,7 @@ fn main() -> Status {
     uefi::helpers::init().unwrap();
     log::set_max_level(log::LevelFilter::Info);
 
-    #[cfg(target_arch = "x86_64")]
-    scan_pci_bus_x86();
-
-    #[cfg(feature = "fdt")]
-    scan_pci_bus_fdt();
-
-    #[cfg(not(target_arch = "x86_64"))]
-    println!("only x86 is supported right now");
+    scan_pci_bus();
 
     qemu::shutdown_if_direct_kernel_load();
     Status::SUCCESS
