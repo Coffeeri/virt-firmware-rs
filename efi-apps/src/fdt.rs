@@ -15,7 +15,7 @@ pub fn print_fdt_node(node: fdt::node::FdtNode, level: usize) {
     let regs: Vec<String> = if let Some(reg) = node.reg() {
         reg.map(|m| {
             format!(
-                "0x{:x} +0x{:x}",
+                "0x{:08x} +0x{:x}",
                 m.starting_address as u64,
                 m.size.unwrap_or(0),
             )
@@ -33,7 +33,7 @@ pub fn print_fdt_node(node: fdt::node::FdtNode, level: usize) {
         if regs.len() == 1 {
             regs.first().unwrap()
         } else {
-            "-"
+            ""
         },
         ilen = level,
         nlen = 32 - level
