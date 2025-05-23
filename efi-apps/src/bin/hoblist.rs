@@ -10,6 +10,8 @@ use alloc::vec::Vec;
 use uefi::prelude::*;
 use uefi::println;
 
+#[cfg(feature = "fdt")]
+use virtfw_efi_apps::fdt::print_fdt_node;
 use virtfw_efi_apps::{hobs, misc, qemu, rawhobs};
 
 fn list_raw(hl: hobs::HobList) {
@@ -58,25 +60,6 @@ fn get_devtree_address(hl: hobs::HobList) -> Option<u64> {
 }
 
 #[cfg(feature = "fdt")]
-fn print_node(node: fdt::node::FdtNode, level: usize) {
-    println!("{:level$}{}", "", node.name, level = level);
-    if let Some(reg) = node.reg() {
-        for m in reg {
-            println!(
-                "{:level$}reg: 0x{:x} +0x{:x}",
-                "",
-                m.starting_address as u64,
-                m.size.unwrap_or(0),
-                level = level + 2
-            );
-        }
-    }
-    for c in node.children() {
-        print_node(c, level + 4);
-    }
-}
-
-#[cfg(feature = "fdt")]
 fn print_devtree(fdt_addr: u64) {
     println!("device tree address: 0x{:x}", fdt_addr);
     let res = unsafe { fdt::Fdt::from_ptr(fdt_addr as *const u8) };
@@ -89,7 +72,7 @@ fn print_devtree(fdt_addr: u64) {
     println!("model: {}", fdt.root().model());
     if let Some(root) = fdt.find_node("/") {
         for c in root.children() {
-            print_node(c, 2);
+            print_fdt_node(c, 4);
         }
     }
 }
