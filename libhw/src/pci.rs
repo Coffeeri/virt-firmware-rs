@@ -179,11 +179,19 @@ impl PciDevice {
             // virtio devices (vendor 0x1af4)
             (0x1af4, 0x1000) => "virtio net",
             (0x1af4, 0x1001) => "virtio blk",
+            (0x1af4, 0x1003) => "virtio console",
             (0x1af4, 0x1004) => "virtio scsi",
+            (0x1af4, 0x1005) => "virtio rng",
+            (0x1af4, 0x1012) => "virtio vsock",
 
             (0x1af4, 0x1041) => "virtio net 1.0",
             (0x1af4, 0x1042) => "virtio blk 1.0",
+            (0x1af4, 0x1043) => "virtio console 1.0",
+            (0x1af4, 0x1044) => "virtio rng 1.0",
             (0x1af4, 0x1048) => "virtio scsi 1.0",
+            (0x1af4, 0x1050) => "virtio gpu",
+            (0x1af4, 0x1052) => "virtio input",
+            (0x1af4, 0x1053) => "virtio vsock 1.0",
 
             (0x1af4, _) => "virtio unknown",
 
