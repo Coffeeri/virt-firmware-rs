@@ -188,6 +188,7 @@ impl PciDevice {
             (0x1af4, _) => "virtio unknown",
 
             // qemu devices (vendor 0x1b36)
+            (0x1b36, 0x0008) => "qemu pcie host bridge",
             (0x1b36, 0x000c) => "qemu pcie root port",
             (0x1b36, 0x000d) => "qemu xhci",
             (0x1b36, _) => "qemu unknown",
