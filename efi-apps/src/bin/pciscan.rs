@@ -9,12 +9,14 @@ use uefi::println;
 
 use virtfw_efi_apps::qemu;
 #[cfg(target_arch = "x86_64")]
-use virtfw_libhw::pci;
+use virtfw_libhw::pci::PciHost;
+#[cfg(target_arch = "x86_64")]
+use virtfw_libhw::pci_ecam::PciHostEcam;
 #[cfg(target_arch = "x86_64")]
 use virtfw_libhw::pci_x86::PciHostX86;
 
 #[cfg(target_arch = "x86_64")]
-fn scan_one_pci_bus<H: pci::PciHost>(pcihost: &H, bus: u8, indent: usize) {
+fn scan_one_pci_bus<H: PciHost>(pcihost: &H, bus: u8, indent: usize) {
     for slot in 0..32 {
         for func in 0..8 {
             if let Some(dev) = pcihost.try_device(bus, slot, func) {
@@ -68,7 +70,26 @@ fn scan_pci_bus_x86() {
         return;
     };
 
-    println!("scan pci bus");
+    let hostbr = pcihost.try_device(0, 0, 0).unwrap();
+    if hostbr.vendor == 0x8086 && hostbr.device == 0x29c0 {
+        // q35
+        let lower = pcihost.readl(&hostbr.addr, 0x60) as u64;
+        let upper = pcihost.readl(&hostbr.addr, 0x64) as u64;
+        if (lower & 1) == 1 {
+            // enabled
+            let addr = (upper << 32) | (lower & !1);
+            println!("q35 ecam at 0x{:x}", addr);
+            let Some(pciehost) = PciHostEcam::new(addr) else {
+                println!("no pcie host bridge");
+                return;
+            };
+            println!("scan ecam pcie bus");
+            scan_one_pci_bus(&pciehost, 0, 2);
+            return;
+        }
+    }
+
+    println!("scan x86 pci bus");
     scan_one_pci_bus(&pcihost, 0, 2);
 }
 
