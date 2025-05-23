@@ -1,5 +1,3 @@
-#![cfg(target_arch = "x86_64")]
-
 use bitfield_struct::bitfield;
 use core::fmt;
 

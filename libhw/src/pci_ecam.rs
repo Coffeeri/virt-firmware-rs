@@ -1,8 +1,10 @@
-#![cfg(target_arch = "x86_64")]
-
 use bitfield_struct::bitfield;
 
+#[cfg(target_arch = "aarch64")]
+use crate::mmio_arm::{readb, readl, readw, writeb, writel, writew};
+#[cfg(target_arch = "x86_64")]
 use crate::mmio_x86::{readb, readl, readw, writeb, writel, writew};
+
 use crate::pci::{PciDevAddr, PciHost};
 
 #[bitfield(u64)]
