@@ -7,7 +7,7 @@
 use uefi::prelude::*;
 use uefi::println;
 
-use virtfw_efi_apps::qemu;
+use virtfw_efi_apps::{hobs, qemu};
 #[cfg(target_arch = "x86_64")]
 use virtfw_libhw::pci::PciHost;
 #[cfg(target_arch = "x86_64")]
@@ -66,7 +66,7 @@ fn scan_one_pci_bus<H: PciHost>(pcihost: &H, bus: u8, indent: usize) {
 #[cfg(target_arch = "x86_64")]
 fn scan_pci_bus_x86() {
     let Some(pcihost) = PciHostX86::new() else {
-        println!("no pci host bridge");
+        println!("no x86 pci host bridge");
         return;
     };
 
@@ -93,6 +93,46 @@ fn scan_pci_bus_x86() {
     scan_one_pci_bus(&pcihost, 0, 2);
 }
 
+#[cfg(feature = "fdt")]
+fn scan_pci_bus_fdt() {
+    let Some(hl) = hobs::HobList::new() else {
+        println!("failed to get hob list");
+        return;
+    };
+
+    let mut iter = hl.filter_map(|h| match h {
+        hobs::Hob::Fdt(data) => Some(data),
+        _ => None,
+    });
+    let Some(fdt_addr) = iter.next() else {
+        println!("no fdt hob found");
+        return;
+    };
+
+    let res = unsafe { fdt::Fdt::from_ptr(fdt_addr as *const u8) };
+    if let Err(e) = res {
+        println!("fdt parse error: {e}");
+        return;
+    };
+    let fdt = res.unwrap();
+
+    let Some(ecam) = fdt.find_compatible(&["pci-host-ecam-generic"]) else {
+        println!("fdt: no pcie host");
+        return;
+    };
+
+    let range = ecam.reg().unwrap().next().unwrap();
+    let addr = range.starting_address as u64;
+    println!("pcie ecam at 0x{:x}", addr);
+    let Some(pciehost) = PciHostEcam::new(addr) else {
+        println!("pcie host bridge probe failed");
+        return;
+    };
+
+    println!("scan ecam pcie bus");
+    scan_one_pci_bus(&pciehost, 0, 2);
+}
+
 #[entry]
 fn main() -> Status {
     uefi::helpers::init().unwrap();
@@ -100,6 +140,9 @@ fn main() -> Status {
 
     #[cfg(target_arch = "x86_64")]
     scan_pci_bus_x86();
+
+    #[cfg(feature = "fdt")]
+    scan_pci_bus_fdt();
 
     #[cfg(not(target_arch = "x86_64"))]
     println!("only x86 is supported right now");
