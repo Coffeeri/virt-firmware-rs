@@ -1,10 +1,6 @@
 use bitfield_struct::bitfield;
 
-#[cfg(target_arch = "aarch64")]
-use crate::mmio_arm::{readb, readl, readw, writeb, writel, writew};
-#[cfg(target_arch = "x86_64")]
-use crate::mmio_x86::{readb, readl, readw, writeb, writel, writew};
-
+use crate::mmio;
 use crate::pci::{PciDevAddr, PciHost};
 
 #[bitfield(u64)]
@@ -44,26 +40,26 @@ impl PciHostEcam {
 
 impl PciHost for PciHostEcam {
     fn readl(&self, dev: &PciDevAddr, addr: u8) -> u32 {
-        readl(self.ecam + self.offset(dev, addr))
+        mmio::readl(self.ecam + self.offset(dev, addr))
     }
 
     fn readw(&self, dev: &PciDevAddr, addr: u8) -> u16 {
-        readw(self.ecam + self.offset(dev, addr))
+        mmio::readw(self.ecam + self.offset(dev, addr))
     }
 
     fn readb(&self, dev: &PciDevAddr, addr: u8) -> u8 {
-        readb(self.ecam + self.offset(dev, addr))
+        mmio::readb(self.ecam + self.offset(dev, addr))
     }
 
     fn writel(&self, dev: &PciDevAddr, addr: u8, value: u32) {
-        writel(self.ecam + self.offset(dev, addr), value);
+        mmio::writel(self.ecam + self.offset(dev, addr), value);
     }
 
     fn writew(&self, dev: &PciDevAddr, addr: u8, value: u16) {
-        writew(self.ecam + self.offset(dev, addr), value);
+        mmio::writew(self.ecam + self.offset(dev, addr), value);
     }
 
     fn writeb(&self, dev: &PciDevAddr, addr: u8, value: u8) {
-        writeb(self.ecam + self.offset(dev, addr), value);
+        mmio::writeb(self.ecam + self.offset(dev, addr), value);
     }
 }
