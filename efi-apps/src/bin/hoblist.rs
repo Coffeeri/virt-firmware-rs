@@ -79,7 +79,7 @@ fn print_devtree(fdt_addr: u64) {
 
 #[cfg(not(feature = "fdt"))]
 fn print_devtree(_fdt_addr: u64) {
-    println!("have device tree");
+    println!("device tree found (compiled without parser support)");
 }
 
 fn devtree(hl: hobs::HobList) {
