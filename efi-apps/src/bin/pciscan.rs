@@ -8,10 +8,10 @@ use uefi::prelude::*;
 use uefi::println;
 
 use virtfw_efi_apps::{fdt, qemu};
-use virtfw_libhw::pci::PciHost;
-use virtfw_libhw::pci_ecam::PciHostEcam;
+use virtfw_libhw::pci::ecam::PciHostEcam;
 #[cfg(target_arch = "x86_64")]
-use virtfw_libhw::pci_x86::PciHostX86;
+use virtfw_libhw::pci::x86::PciHostX86;
+use virtfw_libhw::pci::PciHost;
 
 fn scan_one_pci_bus<H: PciHost>(pcihost: &H, bus: u8, indent: usize) {
     for slot in 0..32 {
