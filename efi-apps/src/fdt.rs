@@ -5,7 +5,9 @@ use alloc::vec::Vec;
 
 use uefi::println;
 
-pub fn print_fdt_node(node: fdt::node::FdtNode, level: usize) {
+use crate::hobs::{Hob, HobList};
+
+pub fn print_node(node: fdt::node::FdtNode, level: usize) {
     let compatible = if let Some(c) = node.compatible() {
         c.first()
     } else {
@@ -46,6 +48,40 @@ pub fn print_fdt_node(node: fdt::node::FdtNode, level: usize) {
     }
 
     for c in node.children() {
-        print_fdt_node(c, level + 4);
+        print_node(c, level + 4);
     }
+}
+
+pub fn find_addr(compatible: &str) -> Result<u64, &'static str> {
+    let Some(hl) = HobList::new() else {
+        return Err("failed to get hob list");
+    };
+
+    let mut iter = hl.filter_map(|h| match h {
+        Hob::Fdt(data) => Some(data),
+        _ => None,
+    });
+    let Some(fdt_addr) = iter.next() else {
+        return Err("no fdt hob found");
+    };
+
+    let res = unsafe { fdt::Fdt::from_ptr(fdt_addr as *const u8) };
+    let fdt = match res {
+        Err(_) => {
+            return Err("fdt: parse error");
+        }
+        Ok(f) => f,
+    };
+
+    let Some(device) = fdt.find_compatible(&[compatible]) else {
+        return Err("fdt: device not found");
+    };
+    let Some(mut reg) = device.reg() else {
+        return Err("fdt: reg property not found");
+    };
+    let Some(range) = reg.next() else {
+        return Err("fdt: reg property is empty");
+    };
+
+    Ok(range.starting_address as u64)
 }

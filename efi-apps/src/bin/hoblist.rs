@@ -11,7 +11,7 @@ use uefi::prelude::*;
 use uefi::println;
 
 #[cfg(feature = "fdt")]
-use virtfw_efi_apps::fdt::print_fdt_node;
+use virtfw_efi_apps::fdt::print_node;
 use virtfw_efi_apps::{hobs, misc, qemu, rawhobs};
 
 fn list_raw(hl: hobs::HobList) {
@@ -72,7 +72,7 @@ fn print_devtree(fdt_addr: u64) {
     println!("model: {}", fdt.root().model());
     if let Some(root) = fdt.find_node("/") {
         for c in root.children() {
-            print_fdt_node(c, 4);
+            print_node(c, 4);
         }
     }
 }
