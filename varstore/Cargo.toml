@@ -20,13 +20,13 @@ required-features = [ "std", "json" ]
 
 [features]
 std = [ "zerocopy/std", "dep:flate2", "dep:getopts", "dep:stderrlog" ]
-json = [ "dep:serde", "dep:serde_json" ]
+json = [ "dep:serde", "dep:serde_json", "uguid/serde" ]
 
 [dependencies]
 getopts = { version = "0.2", optional = true }
 log = { version = "0.4", default-features = false }
 uefi = { version = "0.35", features = [ "alloc" ] }
-uguid = { version = "2", features = [ "serde" ] }
+uguid = { version = "2" }
 stderrlog = { version = "0.6", optional = true }
 virtfw-libefi = { path = "../libefi", version = "0.2.5" }
 zerocopy = { version = "0.8", features = [ "derive" ] }
