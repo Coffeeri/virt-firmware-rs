@@ -8,21 +8,57 @@ use uefi::prelude::*;
 use uefi::println;
 
 use virtfw_efi_apps::qemu;
-#[cfg(target_arch = "x86_64")]
-use virtfw_libhw::fwcfg;
+use virtfw_libhw::fwcfg::FwCfg;
 
 #[cfg(target_arch = "x86_64")]
-fn show_fwcfg() {
-    if fwcfg::detect() {
-        let list = fwcfg::readdir();
-        for e in list {
-            println!("fwcfg file:  #{}  {}", e.item, e.name);
+use virtfw_libhw::fwcfg::x86::FwCfgX86;
+
+#[cfg(target_arch = "aarch64")]
+use virtfw_efi_apps::fdt;
+#[cfg(target_arch = "aarch64")]
+use virtfw_libhw::fwcfg::mmio::FwCfgMmio;
+
+fn show_fwcfg<F: FwCfg>(fwcfg: F) {
+    let list = fwcfg.readdir();
+    for e in list {
+        println!("fwcfg file:  #{}  {}", e.item, e.name);
+    }
+
+    if let Some((item, size)) = fwcfg.findfile("etc/e820") {
+        println!("fwcfg: etc/e820 is item {item}, size {size}");
+    }
+}
+
+fn fwcfg() {
+    #[cfg(target_arch = "x86_64")]
+    {
+        let fwcfg = FwCfgX86::new();
+        if fwcfg.detect() {
+            show_fwcfg(fwcfg);
+            return;
         }
     }
 
-    if let Some((item, size)) = fwcfg::findfile("etc/e820") {
-        println!("fwcfg: etc/e820 is item {item}, size {size}");
+    #[cfg(target_arch = "aarch64")]
+    {
+        let res = fdt::find_addr("qemu,fw-cfg-mmio");
+        let addr = match res {
+            Err(e) => {
+                println!("{e}");
+                return;
+            }
+            Ok(a) => a,
+        };
+
+        let fwcfg = FwCfgMmio::new(addr);
+        println!("mmio fwcfg at {:x}", addr);
+        if fwcfg.detect() {
+            show_fwcfg(fwcfg);
+            return;
+        }
     }
+
+    println!("platform not supported");
 }
 
 #[entry]
@@ -30,11 +66,7 @@ fn main() -> Status {
     uefi::helpers::init().unwrap();
     log::set_max_level(log::LevelFilter::Info);
 
-    #[cfg(target_arch = "x86_64")]
-    show_fwcfg();
-
-    #[cfg(not(target_arch = "x86_64"))]
-    println!("only x86 is supported right now");
+    fwcfg();
 
     qemu::shutdown_if_direct_kernel_load();
     Status::SUCCESS
