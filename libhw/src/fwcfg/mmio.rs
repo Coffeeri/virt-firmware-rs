@@ -1,5 +1,3 @@
-#![cfg(target_arch = "aarch64")]
-
 use crate::fwcfg::FwCfg;
 use crate::mmio;
 
