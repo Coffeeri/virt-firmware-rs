@@ -1,8 +1,8 @@
 #![cfg(target_arch = "x86_64")]
 
 use crate::ioport::outw;
+use crate::pci::x86::PciHostX86;
 use crate::pci::PciHost;
-use crate::pci_x86::PciHostX86;
 
 pub struct QemuAcpi {
     pm_base: u16,

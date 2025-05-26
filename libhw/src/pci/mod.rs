@@ -1,3 +1,6 @@
+pub mod ecam;
+pub mod x86;
+
 use bitfield_struct::bitfield;
 use core::fmt;
 
