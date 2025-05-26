@@ -14,9 +14,17 @@ for cargo in */Cargo.toml; do
     commits=$(git rev-list $desc.. -- $subdir | wc -l)
     test "$commits" = "0" && continue
 
+    next="$(yq .package.version $cargo)"
+    if test "$vers" != "v$next"; then
+        # version field has been updated
+        append=" -- next is v$next"
+    else
+        append=""
+    fi
+
     echo
     echo "#"
-    echo "# $name -- $vers [$commits commits]"
+    echo "# $name -- $vers [$commits commits]$append"
     echo "#"
     git log --oneline $desc.. -- $subdir
 done
