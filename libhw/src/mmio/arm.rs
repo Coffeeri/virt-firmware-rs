@@ -37,3 +37,15 @@ pub fn readl(addr: u64) -> u32 {
         ret
     }
 }
+
+pub fn writeq(addr: u64, value: u64) {
+    unsafe { asm!("str {value:x}, [{addr}]", value = in(reg) value, addr = in(reg) addr) }
+}
+
+pub fn readq(addr: u64) -> u64 {
+    unsafe {
+        let ret: u64;
+        asm!("ldr {value:x}, [{addr}]", addr = in(reg) addr, value = out(reg) ret);
+        ret
+    }
+}
