@@ -2,6 +2,7 @@
 /// test utility: dump pcap files
 ///
 use std::process::ExitCode;
+use uguid::Guid;
 
 use log::{error, info};
 
@@ -16,7 +17,8 @@ use virtfw_varstore::store::EfiVarStore;
 
 fn print_request(data: &[u8]) {
     let core = MmCore::new(data).unwrap();
-    match core.guid {
+    let guid = Guid::from_bytes(core.guid);
+    match guid {
         guids::EfiSmmVariableProtocol => {
             let var_res = MmVariableRequest::new(core.data);
             if let Err(e) = var_res.as_ref() {
@@ -38,7 +40,8 @@ fn print_request(data: &[u8]) {
 
 fn print_reply(data: &[u8]) {
     let core = MmCore::new(data).unwrap();
-    match core.guid {
+    let guid = Guid::from_bytes(core.guid);
+    match guid {
         guids::EfiSmmVariableProtocol => {
             let hdr_res = MmVariableHeader::new(core.data);
             if let Err(e) = hdr_res.as_ref() {

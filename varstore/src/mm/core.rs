@@ -20,7 +20,7 @@ pub struct MmCoreHeader {
 
 #[derive(Debug)]
 pub struct MmCore<'d> {
-    pub guid: Guid,
+    pub guid: [u8; 16],
     pub data: &'d [u8],
 }
 
@@ -28,19 +28,22 @@ impl<'d> MmCore<'d> {
     pub fn new(data: &'d [u8]) -> Result<Self, Error> {
         let (header, body) = MmCoreHeader::read_from_prefix(data)
             .or::<Error>(Err(Status::BAD_BUFFER_SIZE.into()))?;
-        let guid = Guid::from_bytes(header.guid);
         let size = header.size as usize;
         let data = &body[..size];
-        Ok(MmCore { guid, data })
+        Ok(MmCore {
+            guid: header.guid,
+            data,
+        })
     }
 }
 
 impl Display for MmCore<'_> {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        let guid = Guid::from_bytes(self.guid);
         write!(
             f,
             "{}: {} bytes",
-            guids::pretty_name(&self.guid),
+            guids::pretty_name(&guid),
             self.data.len()
         )
     }
@@ -54,7 +57,8 @@ pub fn core_request(store: &mut EfiVarStore, req: &mut [u8]) {
     };
 
     let creq = res.unwrap();
-    match creq.guid {
+    let guid = Guid::from_bytes(creq.guid);
+    match guid {
         guids::EfiSmmVariableProtocol => {
             // We'll go operate on a owned copy of the data for
             // security reasons, to avoid the guest being able to
@@ -87,7 +91,7 @@ pub fn core_request(store: &mut EfiVarStore, req: &mut [u8]) {
             store.exit_boot_service();
         }
         _ => {
-            error!("core/unknown: {}", guids::pretty_name(&creq.guid));
+            error!("core/unknown: {}", guids::pretty_name(&guid));
             panic!()
         }
     }
