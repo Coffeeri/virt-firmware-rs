@@ -21,7 +21,6 @@ pub struct MmCoreHeader {
 #[derive(Debug)]
 pub struct MmCore<'d> {
     pub guid: Guid,
-    pub size: usize,
     pub data: &'d [u8],
 }
 
@@ -32,13 +31,18 @@ impl<'d> MmCore<'d> {
         let guid = Guid::from_bytes(header.guid);
         let size = header.size as usize;
         let data = &body[..size];
-        Ok(MmCore { guid, size, data })
+        Ok(MmCore { guid, data })
     }
 }
 
 impl Display for MmCore<'_> {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "{}: {} bytes", guids::pretty_name(&self.guid), self.size)
+        write!(
+            f,
+            "{}: {} bytes",
+            guids::pretty_name(&self.guid),
+            self.data.len()
+        )
     }
 }
 
