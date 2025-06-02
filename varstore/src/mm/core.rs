@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use core::fmt::Display;
 use log::error;
 use uguid::Guid;
@@ -49,6 +50,34 @@ impl Display for MmCore<'_> {
     }
 }
 
+pub fn core_request_dispatch(
+    store: &mut EfiVarStore,
+    guid_bytes: &[u8; 16],
+    req: &[u8],
+) -> Vec<u8> {
+    let guid = Guid::from_bytes(*guid_bytes);
+    match guid {
+        guids::EfiSmmVariableProtocol => variable_request(store, req),
+        guids::VarCheckPolicyLibMmiHandler => policy_request(store, req),
+        guids::EfiEndOfDxeEventGroup => {
+            store.end_of_dxe();
+            Vec::new()
+        }
+        guids::EfiEventReadyToBoot => {
+            store.ready_to_boot();
+            Vec::new()
+        }
+        guids::EfiEventExitBootServices => {
+            store.exit_boot_service();
+            Vec::new()
+        }
+        _ => {
+            error!("core/unknown: {}", guids::pretty_name(&guid));
+            panic!()
+        }
+    }
+}
+
 pub fn core_request(store: &mut EfiVarStore, req: &mut [u8]) {
     let res = MmCore::new(req);
     if let Err(e) = res {
@@ -57,42 +86,16 @@ pub fn core_request(store: &mut EfiVarStore, req: &mut [u8]) {
     };
 
     let creq = res.unwrap();
-    let guid = Guid::from_bytes(creq.guid);
-    match guid {
-        guids::EfiSmmVariableProtocol => {
-            // We'll go operate on a owned copy of the data for
-            // security reasons, to avoid the guest being able to
-            // change the buffer wile we are processing it.
-            #[allow(clippy::unnecessary_to_owned)]
-            let rsp = variable_request(store, &creq.data.to_vec());
-            assert!(rsp.len() <= creq.data.len());
-            let start = core::mem::size_of::<MmCoreHeader>();
-            let end = start + rsp.len();
-            req[start..end].copy_from_slice(&rsp);
-        }
-        guids::VarCheckPolicyLibMmiHandler => {
-            // We'll go operate on a owned copy of the data for
-            // security reasons, to avoid the guest being able to
-            // change the buffer wile we are processing it.
-            #[allow(clippy::unnecessary_to_owned)]
-            let rsp = policy_request(store, &creq.data.to_vec());
-            assert!(rsp.len() <= creq.data.len());
-            let start = core::mem::size_of::<MmCoreHeader>();
-            let end = start + rsp.len();
-            req[start..end].copy_from_slice(&rsp);
-        }
-        guids::EfiEndOfDxeEventGroup => {
-            store.end_of_dxe();
-        }
-        guids::EfiEventReadyToBoot => {
-            store.ready_to_boot();
-        }
-        guids::EfiEventExitBootServices => {
-            store.exit_boot_service();
-        }
-        _ => {
-            error!("core/unknown: {}", guids::pretty_name(&guid));
-            panic!()
-        }
-    }
+
+    // We'll go operate on a owned copy of the data for
+    // security reasons, to avoid the guest being able to
+    // change the buffer wile we are processing it.
+    #[allow(clippy::unnecessary_to_owned)]
+    let rsp = core_request_dispatch(store, &creq.guid, &creq.data.to_vec());
+
+    // copy result back to request buffer
+    assert!(rsp.len() <= creq.data.len());
+    let start = core::mem::size_of::<MmCoreHeader>();
+    let end = start + rsp.len();
+    req[start..end].copy_from_slice(&rsp);
 }
