@@ -79,7 +79,7 @@ fn print_pagedata(igvm: &IgvmFile) {
     }
     if page_count > 0 {
         println!(
-            "PageData: end 0x{:x} ({} pages)",
+            "PageData: end 0x{:x} ({} more pages)",
             next_gpa.unwrap() - 1,
             page_count
         );
