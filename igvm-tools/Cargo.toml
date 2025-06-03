@@ -11,6 +11,9 @@ authors.workspace = true
 edition.workspace = true
 
 [dependencies]
+uguid.workspace = true
+zerocopy.workspace = true
+
 getopts = "0.2"
 igvm = "0.3"
 igvm_defs = "0.3"

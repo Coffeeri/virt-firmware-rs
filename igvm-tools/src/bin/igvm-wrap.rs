@@ -15,6 +15,8 @@ use igvm_defs::{
     PAGE_SIZE_4K,
 };
 
+use virtfw_igvm_tools::ovmfmeta::OvmfMeta;
+
 pub const NATIVE_COMPAT: u32 = 1u32 << 0;
 
 struct Builder {
@@ -97,6 +99,7 @@ fn parse_args() -> Option<getopts::Matches> {
     let mut opts = getopts::Options::new();
 
     opts.optflag("h", "help", "print this help text");
+    opts.optflag("", "meta", "print ovmf metadata");
 
     opts.optopt("i", "input", "input bios image", "BIOS");
     opts.optopt("o", "output", "output igvm image", "IGVM");
@@ -115,6 +118,13 @@ fn parse_args() -> Option<getopts::Matches> {
     };
 
     Some(cfg)
+}
+
+fn print_ovmfmeta(ovmfmeta: &OvmfMeta) {
+    println!("OVMF regions");
+    for r in &ovmfmeta.regions {
+        println!("  {}", r);
+    }
 }
 
 fn main() -> ExitCode {
@@ -137,6 +147,12 @@ fn main() -> ExitCode {
             return ExitCode::from(1);
         }
         let firmware = firmware_res.unwrap();
+
+        if cfg.opt_present("meta") {
+            if let Some(ovmfmeta) = OvmfMeta::new(&firmware) {
+                print_ovmfmeta(&ovmfmeta)
+            }
+        }
 
         let mut builder = Builder::new();
         builder.add_native_platform().add_firmware(&firmware);
