@@ -38,6 +38,7 @@ fn print_pagedata(igvm: &IgvmFile) {
             flags,
             data_type,
             compatibility_mask,
+            data,
             ..
         } = d
         {
@@ -59,7 +60,7 @@ fn print_pagedata(igvm: &IgvmFile) {
                 page_count = 0;
             }
             println!(
-                "PageData: gpa 0x{:x}, type {:?}, flags {}{}{}, {}",
+                "PageData: gpa 0x{:x}, type {:?}, flags {}{}{}{}, {}",
                 gpa,
                 data_type,
                 if flags.is_2mb_page() { "2m" } else { "4k" },
@@ -68,7 +69,8 @@ fn print_pagedata(igvm: &IgvmFile) {
                 } else {
                     ""
                 },
-                if flags.shared() { ",shared" } else { "" },
+                if flags.shared() { ", shared" } else { "" },
+                if data.is_empty() { ", empty" } else { "" },
                 format_compat(igvm, *compatibility_mask)
             );
             next_gpa = Some(*gpa + PAGE_SIZE_4K);

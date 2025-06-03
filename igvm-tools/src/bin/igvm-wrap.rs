@@ -95,6 +95,7 @@ impl Builder {
 fn parse_args() -> Option<getopts::Matches> {
     let args: Vec<String> = env::args().collect();
     let mut opts = getopts::Options::new();
+
     opts.optflag("h", "help", "print this help text");
 
     opts.optopt("i", "input", "input bios image", "BIOS");
