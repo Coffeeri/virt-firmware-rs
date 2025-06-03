@@ -180,9 +180,10 @@ impl OvmfMeta<'_> {
                 debug!("    {:?}", head);
                 for _ in 0..head.entries {
                     let (e, r) = OvmfMetaSevEntry::read_from_prefix(items).ok()?;
-                    let region = OvmfRegion::new_sev(&e);
-                    debug!("    {}", region);
-                    self.regions.push(region);
+                    if e.size != 0 {
+                        let region = OvmfRegion::new_sev(&e);
+                        self.regions.push(region);
+                    }
                     items = r;
                 }
             }
@@ -195,9 +196,10 @@ impl OvmfMeta<'_> {
                 debug!("    {:?}", head);
                 for _ in 0..head.entries {
                     let (e, r) = OvmfMetaTdxEntry::read_from_prefix(items).ok()?;
-                    let region = OvmfRegion::new_tdx(&e);
-                    debug!("    {}", region);
-                    self.regions.push(region);
+                    if e.mem_size != 0 {
+                        let region = OvmfRegion::new_tdx(&e);
+                        self.regions.push(region);
+                    }
                     items = r;
                 }
             }
