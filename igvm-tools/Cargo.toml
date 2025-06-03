@@ -14,6 +14,7 @@ edition.workspace = true
 uguid.workspace = true
 zerocopy.workspace = true
 
+bitfield-struct = "0.11"
 getopts = "0.2"
 igvm = "0.3"
 igvm_defs = "0.3"

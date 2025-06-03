@@ -1,0 +1,362 @@
+use bitfield_struct::bitfield;
+use igvm::registers::{SegmentRegister, TableRegister, X86Register};
+use igvm::snp_defs::{SevFeatures, SevSelector, SevVmsa};
+use igvm_defs::IgvmNativeVpContextX64;
+
+// for igvm::registers::SegmentRegister
+#[bitfield(u16)]
+pub struct SegmentAttributes {
+    // type field
+    #[bits(default = true)]
+    pub accessed: bool,
+    pub rw: bool, // readable (code) / writable (data)
+    pub ce: bool, // conforming (code) / expand-down (data)
+    pub code: bool,
+
+    #[bits(default = true)]
+    pub system: bool,
+    #[bits(2)]
+    pub dpl: u8,
+    pub present: bool,
+
+    #[bits(4)]
+    _limit1619: u8,
+
+    pub avl: bool,
+    pub long: bool,
+    pub db: bool,
+    pub granularity: bool,
+}
+
+impl SegmentAttributes {
+    // real mode (16 bit).
+    pub const fn code16() -> Self {
+        SegmentAttributes::new()
+            .with_rw(true)
+            .with_code(true)
+            .with_present(true)
+    }
+    pub const fn data16() -> Self {
+        SegmentAttributes::new()
+            .with_rw(true)
+            .with_code(false)
+            .with_present(true)
+    }
+
+    // protected mode (32 bit).
+    pub const fn code32() -> Self {
+        SegmentAttributes::new()
+            .with_rw(true)
+            .with_code(true)
+            .with_present(true)
+            .with_db(true)
+            .with_granularity(true)
+    }
+    pub const fn data32() -> Self {
+        SegmentAttributes::new()
+            .with_rw(true)
+            .with_code(false)
+            .with_present(true)
+            .with_db(true)
+            .with_granularity(true)
+    }
+
+    // long mode (64 bit).
+    pub const fn code64() -> Self {
+        SegmentAttributes::new()
+            .with_code(true)
+            .with_present(true)
+            .with_long(true)
+    }
+    pub const fn data64() -> Self {
+        SegmentAttributes::new().with_present(true)
+    }
+
+    // system segments
+    fn system_segment(systype: u16) -> Self {
+        SegmentAttributes::from(systype & 0x0f)
+            .with_system(false)
+            .with_present(true)
+    }
+
+    pub fn ldt() -> Self {
+        Self::system_segment(0x02)
+    }
+
+    pub fn tss16() -> Self {
+        Self::system_segment(0x03)
+    }
+
+    pub fn tss3264() -> Self {
+        Self::system_segment(0x0b)
+    }
+}
+
+#[bitfield(u64)]
+pub struct ControlRegister0 {
+    pub pe: bool, // protected mode enable
+    pub mp: bool, // monitor co-processor
+    pub em: bool, // x87 fpu emulation
+    pub ts: bool, // task switched
+    pub et: bool, // extension type
+    pub ne: bool, // numeric error,
+
+    #[bits(10)]
+    _pad0: u16,
+
+    pub wp: bool, // write protected
+    _pad1: bool,
+    pub am: bool, // alignment mask
+
+    #[bits(10)]
+    _pad2: u16,
+
+    pub nw: bool, // not write through
+    pub cd: bool, // cache disable
+    pub pg: bool, // paging
+
+    #[bits(32)]
+    _pad3: u32,
+}
+
+impl ControlRegister0 {
+    pub const fn reset() -> Self {
+        ControlRegister0::new()
+            .with_et(true)
+            .with_nw(true)
+            .with_cd(true)
+    }
+}
+
+#[bitfield(u64)]
+pub struct ControlRegister4 {
+    pub vme: bool,    // virtual 8086 mode
+    pub pvi: bool,    // protected mode virtual interrupts
+    pub tsd: bool,    // time stamp disable
+    pub de: bool,     // debugging extensions
+    pub pse: bool,    // page size extension
+    pub pae: bool,    // physical address extension
+    pub mce: bool,    // machine check exception,
+    pub pge: bool,    // page global enable
+    pub pce: bool,    // performance counter enable
+    pub osfxsr: bool, // fxsave / fxrstor
+    pub osmmexcept: bool,
+    pub unip: bool, // user mode instruction prevention
+    pub la57: bool, // 5-level paging
+    pub vmxe: bool, // vm extensions enable
+    pub smxr: bool, // safer mode extensions enable
+    _pad0: bool,
+
+    pub fsgsbase: bool,
+    pub pcide: bool,
+    pub osxsave: bool,
+    _pad1: bool,
+
+    pub smep: bool, // supervisor mode execution protection
+    pub smap: bool, // supervisor mode access prevention
+    pub pke: bool,  // protection key enable
+    pub cet: bool,  // control flow enforcement technology
+    pub pks: bool,  // protection key for supervisor mode pages
+
+    #[bits(39)]
+    _pad2: u64,
+}
+
+#[bitfield(u64)]
+pub struct ExtFeatureEnableReg {
+    pub sce: bool, // syscall enable
+
+    #[bits(7)]
+    _pad0: u8,
+
+    pub lme: bool, // long mode enable
+    _pad1: bool,
+
+    pub lma: bool, // long mode active
+    pub nxe: bool, // NX enable
+
+    #[bits(52)]
+    _pad0: u64,
+}
+
+fn common_regs() -> Vec<X86Register> {
+    let tab = TableRegister {
+        base: 0,
+        limit: 0xffff,
+    };
+    let cr0 = ControlRegister0::reset().into();
+    vec![
+        X86Register::Cr0(cr0),
+        X86Register::Gdtr(tab),
+        X86Register::Idtr(tab),
+    ]
+}
+
+pub fn real_mode_regs() -> Vec<X86Register> {
+    let code = SegmentRegister {
+        base: 0xffff0000,
+        limit: 0xffff,
+        selector: 0xf000,
+        attributes: SegmentAttributes::code16().into(),
+    };
+    let data = SegmentRegister {
+        base: 0,
+        limit: 0xffff,
+        selector: 0,
+        attributes: SegmentAttributes::data16().into(),
+    };
+    let tss = SegmentRegister {
+        base: 0,
+        limit: 0xffff,
+        selector: 0,
+        attributes: SegmentAttributes::tss16().into(),
+    };
+    let mut regs = vec![
+        X86Register::Rip(0xfff0),
+        X86Register::Cs(code),
+        X86Register::Ss(data),
+        X86Register::Ds(data),
+        X86Register::Es(data),
+        X86Register::Fs(data),
+        X86Register::Gs(data),
+        X86Register::Tr(tss),
+    ];
+
+    regs.append(&mut common_regs());
+    regs
+}
+
+pub fn flat32_mode_regs() -> Vec<X86Register> {
+    let code = SegmentRegister {
+        base: 0,
+        limit: 0xffffffff,
+        selector: 0x08,
+        attributes: SegmentAttributes::code32().into(),
+    };
+    let data = SegmentRegister {
+        base: 0,
+        limit: 0xffffffff,
+        selector: 0x10,
+        attributes: SegmentAttributes::data32().into(),
+    };
+    let tss = SegmentRegister {
+        base: 0,
+        limit: 0xffff,
+        selector: 0,
+        attributes: SegmentAttributes::tss3264().into(),
+    };
+    let mut regs = vec![
+        X86Register::Rip(0xfffffff0),
+        X86Register::Cs(code),
+        X86Register::Ss(data),
+        X86Register::Ds(data),
+        X86Register::Es(data),
+        X86Register::Fs(data),
+        X86Register::Gs(data),
+        X86Register::Tr(tss),
+    ];
+
+    regs.append(&mut common_regs());
+    regs
+}
+
+pub fn native_context(regs: &[X86Register]) -> IgvmNativeVpContextX64 {
+    // Temporary unsafe stopgap.  Once igvm switched to zerocopy 0.8 we can
+    // simply use IgvmNativeVpContextX64::new_zeroed() instead.
+    let mut ctx: IgvmNativeVpContextX64 = unsafe { core::mem::zeroed() };
+
+    for r in regs {
+        match r {
+            X86Register::Rip(rip) => ctx.rip = *rip,
+            X86Register::Cr0(cr0) => ctx.cr0 = *cr0,
+            X86Register::Gdtr(tab) => {
+                ctx.gdtr_base = tab.base;
+                ctx.gdtr_limit = tab.limit;
+            }
+            X86Register::Idtr(tab) => {
+                ctx.idtr_base = tab.base;
+                ctx.idtr_limit = tab.limit;
+            }
+            X86Register::Cs(seg) => {
+                ctx.code_base = seg.base as u32;
+                ctx.code_limit = seg.limit;
+                ctx.code_selector = seg.selector;
+                ctx.code_attributes = seg.attributes;
+            }
+            X86Register::Ds(seg) => {
+                ctx.data_base = seg.base as u32;
+                ctx.data_limit = seg.limit;
+                ctx.data_selector = seg.selector;
+                ctx.data_attributes = seg.attributes;
+            }
+            X86Register::Gs(seg) => {
+                ctx.gs_base = seg.base;
+            }
+            X86Register::Ss(_) => {}
+            X86Register::Es(_) => {}
+            X86Register::Fs(_) => {}
+            X86Register::Tr(_) => {}
+            _ => {
+                panic!("native_context: not implemented: {r:?}");
+            }
+        }
+    }
+
+    ctx
+}
+
+fn vmsa_segment(seg: &SegmentRegister) -> SevSelector {
+    // drop the 4 limit bits in the middle
+    let attrib = (seg.attributes & 0xff) | ((seg.attributes & 0xf000) >> 4);
+    SevSelector {
+        base: seg.base,
+        limit: seg.limit,
+        selector: seg.selector,
+        attrib,
+    }
+}
+
+fn vmsa_table(tab: &TableRegister) -> SevSelector {
+    SevSelector {
+        base: tab.base,
+        limit: tab.limit as u32,
+        selector: 0,
+        attrib: 0,
+    }
+}
+
+pub fn vmsa_context(regs: &[X86Register], features: SevFeatures) -> SevVmsa {
+    // Temporary unsafe stopgap.  Once igvm switched to zerocopy 0.8
+    // we can simply use SevVmsa::new_zeroed() instead.
+    let mut vmsa: SevVmsa = unsafe { core::mem::zeroed() };
+
+    // reset defaults for things not in X86Register
+    vmsa.dr6 = 0xffff0ff0;
+    vmsa.dr7 = 0x400;
+    vmsa.xcr0 = 1;
+
+    // sev setup
+    vmsa.sev_features = features;
+
+    // initial register state
+    for r in regs {
+        match r {
+            X86Register::Rip(rip) => vmsa.rip = *rip,
+            X86Register::Cr0(cr0) => vmsa.cr0 = *cr0,
+            X86Register::Gdtr(tab) => vmsa.gdtr = vmsa_table(tab),
+            X86Register::Idtr(tab) => vmsa.idtr = vmsa_table(tab),
+            X86Register::Cs(seg) => vmsa.cs = vmsa_segment(seg),
+            X86Register::Ss(seg) => vmsa.ss = vmsa_segment(seg),
+            X86Register::Ds(seg) => vmsa.ds = vmsa_segment(seg),
+            X86Register::Es(seg) => vmsa.es = vmsa_segment(seg),
+            X86Register::Fs(seg) => vmsa.fs = vmsa_segment(seg),
+            X86Register::Gs(seg) => vmsa.gs = vmsa_segment(seg),
+            X86Register::Tr(seg) => vmsa.tr = vmsa_segment(seg),
+            _ => {
+                panic!("vmsa_context: not implemented: {r:?}");
+            }
+        }
+    }
+
+    vmsa
+}
