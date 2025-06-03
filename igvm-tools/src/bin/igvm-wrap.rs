@@ -15,15 +15,17 @@ use igvm_defs::{
     PAGE_SIZE_4K,
 };
 
-use virtfw_igvm_tools::ovmfmeta::OvmfMeta;
+use virtfw_igvm_tools::ovmfmeta::{OvmfMeta, OvmfRegionType};
 
 pub const NATIVE_COMPAT: u32 = 1u32 << 0;
+pub const SEV_SNP_COMPAT: u32 = 1u32 << 1;
 
 struct Builder {
     revision: IgvmRevision,
     platforms: Vec<IgvmPlatformHeader>,
     initializations: Vec<IgvmInitializationHeader>,
     directives: Vec<IgvmDirectiveHeader>,
+    compatibility_mask_all: u32,
 }
 
 impl Builder {
@@ -40,6 +42,7 @@ impl Builder {
             platforms,
             initializations,
             directives,
+            compatibility_mask_all: 0,
         }
     }
 
@@ -51,18 +54,69 @@ impl Builder {
             platform_version: 1,
             shared_gpa_boundary: 0,
         });
+        self.compatibility_mask_all |= NATIVE_COMPAT;
         self.platforms.push(native);
         self
     }
 
-    fn add_pages(&mut self, base: usize, data: &[u8]) -> &mut Builder {
+    fn add_snp_platform(&mut self) -> &mut Builder {
+        let sev = IgvmPlatformHeader::SupportedPlatform(IGVM_VHS_SUPPORTED_PLATFORM {
+            compatibility_mask: SEV_SNP_COMPAT,
+            highest_vtl: 2,
+            platform_type: IgvmPlatformType::SEV_SNP,
+            platform_version: 1,
+            shared_gpa_boundary: 0,
+        });
+        self.compatibility_mask_all |= SEV_SNP_COMPAT;
+        self.platforms.push(sev);
+        self
+    }
+
+    fn add_empty_pages(
+        &mut self,
+        base: usize,
+        size: usize,
+        compatibility_mask: u32,
+        data_type: IgvmPageDataType,
+    ) -> &mut Builder {
+        let pages = size / PAGE_SIZE_4K as usize;
+        for pg in 0..pages {
+            let start = pg * PAGE_SIZE_4K as usize;
+            let page = IgvmDirectiveHeader::PageData {
+                gpa: (base + start) as u64,
+                compatibility_mask,
+                flags: IgvmPageDataFlags::new(),
+                data_type,
+                data: vec![],
+            };
+            self.directives.push(page);
+        }
+        self
+    }
+
+    fn add_ovmf_snp_pages(&mut self, ovmfmeta: &OvmfMeta) -> &mut Builder {
+        for r in &ovmfmeta.regions {
+            let itype = match r.etype {
+                OvmfRegionType::SevMemory => Some(IgvmPageDataType::NORMAL),
+                OvmfRegionType::SevSecrets => Some(IgvmPageDataType::SECRETS),
+                OvmfRegionType::SevCpuid => Some(IgvmPageDataType::CPUID_DATA),
+                _ => None,
+            };
+            if let Some(t) = itype {
+                self.add_empty_pages(r.memory.0, r.memory.1, SEV_SNP_COMPAT, t);
+            }
+        }
+        self
+    }
+
+    fn add_data_pages(&mut self, base: usize, data: &[u8]) -> &mut Builder {
         let pages = data.len() / PAGE_SIZE_4K as usize;
         for pg in 0..pages {
             let start = pg * PAGE_SIZE_4K as usize;
             let end = start + PAGE_SIZE_4K as usize;
             let page = IgvmDirectiveHeader::PageData {
                 gpa: (base + start) as u64,
-                compatibility_mask: NATIVE_COMPAT,
+                compatibility_mask: self.compatibility_mask_all,
                 flags: IgvmPageDataFlags::new(),
                 data_type: IgvmPageDataType::NORMAL,
                 data: data[start..end].to_vec(),
@@ -75,12 +129,12 @@ impl Builder {
     fn add_firmware(&mut self, firmware: &[u8]) -> &mut Builder {
         // all below 4GB
         let fwbase = (1u64 << 32) as usize - firmware.len();
-        self.add_pages(fwbase, firmware);
+        self.add_data_pages(fwbase, firmware);
         // 128k below 1MB
         let lowsize = min(128 * 1024, firmware.len());
         let lowbase = (1u64 << 20) as usize - lowsize;
         let offset = firmware.len() - lowsize;
-        self.add_pages(lowbase, &firmware[offset..]);
+        self.add_data_pages(lowbase, &firmware[offset..]);
         self
     }
 
@@ -100,6 +154,9 @@ fn parse_args() -> Option<getopts::Matches> {
 
     opts.optflag("h", "help", "print this help text");
     opts.optflag("", "meta", "print ovmf metadata");
+
+    opts.optflag("", "no-native", "disable native platform");
+    opts.optflag("", "snp", "enable sev-snp platform [incomplete]");
 
     opts.optopt("i", "input", "input bios image", "BIOS");
     opts.optopt("o", "output", "output igvm image", "IGVM");
@@ -147,15 +204,27 @@ fn main() -> ExitCode {
             return ExitCode::from(1);
         }
         let firmware = firmware_res.unwrap();
+        let ovmfmeta = OvmfMeta::new(&firmware);
 
         if cfg.opt_present("meta") {
-            if let Some(ovmfmeta) = OvmfMeta::new(&firmware) {
-                print_ovmfmeta(&ovmfmeta)
+            if let Some(m) = ovmfmeta.as_ref() {
+                print_ovmfmeta(m)
             }
         }
 
         let mut builder = Builder::new();
-        builder.add_native_platform().add_firmware(&firmware);
+        if !cfg.opt_present("no-native") {
+            // native
+            builder.add_native_platform();
+        }
+        if cfg.opt_present("snp") {
+            // sev-snp
+            builder.add_snp_platform();
+            if let Some(m) = ovmfmeta.as_ref() {
+                builder.add_ovmf_snp_pages(m);
+            }
+        }
+        builder.add_firmware(&firmware);
         let igvm_res = builder.finalize();
         if let Err(e) = igvm_res {
             error!("build igvm: {}", e);

@@ -88,7 +88,7 @@ impl OvmfRegionType {
 
 #[derive(Debug)]
 pub struct OvmfRegion {
-    pub memory: (u64, u64),
+    pub memory: (usize, usize),
     pub file: Option<(u32, u32)>,
     pub etype: OvmfRegionType,
 }
@@ -96,7 +96,7 @@ pub struct OvmfRegion {
 impl OvmfRegion {
     fn new_sev(entry: &OvmfMetaSevEntry) -> OvmfRegion {
         OvmfRegion {
-            memory: (entry.base as u64, entry.size as u64),
+            memory: (entry.base as usize, entry.size as usize),
             etype: OvmfRegionType::new_sev(entry.kind),
             ..Default::default()
         }
@@ -104,7 +104,7 @@ impl OvmfRegion {
 
     fn new_tdx(entry: &OvmfMetaTdxEntry) -> OvmfRegion {
         OvmfRegion {
-            memory: (entry.mem_base, entry.mem_size),
+            memory: (entry.mem_base as usize, entry.mem_size as usize),
             file: if entry.file_size != 0 {
                 Some((entry.file_base, entry.file_size))
             } else {
