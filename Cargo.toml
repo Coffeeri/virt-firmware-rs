@@ -18,4 +18,5 @@ authors = [ "Gerd Hoffmann <kraxel@redhat.com>" ]
 edition = "2021"
 
 [workspace.dependencies]
+bitfield-struct = "0.11"
 zerocopy = { version = "0.8", features = [ "derive" ] }
