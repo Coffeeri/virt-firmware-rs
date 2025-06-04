@@ -14,9 +14,10 @@ edition.workspace = true
 std = [ "zerocopy/std", "byteorder/std", "log/std", "dep:udev" ]
 
 [dependencies]
+zerocopy.workspace = true
+
 bitfield-struct = "0.11"
 byteorder = { version = "1", default-features = false }
 log = { version = "0.4", default-features = false }
 udev = { version = "0.9", optional = true }
 uguid = "2"
-zerocopy = { version = "0.8", features = [ "derive" ] }

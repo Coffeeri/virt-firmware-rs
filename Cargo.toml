@@ -16,3 +16,6 @@ license-file = "LICENSE"
 repository = "https://gitlab.com/kraxel/virt-firmware-rs"
 authors = [ "Gerd Hoffmann <kraxel@redhat.com>" ]
 edition = "2021"
+
+[workspace.dependencies]
+zerocopy = { version = "0.8", features = [ "derive" ] }
