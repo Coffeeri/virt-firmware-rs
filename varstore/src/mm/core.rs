@@ -2,7 +2,7 @@ use alloc::vec::Vec;
 use core::fmt::Display;
 use log::error;
 use uguid::Guid;
-use zerocopy::FromBytes;
+use zerocopy::{FromBytes, KnownLayout};
 
 use uefi::{Error, Status};
 use virtfw_libefi::guids;
@@ -13,7 +13,7 @@ use crate::store::EfiVarStore;
 
 // EFI_MM_COMMUNICATE_HEADER
 #[repr(C, packed)]
-#[derive(Debug, FromBytes)]
+#[derive(Debug, FromBytes, KnownLayout)]
 pub struct MmCoreHeader {
     pub guid: [u8; 16],
     pub size: u64,
