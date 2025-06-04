@@ -15,9 +15,9 @@ std = [ "zerocopy/std", "byteorder/std", "log/std", "dep:udev" ]
 
 [dependencies]
 bitfield-struct.workspace = true
+uguid.workspace = true
 zerocopy.workspace = true
 
 byteorder = { version = "1", default-features = false }
 log = { version = "0.4", default-features = false }
 udev = { version = "0.9", optional = true }
-uguid = "2"

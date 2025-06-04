@@ -19,4 +19,5 @@ edition = "2021"
 
 [workspace.dependencies]
 bitfield-struct = "0.11"
+uguid = "2"
 zerocopy = { version = "0.8", features = [ "derive" ] }

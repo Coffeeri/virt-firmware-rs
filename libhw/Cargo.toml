@@ -15,4 +15,5 @@ alloc = [ "dep:log" ]
 
 [dependencies]
 bitfield-struct.workspace = true
+
 log = { version = "0.4", optional = true }
