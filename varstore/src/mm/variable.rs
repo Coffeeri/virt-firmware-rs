@@ -6,7 +6,7 @@ use alloc::vec::Vec;
 use core::fmt::Display;
 use log::{debug, error};
 use uguid::Guid;
-use zerocopy::{FromBytes, Immutable, IntoBytes};
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use uefi::{CString16, Error, Status};
 use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr, EfiVarId};
@@ -25,7 +25,7 @@ const GET_PAYLOAD_SIZE: u64 = 11;
 
 // SMM_VARIABLE_COMMUNICATE_HEADER
 #[repr(C)]
-#[derive(Debug, FromBytes, IntoBytes, Immutable)]
+#[derive(Debug, FromBytes, IntoBytes, Immutable, KnownLayout)]
 pub struct MmVariableHeader {
     pub function: u64,
     pub status: u64,
@@ -42,7 +42,7 @@ impl MmVariableHeader {
 
 // SMM_VARIABLE_COMMUNICATE_ACCESS_VARIABLE
 #[repr(C, packed)]
-#[derive(Debug, FromBytes, IntoBytes, Immutable)]
+#[derive(Debug, FromBytes, IntoBytes, Immutable, KnownLayout)]
 struct MmVariableAccess {
     guid: [u8; 16],
     data_size: u64,
@@ -63,7 +63,7 @@ impl MmVariableAccess {
 
 // SMM_VARIABLE_COMMUNICATE_GET_NEXT_VARIABLE_NAME
 #[repr(C, packed)]
-#[derive(Debug, FromBytes, IntoBytes, Immutable)]
+#[derive(Debug, FromBytes, IntoBytes, Immutable, KnownLayout)]
 struct MmNextVariable {
     guid: [u8; 16],
     name_size: u64,
@@ -81,7 +81,7 @@ impl MmNextVariable {
 
 // SMM_VARIABLE_COMMUNICATE_QUERY_VARIABLE_INFO
 #[repr(C, packed)]
-#[derive(Debug, FromBytes, IntoBytes, Immutable)]
+#[derive(Debug, FromBytes, IntoBytes, Immutable, KnownLayout)]
 struct MmVariableInfo {
     max_storage_size: u64,
     free_storage_size: u64,
@@ -91,7 +91,7 @@ struct MmVariableInfo {
 
 // SMM_VARIABLE_COMMUNICATE_GET_PAYLOAD_SIZE
 #[repr(C, packed)]
-#[derive(Debug, FromBytes, IntoBytes, Immutable)]
+#[derive(Debug, FromBytes, IntoBytes, Immutable, KnownLayout)]
 struct MmGetPayloadSize {
     payload_size: u64,
 }
