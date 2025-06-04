@@ -6,10 +6,10 @@ use alloc::vec::Vec;
 
 use bitfield_struct::bitfield;
 use uguid::Guid;
-use zerocopy::{FromBytes, Immutable, IntoBytes};
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[bitfield(u32)]
-#[derive(FromBytes, IntoBytes, Immutable, Eq, PartialEq)]
+#[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Eq, PartialEq)]
 pub struct EfiVarAttr {
     pub non_volatile: bool,
     pub bootservice_access: bool,
