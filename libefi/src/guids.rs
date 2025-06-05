@@ -7,7 +7,7 @@ use alloc::format;
 use alloc::string::{String, ToString};
 
 use uguid::{guid, Guid};
-use zerocopy::{FromBytes, KnownLayout};
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 // efi variable namespaces
 pub const EfiCustomModeEnable: Guid = guid!("c076ec0c-7028-4399-a072-71ee5c448b9f");
@@ -100,7 +100,7 @@ pub fn pretty_name(guid: &Guid) -> String {
 
 // workaround for uguid::Guid not having zerocopy support
 #[repr(C, packed)]
-#[derive(Debug, Clone, Copy, FromBytes, KnownLayout)]
+#[derive(Debug, Clone, Copy, FromBytes, IntoBytes, KnownLayout, Immutable)]
 pub struct RawGuid {
     bytes: [u8; 16],
 }
@@ -108,5 +108,13 @@ pub struct RawGuid {
 impl From<RawGuid> for Guid {
     fn from(raw: RawGuid) -> Self {
         Self::from_bytes(raw.bytes)
+    }
+}
+
+impl From<Guid> for RawGuid {
+    fn from(guid: Guid) -> Self {
+        Self {
+            bytes: guid.to_bytes(),
+        }
     }
 }
