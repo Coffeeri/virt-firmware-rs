@@ -152,6 +152,11 @@ impl EfiSigDB {
         }
         Some(Self { siglists })
     }
+
+    pub fn add_x509_from_der(&mut self, owner: &Guid, data: &[u8]) {
+        let siglist = EfiSigList::new_x509_from_der(owner, data);
+        self.siglists.push(siglist);
+    }
 }
 
 impl Default for EfiSigDB {
