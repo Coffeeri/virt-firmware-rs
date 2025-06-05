@@ -4,7 +4,7 @@ extern crate std;
 use flate2::read::GzDecoder;
 use std::boxed::Box;
 use std::fs::File;
-use std::io::{Error, ErrorKind, Read};
+use std::io::{Error, Read};
 use std::vec;
 use std::vec::Vec;
 use zerocopy::FromBytes;
@@ -42,10 +42,10 @@ impl VarstorePcapParser {
     pub fn new(mut reader: Box<dyn Read>) -> Result<Self, std::io::Error> {
         let fhdr = PcapFileHeader::read_from_io(&mut *reader)?;
         if fhdr.magic != PCAP_MAGIC {
-            return Err(Error::new(ErrorKind::Other, "magic mismatch"));
+            return Err(Error::other("magic mismatch"));
         }
         if fhdr.network != LINKTYPE_EDK2_MM {
-            return Err(Error::new(ErrorKind::Other, "linktype mismatch"));
+            return Err(Error::other("linktype mismatch"));
         }
         let parser = VarstorePcapParser { reader };
         Ok(parser)
