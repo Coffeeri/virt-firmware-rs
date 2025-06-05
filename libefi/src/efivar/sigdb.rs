@@ -1,16 +1,17 @@
 //! efi signature databases
 
 extern crate alloc;
+use alloc::vec;
 use alloc::vec::Vec;
 use core::fmt;
 
 use uguid::Guid;
-use zerocopy::{FromBytes, KnownLayout};
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::guids;
 
 #[repr(C, packed)]
-#[derive(Debug, FromBytes, KnownLayout)]
+#[derive(Debug, FromBytes, IntoBytes, KnownLayout, Immutable)]
 struct EfiSigListHeader {
     kind_guid: guids::RawGuid,
     list_size: u32,
@@ -25,6 +26,13 @@ pub struct EfiSignature {
 }
 
 impl EfiSignature {
+    pub fn new(guid: &Guid, data: &[u8]) -> Self {
+        Self {
+            owner: *guid,
+            data: data.to_vec(),
+        }
+    }
+
     pub fn new_from_bytes(data: &[u8]) -> Option<Self> {
         let (guid, data) = guids::RawGuid::read_from_prefix(data).ok()?;
         Some(Self {
@@ -74,6 +82,16 @@ impl EfiSigList {
 
         Some((siglist, r))
     }
+
+    pub fn new_x509_from_der(owner: &Guid, data: &[u8]) -> Self {
+        let signature = EfiSignature::new(owner, data);
+        Self {
+            kind: guids::EfiCertX509,
+            header_data: Vec::new(),
+            entry_size: (data.len() + 16) as u32,
+            entries: vec![signature],
+        }
+    }
 }
 
 impl fmt::Display for EfiSigList {
@@ -86,11 +104,39 @@ impl fmt::Display for EfiSigList {
     }
 }
 
+impl From<&EfiSigList> for Vec<u8> {
+    fn from(siglist: &EfiSigList) -> Vec<u8> {
+        let size = size_of::<EfiSigListHeader>() as u32
+            + siglist.header_data.len() as u32
+            + siglist.entries.len() as u32 * siglist.entry_size;
+        let header = EfiSigListHeader {
+            kind_guid: siglist.kind.into(),
+            list_size: size,
+            header_size: siglist.header_data.len() as u32,
+            entry_size: siglist.entry_size,
+        };
+
+        let mut bytes = Vec::new();
+        bytes.extend_from_slice(header.as_bytes());
+        bytes.extend_from_slice(&siglist.header_data);
+        for sig in &siglist.entries {
+            bytes.extend_from_slice(&sig.owner.to_bytes());
+            bytes.extend_from_slice(&sig.data);
+        }
+        bytes
+    }
+}
+
 pub struct EfiSigDB {
     pub siglists: Vec<EfiSigList>,
 }
 
 impl EfiSigDB {
+    pub fn new() -> Self {
+        let siglists = Vec::new();
+        Self { siglists }
+    }
+
     pub fn new_from_bytes(data: &[u8]) -> Option<Self> {
         let mut siglists = Vec::new();
 
@@ -105,5 +151,22 @@ impl EfiSigDB {
             d = r;
         }
         Some(Self { siglists })
+    }
+}
+
+impl Default for EfiSigDB {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl From<&EfiSigDB> for Vec<u8> {
+    fn from(sigdb: &EfiSigDB) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        for siglist in &sigdb.siglists {
+            let b: Vec<u8> = siglist.into();
+            bytes.extend_from_slice(&b);
+        }
+        bytes
     }
 }
