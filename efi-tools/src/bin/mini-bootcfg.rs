@@ -207,16 +207,14 @@ fn add_bootindex(
             old_order.len()
         } else {
             let Ok(p) = posstr.parse::<usize>() else {
-                return Err(io::Error::new(
-                    io::ErrorKind::Other,
-                    format!("failed to parse pos: {}", posstr),
-                ));
+                return Err(io::Error::other(format!("failed to parse pos: {}", posstr)));
             };
             if p > old_order.len() {
-                return Err(io::Error::new(
-                    io::ErrorKind::Other,
-                    format!("pos is too big: {} > {}", p, old_order.len()),
-                ));
+                return Err(io::Error::other(format!(
+                    "pos is too big: {} > {}",
+                    p,
+                    old_order.len()
+                )));
             }
             p
         };
