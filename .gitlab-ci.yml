@@ -3,6 +3,7 @@ image: registry.gitlab.com/kraxel/rpm-package-builder:rust
 
 stages:
   - build
+  - package
   - publish
 
 #before_script:
@@ -37,10 +38,16 @@ release:
   script:
     - make install
 
-package:
-  stage: build
+pkg-libhw:
+  stage: package
   script:
-    - make package
+    - make package-libhw
+  allow_failure: true
+
+pkg-libefi:
+  stage: package
+  script:
+    - make package-libefi
   allow_failure: true
 
 pages:
