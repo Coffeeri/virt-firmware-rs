@@ -25,6 +25,7 @@ pub const EfiCertSha384: Guid = guid!("ff3e5307-9fd0-48c9-85f1-8ad56c701e01");
 pub const EfiCertSha512: Guid = guid!("093e0fae-a6c4-4f50-9f1b-d41e2b89c19a");
 pub const EfiCertRsa2048: Guid = guid!("3c5766e8-269c-4e34-aa14-ed776e85b3b6");
 pub const EfiCertX509: Guid = guid!("a5c059a1-94e4-4aa7-87b5-ab155c2bf072");
+pub const EfiCertExternalMgmt: Guid = guid!("452e8ced-dfff-4b8c-ae01-5118862e682c");
 
 // efi signature owners
 pub const MicrosoftVendor: Guid = guid!("77fa9abd-0359-4d32-bd60-28f4e78f784b");
@@ -70,6 +71,7 @@ pub fn try_pretty_name(guid: &Guid) -> Option<&'static str> {
         EfiCertSha512 => Some("EfiCertSha512"),
         EfiCertRsa2048 => Some("EfiCertRsa2048"),
         EfiCertX509 => Some("EfiCertX509"),
+        EfiCertExternalMgmt => Some("EfiCertExternalMgmt"),
 
         MicrosoftVendor => Some("MicrosoftVendor"),
         OvmfEnrollDefaultKeys => Some("OvmfEnrollDefaultKeys"),

@@ -16,3 +16,8 @@ fn encode_decode_dbx() {
     let bytes: Vec<u8> = (&dbx).into();
     assert_eq!(DATA_TEST_DBX, bytes)
 }
+
+#[test]
+fn pk_external_mgmt() {
+    let _pk = EfiSigDB::new_pk_external_mgmt();
+}

@@ -92,6 +92,17 @@ impl EfiSigList {
             entries: vec![signature],
         }
     }
+
+    pub fn new_pk_external_mgmt() -> Self {
+        let data: &[u8] = &[0];
+        let signature = EfiSignature::new(&guids::OvmfEnrollDefaultKeys, data);
+        Self {
+            kind: guids::EfiCertExternalMgmt,
+            header_data: Vec::new(),
+            entry_size: (data.len() + 16) as u32,
+            entries: vec![signature],
+        }
+    }
 }
 
 impl fmt::Display for EfiSigList {
@@ -151,6 +162,13 @@ impl EfiSigDB {
             d = r;
         }
         Some(Self { siglists })
+    }
+
+    pub fn new_pk_external_mgmt() -> Self {
+        let siglist = EfiSigList::new_pk_external_mgmt();
+        Self {
+            siglists: vec![siglist],
+        }
     }
 
     pub fn add_x509_from_der(&mut self, owner: &Guid, data: &[u8]) {
