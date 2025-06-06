@@ -1,14 +1,14 @@
 # variables
 CC	?= gcc
 AS	:= $(CC)
-LD	:= ld
+LD	:= $(CC)
 OBJCOPY	:= objcopy
 
-COMMON	:= -m32 -ffreestanding
+COMMON	:= -m32 -ffreestanding -nostdlib
 ASFLAGS	:= $(COMMON)
 CFLAGS	:= $(COMMON) -Os -g -Wall
 CFLAGS	+= -mno-mmx -mno-sse -fpic
-LDFLAGS	:= -melf_i386 --script=bios32.lds
+LDFLAGS	:= $(COMMON) -Wl,-melf_i386 -Wl,--script=bios32.lds
 
 TARGETS	:= hello.bin info.bin vmfwupdate.bin
 
