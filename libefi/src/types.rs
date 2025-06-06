@@ -11,7 +11,7 @@ pub struct EfiTime {
     pub second: u8,
     _pad1: u8,
     pub nanosecond: u32,
-    pub timezone: u16,
+    pub timezone: i16,
     pub daylight: u8,
     _pad2: u8,
 }
