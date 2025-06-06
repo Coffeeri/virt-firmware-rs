@@ -10,4 +10,5 @@ pub mod efivar;
 pub mod guids;
 pub mod nocasestr;
 pub mod sb;
+pub mod types;
 pub mod varstore;
