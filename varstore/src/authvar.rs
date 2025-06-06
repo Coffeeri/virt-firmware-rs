@@ -86,10 +86,18 @@ impl EfiVarStore {
     }
 
     pub(crate) fn auth_init(&mut self) {
-        // TODO: implement secure boot support
-        self.set_setup_mode(true);
+        let setup = self
+            .get_unchecked("PK", &guids::EfiGlobalVariable)
+            .is_none();
+        self.set_setup_mode(setup);
+
         self.set_signature_support();
-        self.set_secure_boot(false);
+
+        // TODO: SecureBootEnable
+
+        let sb = !setup;
+        self.set_secure_boot(sb);
+
         self.set_custom_mode(false);
         self.set_vendor_keys();
     }

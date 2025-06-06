@@ -47,7 +47,7 @@ impl EfiVarStore {
             .position(|v| v.name == name && v.guid == *guid)
     }
 
-    fn get_unchecked(&self, name: &str, guid: &Guid) -> Option<&EfiVar> {
+    pub(crate) fn get_unchecked(&self, name: &str, guid: &Guid) -> Option<&EfiVar> {
         let index = self.get_position(name, guid)?;
         Some(&self.variables[index])
     }
