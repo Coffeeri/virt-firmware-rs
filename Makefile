@@ -1,15 +1,19 @@
 # variables
 ARCH	:= $(shell uname -m)
-PKGS	:= efi-apps efi-tools igvm-tools varstore
+PKGS	:= efi-tools igvm-tools varstore
 BIOS32	:=
 POST64	:=
 
 ifeq ($(ARCH),x86_64)
-PKGS	+= bios-64
+PKGS	+= bios-64 efi-apps
 BIOS32	+= build-bios-32
 BIOS32	+= build-none-libefi
 BIOS32	+= build-none-varstore
 POST64	+= cargo-post
+endif
+
+ifeq ($(ARCH),aarch64)
+PKGS	+= efi-apps
 endif
 
 # target specific variables
