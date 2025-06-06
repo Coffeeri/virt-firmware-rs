@@ -9,4 +9,5 @@ pub mod efifile;
 pub mod efivar;
 pub mod guids;
 pub mod nocasestr;
+pub mod sb;
 pub mod varstore;
