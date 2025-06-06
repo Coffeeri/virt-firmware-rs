@@ -42,13 +42,11 @@ pkg-libhw:
   stage: package
   script:
     - make package-libhw
-  allow_failure: true
 
 pkg-libefi:
   stage: package
   script:
     - make package-libefi
-  allow_failure: true
 
 pkg-efi-apps:
   stage: package
@@ -66,7 +64,6 @@ pkg-igvm-tools:
   stage: package
   script:
     - make package-igvm-tools
-  allow_failure: true
 
 pkg-varstore:
   stage: package
