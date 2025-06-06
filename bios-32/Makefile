@@ -1,10 +1,12 @@
 # variables
 CC	?= gcc
+AS	:= $(CC)
 LD	:= ld
 OBJCOPY	:= objcopy
 
-ASFLAGS	:= -m32
-CFLAGS	:= -m32 -ffreestanding -Os -g -Wall
+COMMON	:= -m32 -ffreestanding
+ASFLAGS	:= $(COMMON)
+CFLAGS	:= $(COMMON) -Os -g -Wall
 CFLAGS	+= -mno-mmx -mno-sse -fpic
 LDFLAGS	:= -melf_i386 --script=bios32.lds
 
