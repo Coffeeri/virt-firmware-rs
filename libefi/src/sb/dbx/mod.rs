@@ -7,6 +7,13 @@ use crate::types::EfiTime;
 pub const DBX_X86_64: &[u8] = include_bytes!("x86_64.auth");
 pub const DBX_AARCH64: &[u8] = include_bytes!("aarch64.auth");
 
+#[cfg(target_arch = "aarch64")]
+pub const DBX_NATIVE: Option<&[u8]> = Some(DBX_AARCH64);
+#[cfg(target_arch = "x86_64")]
+pub const DBX_NATIVE: Option<&[u8]> = Some(DBX_X86_64);
+#[cfg(not(any(target_arch = "aarch64", target_arch = "x86_64",)))]
+pub const DBX_NATIVE: Option<&[u8]> = None;
+
 // EFI_VARIABLE_AUTHENTICATION_2
 #[repr(C, packed)]
 #[derive(Debug, Clone, Copy, FromBytes, IntoBytes, KnownLayout, Immutable)]
