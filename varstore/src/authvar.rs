@@ -3,6 +3,8 @@
 //!
 use alloc::vec::Vec;
 
+use uefi::{Error, Status};
+
 use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr};
 use virtfw_libefi::guids;
 
@@ -65,6 +67,22 @@ impl EfiVarStore {
             EfiVarAttr::new_bs_rt(),
             false,
         );
+    }
+
+    fn check_time_auth(&self, _variable: &EfiVar) -> Result<(), Error<&'static str>> {
+        // not implemented yet
+        Err(Error::new(Status::UNSUPPORTED, "time auth bit set"))
+    }
+
+    pub(crate) fn check_auth(&self, variable: &EfiVar) -> Result<(), Error<&'static str>> {
+        if variable.attr.auth_wr_access() {
+            // not used any more
+            return Err(Error::new(Status::UNSUPPORTED, "auth bit set"));
+        }
+        if variable.attr.time_auth_wr_access() {
+            return self.check_time_auth(variable);
+        }
+        Ok(())
     }
 
     pub(crate) fn auth_init(&mut self) {

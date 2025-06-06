@@ -115,14 +115,6 @@ impl EfiVarStore {
         if variable.attr.hardware_error() {
             return Err(Error::new(Status::INVALID_PARAMETER, "hw-error bit set"));
         }
-        if variable.attr.auth_wr_access() {
-            // not used any more
-            return Err(Error::new(Status::UNSUPPORTED, "auth bit set"));
-        }
-        if variable.attr.time_auth_wr_access() {
-            // not implemented yet
-            return Err(Error::new(Status::UNSUPPORTED, "time auth bit set"));
-        }
         Ok(())
     }
 
@@ -177,6 +169,7 @@ impl EfiVarStore {
         let old_opt = self.get_unchecked(&new.name, &new.guid);
         if let Some(old) = old_opt {
             self.check_service(old)?;
+            self.check_auth(old)?;
             self.policy_check(&new, false)?;
             self.variables
                 .retain(|v| v.name != new.name || v.guid != new.guid);
@@ -194,6 +187,7 @@ impl EfiVarStore {
         }
         self.check_service(&new)?;
         self.check_attributes(&new)?;
+        self.check_auth(&new)?;
 
         let is_new_var = old_opt.is_none();
         self.policy_check(&new, is_new_var)?;
