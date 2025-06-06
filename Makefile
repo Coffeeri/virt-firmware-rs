@@ -19,7 +19,7 @@ doc-varstore build-varstore clippy-varstore release-varstore : TARGET := --featu
 
 # targets
 default: build clippy $(POST64)
-all: build clippy test package $(POST64)
+all: build clippy test $(POST64)
 doc docs: cargo-doc
 test tests: cargo-test
 build: $(BIOS32) cargo-build
