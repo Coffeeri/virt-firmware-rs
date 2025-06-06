@@ -18,7 +18,7 @@ impl EfiVarStore {
         let var = EfiVar {
             guid: *guid,
             name: name.into(),
-            attr: EfiVarAttr::new_nv_bs_rt(),
+            attr: EfiVarAttr::new_nv_bs_rt().with_time_auth_wr_access(true),
             data: sigdb.into(),
         };
         self.set_unchecked(var);
