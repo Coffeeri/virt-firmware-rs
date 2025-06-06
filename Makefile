@@ -17,9 +17,9 @@ PKGS	+= efi-apps
 endif
 
 # target specific variables
-doc-bios-64 build-bios-64 clippy-bios-64 release-bios-64 : TARGET := --target $(ARCH)-unknown-none
-doc-efi-apps build-efi-apps clippy-efi-apps release-efi-apps : TARGET := --target $(ARCH)-unknown-uefi --features fdt
-doc-varstore build-varstore clippy-varstore release-varstore : TARGET := --features std
+doc-bios-64 build-bios-64 clippy-bios-64 release-bios-64 package-bios-64 : TARGET := --target $(ARCH)-unknown-none
+doc-efi-apps build-efi-apps clippy-efi-apps release-efi-apps package-efi-apps : TARGET := --target $(ARCH)-unknown-uefi --features fdt
+doc-varstore build-varstore clippy-varstore release-varstore package-varstore : TARGET := --features std
 
 # targets
 default: build clippy $(POST64)
