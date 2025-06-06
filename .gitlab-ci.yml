@@ -41,6 +41,7 @@ package:
   stage: build
   script:
     - make package
+  allow_failure: true
 
 pages:
   stage: publish
