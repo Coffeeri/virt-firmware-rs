@@ -20,4 +20,4 @@ glob = "0.3"
 log = "0.4"
 stderrlog = "0.6"
 
-virtfw-libefi = { path = "../libefi", version = "0.2.6", features = [ "std" ] }
+virtfw-libefi = { path = "../libefi", version = "0.2.8", features = [ "std" ] }
