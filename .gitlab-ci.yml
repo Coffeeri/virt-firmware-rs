@@ -50,6 +50,30 @@ pkg-libefi:
     - make package-libefi
   allow_failure: true
 
+pkg-efi-apps:
+  stage: package
+  script:
+    - make package-efi-apps
+  allow_failure: true
+
+pkg-efi-tools:
+  stage: package
+  script:
+    - make package-efi-tools
+  allow_failure: true
+
+pkg-igvm-tools:
+  stage: package
+  script:
+    - make package-igvm-tools
+  allow_failure: true
+
+pkg-varstore:
+  stage: package
+  script:
+    - make package-varstore
+  allow_failure: true
+
 pages:
   stage: publish
   script:
