@@ -1,6 +1,8 @@
+use der::Decode;
 use log::error;
 use std::env;
 use uguid::Guid;
+use x509_cert::Certificate;
 
 use virtfw_libefi::efivar::sigdb::EfiSigDB;
 use virtfw_libefi::guids;
@@ -20,6 +22,12 @@ fn print_sigdb(name: &str, guid: &Guid) {
 
     for siglist in sigdb.siglists {
         println!("  {}", siglist);
+        if let Some(der) = siglist.get_x509() {
+            if let Ok(cert) = Certificate::from_der(der) {
+                println!("    subject: {}", cert.tbs_certificate.subject);
+                println!("    issuer : {}", cert.tbs_certificate.issuer);
+            }
+        }
     }
 }
 
@@ -60,4 +68,6 @@ fn main() {
     print_sigdb("KEK", &guids::EfiGlobalVariable);
     print_sigdb("db", &guids::EfiImageSecurityDatabase);
     print_sigdb("dbx", &guids::EfiImageSecurityDatabase);
+    print_sigdb("MokListRT", &guids::ShimVariable);
+    print_sigdb("MokListXRT", &guids::ShimVariable);
 }
