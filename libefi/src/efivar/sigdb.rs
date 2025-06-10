@@ -103,6 +103,13 @@ impl EfiSigList {
             entries: vec![signature],
         }
     }
+
+    pub fn get_x509(&self) -> Option<&[u8]> {
+        if self.kind != guids::EfiCertX509 {
+            return None;
+        }
+        Some(self.entries[0].data.as_ref())
+    }
 }
 
 impl fmt::Display for EfiSigList {
