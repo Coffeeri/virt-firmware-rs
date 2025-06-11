@@ -8,6 +8,20 @@ use virtfw_libefi::efivar::sigdb::EfiSigDB;
 use virtfw_libefi::guids;
 use virtfw_libefi::varstore::sysfs;
 
+fn print_cert(cert: &Certificate) {
+    let tbs = &cert.tbs_certificate;
+    if tbs.subject == tbs.issuer {
+        println!("    subject: {} (self-signed)", tbs.subject);
+    } else {
+        println!("    subject: {}", tbs.subject);
+        println!("    issuer : {}", tbs.issuer);
+    }
+    println!(
+        "    valid  : {} -> {}",
+        tbs.validity.not_before, tbs.validity.not_after
+    );
+}
+
 fn print_sigdb(name: &str, guid: &Guid) {
     let Some(var) = sysfs::varstore_read(name, guid) else {
         println!("no {}", name);
@@ -24,8 +38,7 @@ fn print_sigdb(name: &str, guid: &Guid) {
         println!("  {}", siglist);
         if let Some(der) = siglist.get_x509() {
             if let Ok(cert) = Certificate::from_der(der) {
-                println!("    subject: {}", cert.tbs_certificate.subject);
-                println!("    issuer : {}", cert.tbs_certificate.issuer);
+                print_cert(&cert);
             }
         }
     }
