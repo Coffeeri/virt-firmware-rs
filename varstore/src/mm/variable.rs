@@ -116,7 +116,10 @@ impl MmVariableParsedRequest {
             GET_VARIABLE => {
                 let (access, namedata) = MmVariableAccess::new(body)?;
                 let ns = access.name_size as usize;
-                let name = util::cstr16_from_bytes_with_nul(&namedata[0..ns])?;
+                let Some(slice) = &namedata.get(0..ns) else {
+                    return Err(Error::new(Status::BAD_BUFFER_SIZE, "invalid name size"));
+                };
+                let name = util::cstr16_from_bytes_with_nul(slice)?;
                 let guid = Guid::from_bytes(access.guid);
                 let id = EfiVarId::new(String::from(name), guid);
                 MmVariableParsedRequest::GetVariable(id)
@@ -124,7 +127,10 @@ impl MmVariableParsedRequest {
             GET_NEXT_VARIABLE_NAME | LOCK_VARIABLE => {
                 let (next, namebytes) = MmNextVariable::new(body)?;
                 let ns = next.name_size as usize;
-                let name = util::cstr16_from_bytes_until_nul(&namebytes[0..ns])?;
+                let Some(slice) = &namebytes.get(0..ns) else {
+                    return Err(Error::new(Status::BAD_BUFFER_SIZE, "invalid name size"));
+                };
+                let name = util::cstr16_from_bytes_until_nul(slice)?;
                 let guid = Guid::from_bytes(next.guid);
                 let id = EfiVarId::new(String::from(name), guid);
                 if function == GET_NEXT_VARIABLE_NAME {
@@ -137,8 +143,13 @@ impl MmVariableParsedRequest {
                 let (access, namedata) = MmVariableAccess::new(body)?;
                 let ns = access.name_size as usize;
                 let ds = access.data_size as usize;
-                let name = util::cstr16_from_bytes_with_nul(&namedata[0..ns])?;
-                let data = &namedata[ns..ns + ds];
+                let Some(slice) = &namedata.get(0..ns) else {
+                    return Err(Error::new(Status::BAD_BUFFER_SIZE, "invalid name size"));
+                };
+                let name = util::cstr16_from_bytes_with_nul(slice)?;
+                let Some(data) = &namedata.get(ns..ns + ds) else {
+                    return Err(Error::new(Status::BAD_BUFFER_SIZE, "invalid data size"));
+                };
                 let guid = Guid::from_bytes(access.guid);
                 let var = EfiVar {
                     guid,

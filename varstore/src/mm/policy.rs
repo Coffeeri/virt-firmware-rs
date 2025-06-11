@@ -135,13 +135,22 @@ impl<'a> MmVarPolicyRequest<'a> {
         let pst = core::mem::size_of::<MmVariablePolicyEntry>();
         let nst = policy.offset_to_name as usize;
         let end = policy.size as usize;
-        let name = util::cstr16_from_bytes_with_nul(&self.body[nst..end])?;
+        let Some(slice) = &self.body.get(nst..end) else {
+            return Err(Error::new(Status::BAD_BUFFER_SIZE, "invalid name size"));
+        };
+        let name = util::cstr16_from_bytes_with_nul(slice)?;
         let policy_type = match policy.lock_policy_type {
             VARIABLE_POLICY_TYPE_NO_LOCK => VariablePolicyType::NoLock,
             VARIABLE_POLICY_TYPE_LOCK_NOW => VariablePolicyType::LockNow,
             VARIABLE_POLICY_TYPE_LOCK_ON_CREATE => VariablePolicyType::LockOnCreate,
             VARIABLE_POLICY_TYPE_LOCK_ON_VAR_STATE => {
-                let (vstate, more) = MmVariableLockOnVarState::new(&self.body[pst..nst])?;
+                let Some(slice) = &self.body.get(pst..nst) else {
+                    return Err(Error::new(
+                        Status::BAD_BUFFER_SIZE,
+                        "invalid var state size",
+                    ));
+                };
+                let (vstate, more) = MmVariableLockOnVarState::new(slice)?;
                 let vname = util::cstr16_from_bytes_with_nul(more)?;
                 VariablePolicyType::LockOnVarState {
                     namespace: Guid::from_bytes(vstate.namespace),

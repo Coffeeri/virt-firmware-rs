@@ -30,7 +30,9 @@ impl<'d> MmCore<'d> {
         let (header, body) = MmCoreHeader::read_from_prefix(data)
             .or::<Error>(Err(Status::BAD_BUFFER_SIZE.into()))?;
         let size = header.size as usize;
-        let data = &body[..size];
+        let Some(data) = &body.get(..size) else {
+            return Err(Status::BAD_BUFFER_SIZE.into());
+        };
         Ok(MmCore {
             guid: header.guid,
             data,
