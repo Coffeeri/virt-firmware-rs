@@ -6,3 +6,7 @@ pub const REDHAT_DB_UEFI_2024: &[u8] = include_bytes!("redhat.com/rh-uefi-2024.d
 pub const MICROSOFT_DB_UEFI_2011: &[u8] = include_bytes!("microsoft.com/ms-uefi-2011.der");
 pub const MICROSOFT_DB_UEFI_2023: &[u8] = include_bytes!("microsoft.com/ms-uefi-2023.der");
 pub const MICROSOFT_DB_UEFI_ROM_2023: &[u8] = include_bytes!("microsoft.com/ms-uefi-2023.der");
+
+// used for test builds, private key is public
+pub const REDHAT_DB_TEST_INSECURE_2012: &[u8] =
+    include_bytes!("redhat.com/redhat-test-insecure-2012.der");
