@@ -13,6 +13,7 @@ edition.workspace = true
 [features]
 std = [ "zerocopy/std", "byteorder/std", "log/std", "dep:udev" ]
 sbdata = []
+sbtest = []
 
 [dependencies]
 bitfield-struct.workspace = true
