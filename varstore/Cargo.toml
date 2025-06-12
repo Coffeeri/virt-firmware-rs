@@ -21,6 +21,7 @@ required-features = [ "std", "json" ]
 [features]
 std = [ "zerocopy/std", "dep:flate2", "dep:getopts", "dep:stderrlog" ]
 json = [ "dep:serde", "dep:serde_json", "uguid/serde" ]
+sbtest = [ "virtfw-libefi/sbtest" ]
 
 [dependencies]
 uguid.workspace = true

@@ -48,6 +48,19 @@ impl EfiVarStore {
         self.enroll_db(&db);
     }
 
+    // Enroll all certs, including the rh test cert which is used to
+    // sign test builds.  The private key is public, so that does not
+    // actually protect anything.
+    #[cfg(feature = "sbtest")]
+    pub fn enroll_db_test_insecure(&mut self) {
+        let mut db = EfiSigDB::new();
+        db.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_DB_UEFI_2011);
+        db.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_DB_UEFI_2023);
+        db.add_x509_from_der(&guids::OvmfEnrollDefaultKeys, REDHAT_DB_UEFI_2024);
+        db.add_x509_from_der(&guids::OvmfEnrollDefaultKeys, REDHAT_DB_TEST_INSECURE_2012);
+        self.enroll_db(&db);
+    }
+
     pub fn enroll_dbx_native(&mut self) {
         if let Some(auth) = DBX_NATIVE {
             let esl = auth_to_esl(auth).unwrap();
