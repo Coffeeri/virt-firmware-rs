@@ -28,6 +28,10 @@ impl EfiVarStore {
         self.enroll_sigdb(&guids::EfiGlobalVariable, "PK", pk);
     }
 
+    fn enroll_kek(&mut self, kek: &EfiSigDB) {
+        self.enroll_sigdb(&guids::EfiGlobalVariable, "KEK", kek);
+    }
+
     fn enroll_db(&mut self, db: &EfiSigDB) {
         self.enroll_sigdb(&guids::EfiImageSecurityDatabase, "db", db);
     }
@@ -39,6 +43,13 @@ impl EfiVarStore {
     pub fn enroll_pk_mgmt(&mut self) {
         let pk = EfiSigDB::new_pk_external_mgmt();
         self.enroll_pk(&pk);
+    }
+
+    pub fn enroll_kek_microsoft(&mut self) {
+        let mut kek = EfiSigDB::new();
+        kek.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_KEK_2011);
+        kek.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_KEK_2023);
+        self.enroll_kek(&kek);
     }
 
     pub fn enroll_db_microsoft_uefi(&mut self) {
