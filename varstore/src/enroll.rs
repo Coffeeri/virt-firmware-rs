@@ -24,19 +24,19 @@ impl EfiVarStore {
         self.set_unchecked(var);
     }
 
-    fn enroll_pk(&mut self, pk: &EfiSigDB) {
+    pub fn enroll_pk(&mut self, pk: &EfiSigDB) {
         self.enroll_sigdb(&guids::EfiGlobalVariable, "PK", pk);
     }
 
-    fn enroll_kek(&mut self, kek: &EfiSigDB) {
+    pub fn enroll_kek(&mut self, kek: &EfiSigDB) {
         self.enroll_sigdb(&guids::EfiGlobalVariable, "KEK", kek);
     }
 
-    fn enroll_db(&mut self, db: &EfiSigDB) {
+    pub fn enroll_db(&mut self, db: &EfiSigDB) {
         self.enroll_sigdb(&guids::EfiImageSecurityDatabase, "db", db);
     }
 
-    fn enroll_dbx(&mut self, dbx: &EfiSigDB) {
+    pub fn enroll_dbx(&mut self, dbx: &EfiSigDB) {
         self.enroll_sigdb(&guids::EfiImageSecurityDatabase, "dbx", dbx);
     }
 
