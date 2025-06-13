@@ -38,5 +38,5 @@ fn parse_dbxupdate_x86_64() {
     let esl = auth_to_esl(DBX_X86_64).unwrap();
     let sigdb = EfiSigDB::new_from_bytes(esl).unwrap();
     let siglist = sigdb.siglists.first().unwrap();
-    assert_eq!(siglist.entries.len(), 416);
+    assert_eq!(siglist.entries.len(), 430);
 }
