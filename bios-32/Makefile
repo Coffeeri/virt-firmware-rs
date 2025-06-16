@@ -1,5 +1,11 @@
 # variables
-CC	?= gcc
+ARCH	:= $(shell uname -m)
+ifeq ($(ARCH),x86_64)
+CC	:= gcc
+else
+CC	:= x86_64-linux-gnu-gcc
+endif
+
 AS	:= $(CC)
 LD	:= $(CC)
 OBJCOPY	:= objcopy
