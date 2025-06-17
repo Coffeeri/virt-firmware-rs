@@ -35,7 +35,7 @@ install: cargo-install
 package: cargo-package
 
 cargo-doc: $(patsubst %,doc-%,$(PKGS))
-cargo-test: test-libefi test-varstore
+cargo-test: test-libefi test-varstore test-igvm-tools
 cargo-build: $(patsubst %,build-%,$(PKGS))
 cargo-clippy: $(patsubst %,clippy-%,$(PKGS))
 cargo-clippy-fix: $(patsubst %,clippy-fix-%,$(PKGS))

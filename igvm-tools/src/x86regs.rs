@@ -176,7 +176,7 @@ pub struct ExtFeatureEnableReg {
     pub nxe: bool, // NX enable
 
     #[bits(52)]
-    _pad0: u64,
+    _pad2: u64,
 }
 
 fn common_regs() -> Vec<X86Register> {
