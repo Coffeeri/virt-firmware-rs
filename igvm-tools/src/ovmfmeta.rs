@@ -216,7 +216,7 @@ impl OvmfMeta<'_> {
             regions: Vec::new(),
         };
 
-        let s = firmware.len() - 0x20;
+        let s = firmware.len().checked_sub(0x20)?;
         let (f, _) = firmware.split_at(s);
         let (g, mut m1, _) = Self::meta_blk(f)?;
 
