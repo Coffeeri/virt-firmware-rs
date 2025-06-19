@@ -172,6 +172,26 @@ fn print_directives(igvm: &IgvmFile) {
     }
 }
 
+fn print_initializations(igvm: &IgvmFile) {
+    for i in igvm.initializations() {
+        match i {
+            IgvmInitializationHeader::GuestPolicy {
+                policy,
+                compatibility_mask,
+            } => {
+                println!(
+                    "initialization: policy 0x{:x}, {}",
+                    policy,
+                    format_compat(&igvm, *compatibility_mask)
+                );
+            }
+            _ => {
+                println!("initialization: {:?}", i);
+            }
+        }
+    }
+}
+
 fn main() {
     stderrlog::new()
         .module(module_path!())
@@ -195,24 +215,7 @@ fn main() {
             );
         }
 
-        for i in igvm.initializations() {
-            match i {
-                IgvmInitializationHeader::GuestPolicy {
-                    policy,
-                    compatibility_mask,
-                } => {
-                    println!(
-                        "initialization: policy 0x{:x}, {}",
-                        policy,
-                        format_compat(&igvm, *compatibility_mask)
-                    );
-                }
-                _ => {
-                    println!("initialization: {:?}", i);
-                }
-            }
-        }
-
+        print_initializations(&igvm);
         print_directives(&igvm);
         print_pagedata(&igvm);
     }
