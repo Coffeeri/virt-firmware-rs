@@ -1,3 +1,7 @@
 {
-    "makefile.configureOnOpen": false
+    "makefile.configureOnOpen": false,
+    "files.exclude": {
+        ".git": true,
+        "**/*~": true
+    }
 }
