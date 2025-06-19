@@ -98,17 +98,14 @@ fn print_directives(igvm: &IgvmFile) {
             IgvmDirectiveHeader::SnpVpContext {
                 compatibility_mask, ..
             } => {
-                println!(
-                    "SnpVpContext: {}",
-                    format_compat(&igvm, *compatibility_mask)
-                );
+                println!("SnpVpContext: {}", format_compat(igvm, *compatibility_mask));
             }
             IgvmDirectiveHeader::X64NativeVpContext {
                 compatibility_mask, ..
             } => {
                 println!(
                     "X64NativeVpContext: {}",
-                    format_compat(&igvm, *compatibility_mask)
+                    format_compat(igvm, *compatibility_mask)
                 );
             }
 
@@ -122,7 +119,7 @@ fn print_directives(igvm: &IgvmFile) {
                     "RequiredMemory: gpa 0x{:x}, bytes 0x{:X}, {}",
                     gpa,
                     number_of_bytes,
-                    format_compat(&igvm, *compatibility_mask)
+                    format_compat(igvm, *compatibility_mask)
                 );
             }
 
@@ -161,7 +158,7 @@ fn print_directives(igvm: &IgvmFile) {
                     "ParameterInsert: gpa 0x{:x}, idx {}, {}",
                     p.gpa,
                     p.parameter_area_index,
-                    format_compat(&igvm, p.compatibility_mask)
+                    format_compat(igvm, p.compatibility_mask)
                 );
             }
 
@@ -182,7 +179,7 @@ fn print_initializations(igvm: &IgvmFile) {
                 println!(
                     "initialization: policy 0x{:x}, {}",
                     policy,
-                    format_compat(&igvm, *compatibility_mask)
+                    format_compat(igvm, *compatibility_mask)
                 );
             }
             _ => {
@@ -202,6 +199,13 @@ fn print_platforms(igvm: &IgvmFile) {
     }
 }
 
+fn print_igvm(igvm: &IgvmFile) {
+    print_platforms(igvm);
+    print_initializations(igvm);
+    print_directives(igvm);
+    print_pagedata(igvm);
+}
+
 fn main() {
     stderrlog::new()
         .module(module_path!())
@@ -217,9 +221,6 @@ fn main() {
         let blob = std::fs::read(arg).expect("file read error");
         let igvm = IgvmFile::new_from_binary(&blob, None).expect("file parse error");
 
-        print_platforms(&igvm);
-        print_initializations(&igvm);
-        print_directives(&igvm);
-        print_pagedata(&igvm);
+        print_igvm(&igvm);
     }
 }
