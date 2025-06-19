@@ -88,6 +88,90 @@ fn print_pagedata(igvm: &IgvmFile) {
     }
 }
 
+fn print_directives(igvm: &IgvmFile) {
+    for d in igvm
+        .directives()
+        .iter()
+        .filter(|x| !matches! {x, IgvmDirectiveHeader::PageData { .. }})
+    {
+        match d {
+            IgvmDirectiveHeader::SnpVpContext {
+                compatibility_mask, ..
+            } => {
+                println!(
+                    "SnpVpContext: {}",
+                    format_compat(&igvm, *compatibility_mask)
+                );
+            }
+            IgvmDirectiveHeader::X64NativeVpContext {
+                compatibility_mask, ..
+            } => {
+                println!(
+                    "X64NativeVpContext: {}",
+                    format_compat(&igvm, *compatibility_mask)
+                );
+            }
+
+            IgvmDirectiveHeader::RequiredMemory {
+                gpa,
+                compatibility_mask,
+                number_of_bytes,
+                ..
+            } => {
+                println!(
+                    "RequiredMemory: gpa 0x{:x}, bytes 0x{:X}, {}",
+                    gpa,
+                    number_of_bytes,
+                    format_compat(&igvm, *compatibility_mask)
+                );
+            }
+
+            IgvmDirectiveHeader::ParameterArea {
+                number_of_bytes,
+                parameter_area_index,
+                ..
+            } => {
+                println!(
+                    "ParameterArea: idx {}, bytes 0x{:x}",
+                    parameter_area_index, number_of_bytes
+                );
+            }
+
+            IgvmDirectiveHeader::EnvironmentInfo(p) => {
+                println!(
+                    "Parameter/EnvironmentInfo: idx {}, offset 0x{:x}",
+                    p.parameter_area_index, p.byte_offset
+                );
+            }
+            IgvmDirectiveHeader::MemoryMap(p) => {
+                println!(
+                    "Parameter/MemoryMap: idx {}, offset 0x{:x}",
+                    p.parameter_area_index, p.byte_offset
+                );
+            }
+            IgvmDirectiveHeader::VpCount(p) => {
+                println!(
+                    "Parameter/VpCount: idx {}, offset 0x{:x}",
+                    p.parameter_area_index, p.byte_offset
+                );
+            }
+
+            IgvmDirectiveHeader::ParameterInsert(p) => {
+                println!(
+                    "ParameterInsert: gpa 0x{:x}, idx {}, {}",
+                    p.gpa,
+                    p.parameter_area_index,
+                    format_compat(&igvm, p.compatibility_mask)
+                );
+            }
+
+            _ => {
+                println!("directive: {}", d);
+            }
+        }
+    }
+}
+
 fn main() {
     stderrlog::new()
         .module(module_path!())
@@ -129,88 +213,7 @@ fn main() {
             }
         }
 
-        for d in igvm
-            .directives()
-            .iter()
-            .filter(|x| !matches! {x, IgvmDirectiveHeader::PageData { .. }})
-        {
-            match d {
-                IgvmDirectiveHeader::SnpVpContext {
-                    compatibility_mask, ..
-                } => {
-                    println!(
-                        "SnpVpContext: {}",
-                        format_compat(&igvm, *compatibility_mask)
-                    );
-                }
-                IgvmDirectiveHeader::X64NativeVpContext {
-                    compatibility_mask, ..
-                } => {
-                    println!(
-                        "X64NativeVpContext: {}",
-                        format_compat(&igvm, *compatibility_mask)
-                    );
-                }
-
-                IgvmDirectiveHeader::RequiredMemory {
-                    gpa,
-                    compatibility_mask,
-                    number_of_bytes,
-                    ..
-                } => {
-                    println!(
-                        "RequiredMemory: gpa 0x{:x}, bytes 0x{:X}, {}",
-                        gpa,
-                        number_of_bytes,
-                        format_compat(&igvm, *compatibility_mask)
-                    );
-                }
-
-                IgvmDirectiveHeader::ParameterArea {
-                    number_of_bytes,
-                    parameter_area_index,
-                    ..
-                } => {
-                    println!(
-                        "ParameterArea: idx {}, bytes 0x{:x}",
-                        parameter_area_index, number_of_bytes
-                    );
-                }
-
-                IgvmDirectiveHeader::EnvironmentInfo(p) => {
-                    println!(
-                        "Parameter/EnvironmentInfo: idx {}, offset 0x{:x}",
-                        p.parameter_area_index, p.byte_offset
-                    );
-                }
-                IgvmDirectiveHeader::MemoryMap(p) => {
-                    println!(
-                        "Parameter/MemoryMap: idx {}, offset 0x{:x}",
-                        p.parameter_area_index, p.byte_offset
-                    );
-                }
-                IgvmDirectiveHeader::VpCount(p) => {
-                    println!(
-                        "Parameter/VpCount: idx {}, offset 0x{:x}",
-                        p.parameter_area_index, p.byte_offset
-                    );
-                }
-
-                IgvmDirectiveHeader::ParameterInsert(p) => {
-                    println!(
-                        "ParameterInsert: gpa 0x{:x}, idx {}, {}",
-                        p.gpa,
-                        p.parameter_area_index,
-                        format_compat(&igvm, p.compatibility_mask)
-                    );
-                }
-
-                _ => {
-                    println!("directive: {}", d);
-                }
-            }
-        }
-
+        print_directives(&igvm);
         print_pagedata(&igvm);
     }
 }
