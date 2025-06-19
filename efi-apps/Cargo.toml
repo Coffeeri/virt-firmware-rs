@@ -23,5 +23,5 @@ serde_json = { version = "1", default-features = false, features = [ "alloc" ]  
 uefi = { version = "0.35", features = ["panic_handler", "logger", "log-debugcon", "alloc", "global_allocator" ] }
 uefi-raw = "0.11"
 
-virtfw-libhw = { path = "../libhw", version = "0.2", features = ["alloc"] }
+virtfw-libhw = { path = "../libhw", version = "0.2.1", features = ["alloc"] }
 virtfw-libefi = { path = "../libefi", version = "0.2.6" }
