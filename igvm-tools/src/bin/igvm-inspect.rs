@@ -192,6 +192,16 @@ fn print_initializations(igvm: &IgvmFile) {
     }
 }
 
+fn print_platforms(igvm: &IgvmFile) {
+    for p in igvm.platforms() {
+        let IgvmPlatformHeader::SupportedPlatform(sp) = p;
+        println!(
+            "platform: {:?}, compat 0x{:x}",
+            sp.platform_type, sp.compatibility_mask
+        );
+    }
+}
+
 fn main() {
     stderrlog::new()
         .module(module_path!())
@@ -207,14 +217,7 @@ fn main() {
         let blob = std::fs::read(arg).expect("file read error");
         let igvm = IgvmFile::new_from_binary(&blob, None).expect("file parse error");
 
-        for p in igvm.platforms() {
-            let IgvmPlatformHeader::SupportedPlatform(sp) = p;
-            println!(
-                "platform: {:?}, compat 0x{:x}",
-                sp.platform_type, sp.compatibility_mask
-            );
-        }
-
+        print_platforms(&igvm);
         print_initializations(&igvm);
         print_directives(&igvm);
         print_pagedata(&igvm);
