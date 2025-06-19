@@ -15,6 +15,7 @@ use igvm_defs::{
     PAGE_SIZE_4K,
 };
 
+use virtfw_igvm_tools::inspect::inspect_igvm;
 use virtfw_igvm_tools::ovmfmeta::{OvmfMeta, OvmfRegionType};
 
 pub const NATIVE_COMPAT: u32 = 1u32 << 0;
@@ -154,6 +155,7 @@ fn parse_args() -> Option<getopts::Matches> {
 
     opts.optflag("h", "help", "print this help text");
     opts.optflag("", "meta", "print ovmf metadata");
+    opts.optflag("", "inspect", "inspect generated igvm");
 
     opts.optflag("", "no-native", "disable native platform");
     opts.optflag("", "snp", "enable sev-snp platform [incomplete]");
@@ -230,10 +232,16 @@ fn main() -> ExitCode {
             error!("build igvm: {}", e);
             return ExitCode::from(1);
         }
+        let igvm = igvm_res.unwrap();
+
+        if cfg.opt_present("inspect") {
+            println!("IGVM image");
+            inspect_igvm(&igvm);
+        }
 
         if let Some(outfile) = cfg.opt_str("output") {
             let mut blob = Vec::new();
-            let res = igvm_res.unwrap().serialize(&mut blob);
+            let res = igvm.serialize(&mut blob);
             if let Err(e) = res {
                 error!("serialize igvm: {}", e);
                 return ExitCode::from(1);
