@@ -127,10 +127,14 @@ impl Builder {
         self
     }
 
-    fn add_firmware(&mut self, firmware: &[u8]) -> &mut Builder {
+    fn add_firmware_4g(&mut self, firmware: &[u8]) -> &mut Builder {
         // all below 4GB
         let fwbase = (1u64 << 32) as usize - firmware.len();
         self.add_data_pages(fwbase, firmware);
+        self
+    }
+
+    fn add_firmware_1m(&mut self, firmware: &[u8]) -> &mut Builder {
         // 128k below 1MB
         let lowsize = min(128 * 1024, firmware.len());
         let lowbase = (1u64 << 20) as usize - lowsize;
@@ -226,7 +230,8 @@ fn main() -> ExitCode {
                 builder.add_ovmf_snp_pages(m);
             }
         }
-        builder.add_firmware(&firmware);
+        builder.add_firmware_1m(&firmware);
+        builder.add_firmware_4g(&firmware);
         let igvm_res = builder.finalize();
         if let Err(e) = igvm_res {
             error!("build igvm: {}", e);
