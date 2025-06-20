@@ -61,7 +61,7 @@ impl Builder {
     }
 
     fn add_snp_platform(&mut self) -> &mut Builder {
-        let sev = IgvmPlatformHeader::SupportedPlatform(IGVM_VHS_SUPPORTED_PLATFORM {
+        let snp = IgvmPlatformHeader::SupportedPlatform(IGVM_VHS_SUPPORTED_PLATFORM {
             compatibility_mask: SEV_SNP_COMPAT,
             highest_vtl: 2,
             platform_type: IgvmPlatformType::SEV_SNP,
@@ -69,7 +69,7 @@ impl Builder {
             shared_gpa_boundary: 0,
         });
         self.compatibility_mask_all |= SEV_SNP_COMPAT;
-        self.platforms.push(sev);
+        self.platforms.push(snp);
         self
     }
 
