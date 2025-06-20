@@ -7,8 +7,10 @@ use std::env;
 use std::fs;
 use std::process::ExitCode;
 
+use igvm::snp_defs::SevFeatures;
 use igvm::{
-    Arch, IgvmDirectiveHeader, IgvmFile, IgvmInitializationHeader, IgvmPlatformHeader, IgvmRevision,
+    registers::X86Register, Arch, IgvmDirectiveHeader, IgvmFile, IgvmInitializationHeader,
+    IgvmPlatformHeader, IgvmRevision,
 };
 use igvm_defs::{
     IgvmPageDataFlags, IgvmPageDataType, IgvmPlatformType, IGVM_VHS_SUPPORTED_PLATFORM,
@@ -17,6 +19,7 @@ use igvm_defs::{
 
 use virtfw_igvm_tools::inspect::inspect_igvm;
 use virtfw_igvm_tools::ovmfmeta::{OvmfMeta, OvmfRegionType};
+use virtfw_igvm_tools::x86regs::{real_mode_regs, vmsa_context};
 
 pub const NATIVE_COMPAT: u32 = 1u32 << 0;
 pub const SEV_SNP_COMPAT: u32 = 1u32 << 1;
@@ -70,6 +73,20 @@ impl Builder {
         });
         self.compatibility_mask_all |= SEV_SNP_COMPAT;
         self.platforms.push(snp);
+        self
+    }
+
+    fn add_snp_vmsa_context(&mut self, regs: &[X86Register]) -> &mut Builder {
+        let features = SevFeatures::new().with_snp(true);
+        let vmsa = vmsa_context(regs, features);
+        let gpa = 0xFFFFFFFFF000;
+        let ctx = IgvmDirectiveHeader::SnpVpContext {
+            gpa,
+            compatibility_mask: SEV_SNP_COMPAT,
+            vp_index: 0,
+            vmsa: Box::new(vmsa),
+        };
+        self.directives.push(ctx);
         self
     }
 
@@ -162,7 +179,7 @@ fn parse_args() -> Option<getopts::Matches> {
     opts.optflag("", "inspect", "inspect generated igvm");
 
     opts.optflag("", "no-native", "disable native platform");
-    opts.optflag("", "snp", "enable sev-snp platform [incomplete]");
+    opts.optflag("", "snp", "enable sev-snp platform");
 
     opts.optopt("i", "input", "input bios image", "BIOS");
     opts.optopt("o", "output", "output igvm image", "IGVM");
@@ -226,6 +243,7 @@ fn main() -> ExitCode {
         if cfg.opt_present("snp") {
             // sev-snp
             builder.add_snp_platform();
+            builder.add_snp_vmsa_context(&real_mode_regs());
             if let Some(m) = ovmfmeta.as_ref() {
                 builder.add_ovmf_snp_pages(m);
             }
