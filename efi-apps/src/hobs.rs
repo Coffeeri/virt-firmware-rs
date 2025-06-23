@@ -12,7 +12,7 @@ use uefi::system::with_config_table;
 use uefi::table::cfg::ConfigTableEntry;
 use uefi::Guid;
 
-use virtfw_libefi::guids::{pretty_name, FdtHob, HandOffBlockListCfg};
+use virtfw_libefi::guids::{pretty_name, FdtHob, HandOffBlockListCfg, OvmfMemDebugLog};
 
 use crate::rawhobs::{
     HobHeader, HobMemoryAllocation, HobResourceDescriptor, EFI_HOB_TYPE_END_OF_HOB_LIST,
@@ -24,6 +24,7 @@ pub enum Hob {
     MemoryAllocation(HobMemoryAllocation),
     ResourceDescriptor(HobResourceDescriptor),
     Fdt(u64),
+    MemLog(u64),
     OtherType { hob_type: u16 },
     OtherGuid { hob_guid: Guid },
     Broken,
@@ -41,6 +42,7 @@ impl Hob {
         let addr = u64::from_le_bytes(addr_bytes);
         match guid {
             FdtHob => Hob::Fdt(addr),
+            OvmfMemDebugLog => Hob::MemLog(addr),
             _ => Hob::OtherGuid { hob_guid: guid },
         }
     }
@@ -90,6 +92,7 @@ impl core::fmt::Display for Hob {
                 )
             }
             Hob::Fdt(_) => write!(f, "device tree"),
+            Hob::MemLog(_) => write!(f, "memory log"),
             Hob::OtherType { hob_type } => write!(f, "other type: {}", hob_type),
             Hob::OtherGuid { hob_guid } => write!(f, "other guid: {}", pretty_name(hob_guid)),
             Hob::Broken => write!(f, "broken"),
