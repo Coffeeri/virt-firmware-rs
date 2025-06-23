@@ -12,7 +12,7 @@ use uefi::println;
 
 #[cfg(feature = "fdt")]
 use virtfw_efi_apps::fdt::print_node;
-use virtfw_efi_apps::ovmflog::MemDebugLog;
+use virtfw_efi_apps::ovmf_log::MemDebugLog;
 use virtfw_efi_apps::{hobs, misc, qemu, rawhobs};
 
 fn list_raw(hl: hobs::HobList) {
