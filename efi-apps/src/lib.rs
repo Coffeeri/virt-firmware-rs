@@ -5,5 +5,6 @@ pub mod distro;
 pub mod fdt;
 pub mod hobs;
 pub mod misc;
+pub mod ovmflog;
 pub mod qemu;
 pub mod rawhobs;
