@@ -54,6 +54,7 @@ pub const FdtHob: Guid = guid!("16958446-19B7-480B-B047-7485AD3F716D");
 pub const OvmfPkgPlatformInfo: Guid = guid!("dec9b486-1f16-47c7-8f68-df1a41888ba5");
 pub const PcdDatabase: Guid = guid!("9b3ada4f-ae56-4c24-8dea-f03b7558ae50");
 pub const SecPlatformInformation2: Guid = guid!("9e9f374b-8f16-4230-9824-5846ee766a97");
+pub const OvmfMemDebugLog: Guid = guid!("95305139-b20f-4723-8425-627c888ff121");
 
 pub fn try_pretty_name(guid: &Guid) -> Option<&'static str> {
     match *guid {
