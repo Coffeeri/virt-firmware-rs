@@ -4,6 +4,7 @@
 //!
 extern crate alloc;
 use alloc::string::String;
+use alloc::vec::Vec;
 
 use uefi::prelude::*;
 use uefi::proto::device_path::text::{AllowShortcuts, DisplayOnly};
@@ -12,11 +13,19 @@ use uefi::proto::loaded_image::LoadedImage;
 use uefi::{print, println};
 
 /// return command line if present
-pub fn cmdline() -> Option<String> {
+pub fn cmdline(me: &str) -> Option<String> {
     let image = boot::open_protocol_exclusive::<LoadedImage>(boot::image_handle()).ok()?;
     let cmdline16 = image.load_options_as_cstr16().ok()?;
+    let cmdline = String::from_utf16_lossy(cmdline16.to_u16_slice());
+    let mut args: Vec<&str> = cmdline.split_whitespace().collect();
 
-    Some(String::from_utf16_lossy(cmdline16.to_u16_slice()))
+    if let Some(arg0) = args.first() {
+        if me == *arg0 {
+            args.remove(0);
+        }
+    }
+
+    Some(args.join(" "))
 }
 
 /// connect all controllers

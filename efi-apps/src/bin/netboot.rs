@@ -191,7 +191,7 @@ fn main() -> Status {
         return Status::SUCCESS;
     };
 
-    let Some(cmdline) = misc::cmdline() else {
+    let Some(cmdline) = misc::cmdline("netboot.efi") else {
         println!("usage: netboot.efi $url");
         boot::stall(1_000_000);
         return Status::SUCCESS;
