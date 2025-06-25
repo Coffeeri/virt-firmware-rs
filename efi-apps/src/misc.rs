@@ -20,7 +20,7 @@ pub fn cmdline(me: &str) -> Option<String> {
     let mut args: Vec<&str> = cmdline.split_whitespace().collect();
 
     if let Some(arg0) = args.first() {
-        if me == *arg0 {
+        if arg0.starts_with(me) {
             args.remove(0);
         }
     }

@@ -7,7 +7,7 @@
 use uefi::prelude::*;
 use uefi::println;
 
-use virtfw_efi_apps::{misc, qemu};
+use virtfw_efi_apps::qemu;
 
 #[entry]
 fn main() -> Status {
@@ -15,7 +15,6 @@ fn main() -> Status {
     log::set_max_level(log::LevelFilter::Info);
 
     println!("Hello world!");
-    let _ = misc::cmdline("hello.efi");
 
     qemu::shutdown_if_direct_kernel_load();
     Status::SUCCESS

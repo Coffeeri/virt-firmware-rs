@@ -161,7 +161,7 @@ fn list_hobs() {
         return;
     };
 
-    let Some(cmdline) = misc::cmdline("hoblist.efi") else {
+    let Some(cmdline) = misc::cmdline("hoblist") else {
         list_raw(hl);
         return;
     };
