@@ -4,7 +4,7 @@
 pub mod bootcfg;
 #[cfg(feature = "std")]
 pub mod distro;
-#[cfg(feature = "std")]
+#[cfg(feature = "udev")]
 pub mod efifile;
 pub mod efivar;
 pub mod guids;
