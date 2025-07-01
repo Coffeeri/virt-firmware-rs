@@ -10,6 +10,22 @@ repository.workspace = true
 authors.workspace = true
 edition.workspace = true
 
+[[bin]]
+name = "generate-boot-csv"
+
+[[bin]]
+name = "list-sb-vars"
+
+[[bin]]
+name = "mini-bootcfg"
+required-features = [ "udev" ]
+
+[[bin]]
+name = "uefi-boot-menu"
+
+[features]
+udev = [ "virtfw-libefi/udev" ]
+
 [dependencies]
 uguid.workspace = true
 
