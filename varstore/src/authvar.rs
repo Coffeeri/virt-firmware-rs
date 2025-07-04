@@ -22,6 +22,11 @@ pub const SB_CUSTOM_MODE: &str = "CustomMode";
 pub const SB_SECURE_BOOT: &str = "SecureBoot";
 
 impl EfiVarStore {
+    fn get_setup_mode(&self) -> bool {
+        self.get_unchecked(SB_PK, &guids::EfiGlobalVariable)
+            .is_none()
+    }
+
     fn set_setup_mode(&mut self, enabled: bool) {
         self.set_unchecked_bool(
             &guids::EfiGlobalVariable,
@@ -100,8 +105,12 @@ impl EfiVarStore {
 
     // check secure boot auth vars
     fn check_sb_auth(&self, _variable: &EfiVar) -> Result<(), Error<&'static str>> {
-        // not implemented yet
-        Err(Error::new(Status::UNSUPPORTED, "time auth bit set"))
+        if self.get_setup_mode() {
+            return Ok(());
+        }
+
+        // no support (yet) for pkcs7 signature verification -> make vars read-only
+        Err(Error::new(Status::WRITE_PROTECTED, "secure boot auth var"))
     }
 
     fn check_time_auth(&self, variable: &EfiVar) -> Result<(), Error<&'static str>> {
@@ -124,9 +133,7 @@ impl EfiVarStore {
     }
 
     pub(crate) fn auth_init(&mut self) {
-        let setup = self
-            .get_unchecked(SB_PK, &guids::EfiGlobalVariable)
-            .is_none();
+        let setup = self.get_setup_mode();
         self.set_setup_mode(setup);
 
         self.set_signature_support();
