@@ -80,7 +80,34 @@ impl EfiVarStore {
         );
     }
 
-    fn check_time_auth(&self, _variable: &EfiVar) -> Result<(), Error<&'static str>> {
+    fn is_sb_pk(&self, var: &EfiVar) -> bool {
+        var.guid == guids::EfiGlobalVariable && var.name == SB_PK
+    }
+
+    fn is_sb_kek(&self, var: &EfiVar) -> bool {
+        var.guid == guids::EfiGlobalVariable && var.name == SB_KEK
+    }
+
+    // image security database (db + dbx)
+    fn is_sb_imgdb(&self, var: &EfiVar) -> bool {
+        var.guid == guids::EfiImageSecurityDatabase && (var.name == SB_DB || var.name == SB_DBX)
+    }
+
+    // is secure boot auth var?
+    fn is_sb_authvar(&self, var: &EfiVar) -> bool {
+        self.is_sb_pk(var) || self.is_sb_kek(var) || self.is_sb_imgdb(var)
+    }
+
+    // check secure boot auth vars
+    fn check_sb_auth(&self, _variable: &EfiVar) -> Result<(), Error<&'static str>> {
+        // not implemented yet
+        Err(Error::new(Status::UNSUPPORTED, "time auth bit set"))
+    }
+
+    fn check_time_auth(&self, variable: &EfiVar) -> Result<(), Error<&'static str>> {
+        if self.is_sb_authvar(variable) {
+            return self.check_sb_auth(variable);
+        }
         // not implemented yet
         Err(Error::new(Status::UNSUPPORTED, "time auth bit set"))
     }
