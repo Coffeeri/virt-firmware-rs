@@ -115,6 +115,10 @@ impl EfiVarStore {
         if variable.attr.hardware_error() {
             return Err(Error::new(Status::INVALID_PARAMETER, "hw-error bit set"));
         }
+        if variable.attr.auth_wr_access() {
+            // not used any more
+            return Err(Error::new(Status::UNSUPPORTED, "auth bit set"));
+        }
         Ok(())
     }
 

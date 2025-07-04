@@ -122,10 +122,6 @@ impl EfiVarStore {
     }
 
     pub(crate) fn check_auth(&self, variable: &EfiVar) -> Result<(), Error<&'static str>> {
-        if variable.attr.auth_wr_access() {
-            // not used any more
-            return Err(Error::new(Status::UNSUPPORTED, "auth bit set"));
-        }
         if variable.attr.time_auth_wr_access() {
             return self.check_time_auth(variable);
         }
