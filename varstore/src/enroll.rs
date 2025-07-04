@@ -12,6 +12,7 @@ use virtfw_libefi::guids;
 use virtfw_libefi::sb::certs::*;
 use virtfw_libefi::sb::dbx::*;
 
+use crate::authvar::{SB_DB, SB_DBX, SB_KEK, SB_PK};
 use crate::store::EfiVarStore;
 
 impl EfiVarStore {
@@ -26,19 +27,19 @@ impl EfiVarStore {
     }
 
     pub fn enroll_pk(&mut self, pk: &EfiSigDB) {
-        self.enroll_sigdb(&guids::EfiGlobalVariable, "PK", pk);
+        self.enroll_sigdb(&guids::EfiGlobalVariable, SB_PK, pk);
     }
 
     pub fn enroll_kek(&mut self, kek: &EfiSigDB) {
-        self.enroll_sigdb(&guids::EfiGlobalVariable, "KEK", kek);
+        self.enroll_sigdb(&guids::EfiGlobalVariable, SB_KEK, kek);
     }
 
     pub fn enroll_db(&mut self, db: &EfiSigDB) {
-        self.enroll_sigdb(&guids::EfiImageSecurityDatabase, "db", db);
+        self.enroll_sigdb(&guids::EfiImageSecurityDatabase, SB_DB, db);
     }
 
     pub fn enroll_dbx(&mut self, dbx: &EfiSigDB) {
-        self.enroll_sigdb(&guids::EfiImageSecurityDatabase, "dbx", dbx);
+        self.enroll_sigdb(&guids::EfiImageSecurityDatabase, SB_DBX, dbx);
     }
 
     pub fn enroll_pk_mgmt(&mut self) {

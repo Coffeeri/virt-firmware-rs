@@ -10,11 +10,22 @@ use virtfw_libefi::guids;
 
 use crate::store::EfiVarStore;
 
+// signature database names
+pub const SB_PK: &str = "PK";
+pub const SB_KEK: &str = "KEK";
+pub const SB_DB: &str = "db";
+pub const SB_DBX: &str = "dbx";
+
+// secure boot variable names
+pub const SB_SETUP_MODE: &str = "SetupMode";
+pub const SB_CUSTOM_MODE: &str = "CustomMode";
+pub const SB_SECURE_BOOT: &str = "SecureBoot";
+
 impl EfiVarStore {
     fn set_setup_mode(&mut self, enabled: bool) {
         self.set_unchecked_bool(
             &guids::EfiGlobalVariable,
-            "SetupMode",
+            SB_SETUP_MODE,
             EfiVarAttr::new_bs_rt(),
             enabled,
         );
@@ -23,7 +34,7 @@ impl EfiVarStore {
     fn set_secure_boot(&mut self, enabled: bool) {
         self.set_unchecked_bool(
             &guids::EfiGlobalVariable,
-            "SecureBoot",
+            SB_SECURE_BOOT,
             EfiVarAttr::new_bs_rt(),
             enabled,
         );
@@ -32,7 +43,7 @@ impl EfiVarStore {
     fn set_custom_mode(&mut self, enabled: bool) {
         self.set_unchecked_bool(
             &guids::EfiCustomModeEnable,
-            "CustomMode",
+            SB_CUSTOM_MODE,
             EfiVarAttr::new_nv_bs(),
             enabled,
         );
@@ -87,7 +98,7 @@ impl EfiVarStore {
 
     pub(crate) fn auth_init(&mut self) {
         let setup = self
-            .get_unchecked("PK", &guids::EfiGlobalVariable)
+            .get_unchecked(SB_PK, &guids::EfiGlobalVariable)
             .is_none();
         self.set_setup_mode(setup);
 
