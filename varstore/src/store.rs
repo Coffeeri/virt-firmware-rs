@@ -173,7 +173,7 @@ impl EfiVarStore {
         let old_opt = self.get_unchecked(&new.name, &new.guid);
         if let Some(old) = old_opt {
             self.check_service(old)?;
-            self.check_auth(old)?;
+            self.check_attributes(&new)?;
             self.policy_check(&new, false)?;
             self.variables
                 .retain(|v| v.name != new.name || v.guid != new.guid);
@@ -191,10 +191,13 @@ impl EfiVarStore {
         }
         self.check_service(&new)?;
         self.check_attributes(&new)?;
-        self.check_auth(&new)?;
 
         let is_new_var = old_opt.is_none();
         self.policy_check(&new, is_new_var)?;
+
+        if new.attr.time_auth_wr_access() {
+            return self.set_time_auth(&new);
+        }
 
         self.set_unchecked(new);
         Ok(())

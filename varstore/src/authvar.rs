@@ -2,9 +2,9 @@
 //! efi variable store implementation -- handle authenticated variables
 //!
 use alloc::vec::Vec;
-
 use uefi::{Error, Status};
 
+use virtfw_libefi::efivar::auth::EfiVarAuth2;
 use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr};
 use virtfw_libefi::guids;
 
@@ -104,7 +104,11 @@ impl EfiVarStore {
     }
 
     // check secure boot auth vars
-    fn check_sb_auth(&self, _variable: &EfiVar) -> Result<(), Error<&'static str>> {
+    fn check_time_auth_sb(
+        &self,
+        _variable: &EfiVar,
+        _authvar: &EfiVarAuth2,
+    ) -> Result<(), Error<&'static str>> {
         if self.get_setup_mode() {
             return Ok(());
         }
@@ -113,18 +117,33 @@ impl EfiVarStore {
         Err(Error::new(Status::WRITE_PROTECTED, "secure boot auth var"))
     }
 
-    fn check_time_auth(&self, variable: &EfiVar) -> Result<(), Error<&'static str>> {
+    fn check_time_auth(
+        &self,
+        variable: &EfiVar,
+        authvar: &EfiVarAuth2,
+    ) -> Result<(), Error<&'static str>> {
         if self.is_sb_authvar(variable) {
-            return self.check_sb_auth(variable);
+            return self.check_time_auth_sb(variable, authvar);
         }
+
         // not implemented yet
         Err(Error::new(Status::UNSUPPORTED, "time auth bit set"))
     }
 
-    pub(crate) fn check_auth(&self, variable: &EfiVar) -> Result<(), Error<&'static str>> {
-        if variable.attr.time_auth_wr_access() {
-            return self.check_time_auth(variable);
-        }
+    pub(crate) fn set_time_auth(&mut self, variable: &EfiVar) -> Result<(), Error<&'static str>> {
+        let Some(authvar) = EfiVarAuth2::new(&variable.data) else {
+            return Err(Error::new(Status::INVALID_PARAMETER, "authvar parse error"));
+        };
+
+        self.check_time_auth(variable, &authvar)?;
+
+        let v = EfiVar {
+            guid: variable.guid,
+            name: variable.name.clone(),
+            attr: variable.attr,
+            data: authvar.data.to_vec(),
+        };
+        self.set_unchecked(v);
         Ok(())
     }
 
