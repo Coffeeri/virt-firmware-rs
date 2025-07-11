@@ -29,6 +29,7 @@ doc docs: cargo-doc
 test tests: cargo-test
 build: $(BIOS32) cargo-build
 clippy: cargo-clippy
+clippy-fix: cargo-clippy-fix
 release: $(BIOS32) cargo-release
 install: cargo-install
 package: cargo-package
@@ -37,6 +38,7 @@ cargo-doc: $(patsubst %,doc-%,$(PKGS))
 cargo-test: test-libefi test-varstore
 cargo-build: $(patsubst %,build-%,$(PKGS))
 cargo-clippy: $(patsubst %,clippy-%,$(PKGS))
+cargo-clippy-fix: $(patsubst %,clippy-fix-%,$(PKGS))
 cargo-release: $(patsubst %,release-%,$(PKGS))
 cargo-install: install-efi-tools install-igvm-tools
 cargo-package: package-libefi package-efi-tools package-igvm-tools
@@ -88,6 +90,9 @@ build-none-%:
 
 clippy-%:
 	cargo clippy --package virtfw-$* $(TARGET)
+
+clippy-fix-%:
+	cargo clippy --fix --package virtfw-$* $(TARGET)
 
 release-%:
 	cargo build --release --package virtfw-$* $(TARGET)
