@@ -95,7 +95,7 @@ fn main() -> ExitCode {
         error!("no uki images found ({uki_glob})");
         return ExitCode::from(1);
     }
-    print!("{}", csv);
+    print!("{csv}");
 
     if let Err(e) = write_boot_csv(&csv_path, &csv) {
         error!("write {}: {}", csv_path.display(), e);

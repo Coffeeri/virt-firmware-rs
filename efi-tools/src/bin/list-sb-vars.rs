@@ -24,10 +24,10 @@ fn print_cert(cert: &Certificate) {
 
 fn print_sigdb(name: &str, guid: &Guid) {
     let Some(var) = sysfs::varstore_read(name, guid) else {
-        println!("no {}", name);
+        println!("no {name}");
         return;
     };
-    println!("{}", name);
+    println!("{name}");
 
     let Some(sigdb) = EfiSigDB::new_from_bytes(&var.data) else {
         error!("parse error");
@@ -35,7 +35,7 @@ fn print_sigdb(name: &str, guid: &Guid) {
     };
 
     for siglist in sigdb.siglists {
-        println!("  {}", siglist);
+        println!("  {siglist}");
         if let Some(der) = siglist.get_x509() {
             if let Ok(cert) = Certificate::from_der(der) {
                 print_cert(&cert);

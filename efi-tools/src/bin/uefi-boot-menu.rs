@@ -67,10 +67,10 @@ fn main() -> ExitCode {
         attr: EfiVarAttr::new_nv_bs_rt(),
         data: Vec::from(bi),
     };
-    debug!("{:?}", bn);
-    println!("Setting BootNext to {}", bi);
+    debug!("{bn:?}");
+    println!("Setting BootNext to {bi}");
     if let Err(e) = sysfs::varstore_write(&bn) {
-        error!("failed to write BootNext: {}", e);
+        error!("failed to write BootNext: {e}");
         return ExitCode::from(1);
     }
 
