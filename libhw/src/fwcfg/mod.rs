@@ -98,7 +98,7 @@ pub trait FwCfg {
         {
             self.select(ITEM_VERSION);
             let ver = self.read32_le();
-            debug!("fwcfg: signature 0x{:x}, version {}", sig, ver);
+            debug!("fwcfg: signature 0x{sig:x}, version {ver}");
         }
 
         true
@@ -127,7 +127,7 @@ pub trait FwCfg {
 
         self.select(ITEM_FILEDIR);
         let count = self.read32_be();
-        debug!("fwcfg: filedir: count {}", count);
+        debug!("fwcfg: filedir: count {count}");
 
         for _ in 0..count {
             let size = self.read32_be();
@@ -139,7 +139,7 @@ pub trait FwCfg {
                 item,
                 name: bytes_to_string(&name),
             };
-            debug!("{:?}", entry);
+            debug!("{entry:?}");
             list.push(entry);
         }
 
