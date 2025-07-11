@@ -186,7 +186,7 @@ fn parse_args() -> Option<getopts::Matches> {
 fn print_ovmfmeta(ovmfmeta: &OvmfMeta) {
     println!("OVMF regions");
     for r in &ovmfmeta.regions {
-        println!("  {}", r);
+        println!("  {r}");
     }
 }
 
@@ -234,7 +234,7 @@ fn main() -> ExitCode {
         builder.add_firmware_4g(&firmware);
         let igvm_res = builder.finalize();
         if let Err(e) = igvm_res {
-            error!("build igvm: {}", e);
+            error!("build igvm: {e}");
             return ExitCode::from(1);
         }
         let igvm = igvm_res.unwrap();
@@ -248,7 +248,7 @@ fn main() -> ExitCode {
             let mut blob = Vec::new();
             let res = igvm.serialize(&mut blob);
             if let Err(e) = res {
-                error!("serialize igvm: {}", e);
+                error!("serialize igvm: {e}");
                 return ExitCode::from(1);
             }
 

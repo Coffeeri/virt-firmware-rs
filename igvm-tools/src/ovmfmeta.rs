@@ -159,25 +159,25 @@ impl OvmfMeta<'_> {
         match guid {
             OVMF_META_SEV_RESET => {
                 let (addr, _) = u32::read_from_prefix(blk).ok()?;
-                debug!("  sev reset: 0x{:x}", addr);
+                debug!("  sev reset: 0x{addr:x}");
             }
             OVMF_META_SEV_SECRET => {
                 let (addr, r) = u32::read_from_prefix(blk).ok()?;
                 let (size, _) = u32::read_from_prefix(r).ok()?;
-                debug!("  sev secret 0x{:x} +0x{:x}", addr, size);
+                debug!("  sev secret 0x{addr:x} +0x{size:x}");
             }
             OVMF_META_SEV_HASHES => {
                 let (addr, r) = u32::read_from_prefix(blk).ok()?;
                 let (size, _) = u32::read_from_prefix(r).ok()?;
-                debug!("  sev hashes 0x{:x} +0x{:x}", addr, size,);
+                debug!("  sev hashes 0x{addr:x} +0x{size:x}",);
             }
             OVMF_META_SEV_LIST => {
                 let (listbase, _) = u32::read_from_prefix(blk).ok()?;
                 let start = self.firmware.len().checked_sub(listbase as usize)?;
-                debug!("  sev addr 0x{:x} -> 0x{:x}", listbase, start);
+                debug!("  sev addr 0x{listbase:x} -> 0x{start:x}");
                 let (_, sev) = self.firmware.split_at_checked(start)?;
                 let (head, mut items) = OvmfMetaListHead::read_from_prefix(sev).ok()?;
-                debug!("    {:?}", head);
+                debug!("    {head:?}");
                 for _ in 0..head.entries {
                     let (e, r) = OvmfMetaSevEntry::read_from_prefix(items).ok()?;
                     if e.size != 0 {
@@ -190,10 +190,10 @@ impl OvmfMeta<'_> {
             OVMF_META_TDX_LIST => {
                 let (listbase, _) = u32::read_from_prefix(blk).ok()?;
                 let start = self.firmware.len().checked_sub(listbase as usize)?;
-                debug!("  tdx addr 0x{:x} -> 0x{:x}", listbase, start);
+                debug!("  tdx addr 0x{listbase:x} -> 0x{start:x}");
                 let (_, tdx) = self.firmware.split_at_checked(start)?;
                 let (head, mut items) = OvmfMetaListHead::read_from_prefix(tdx).ok()?;
-                debug!("    {:?}", head);
+                debug!("    {head:?}");
                 for _ in 0..head.entries {
                     let (e, r) = OvmfMetaTdxEntry::read_from_prefix(items).ok()?;
                     if e.mem_size != 0 {

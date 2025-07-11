@@ -14,7 +14,7 @@ fn main() {
     let mut args: Vec<String> = env::args().collect();
     args.remove(0);
     for arg in args {
-        info!("{}", arg);
+        info!("{arg}");
 
         let blob = std::fs::read(arg).expect("file read error");
         let igvm = IgvmFile::new_from_binary(&blob, None).expect("file parse error");

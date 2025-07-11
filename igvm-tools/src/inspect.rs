@@ -15,7 +15,7 @@ pub fn format_compat(igvm: &IgvmFile, compat: u32) -> String {
         })
         .collect();
 
-    format!("compat 0x{:x} {:?}", compat, platforms)
+    format!("compat 0x{compat:x} {platforms:?}")
 }
 
 pub fn inspect_platforms(igvm: &IgvmFile) {
@@ -42,7 +42,7 @@ pub fn inspect_initializations(igvm: &IgvmFile) {
                 );
             }
             _ => {
-                println!("initialization: {:?}", i);
+                println!("initialization: {i:?}");
             }
         }
     }
@@ -89,8 +89,7 @@ pub fn inspect_directives(igvm: &IgvmFile) {
                 ..
             } => {
                 println!(
-                    "ParameterArea: idx {}, bytes 0x{:x}",
-                    parameter_area_index, number_of_bytes
+                    "ParameterArea: idx {parameter_area_index}, bytes 0x{number_of_bytes:x}"
                 );
             }
 
@@ -123,7 +122,7 @@ pub fn inspect_directives(igvm: &IgvmFile) {
             }
 
             _ => {
-                println!("directive: {}", d);
+                println!("directive: {d}");
             }
         }
     }
