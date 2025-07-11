@@ -73,11 +73,11 @@ fn main() -> Status {
     uefi::helpers::init().unwrap();
     log::set_max_level(log::LevelFilter::Info);
 
-    let Some(entry) = with_config_table(find_debuglog) else {
+    if let Some(entry) = with_config_table(find_debuglog) {
+        print_debuglog(entry);
+    } else {
         println!("no debuglog found");
-        return Status::SUCCESS;
-    };
-    print_debuglog(entry);
+    }
 
     qemu::shutdown_if_direct_kernel_load();
     Status::SUCCESS
