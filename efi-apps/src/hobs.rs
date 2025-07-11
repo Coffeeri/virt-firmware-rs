@@ -93,7 +93,7 @@ impl core::fmt::Display for Hob {
             }
             Hob::Fdt(_) => write!(f, "device tree"),
             Hob::MemLog(_) => write!(f, "memory log"),
-            Hob::OtherType { hob_type } => write!(f, "other type: {}", hob_type),
+            Hob::OtherType { hob_type } => write!(f, "other type: {hob_type}"),
             Hob::OtherGuid { hob_guid } => write!(f, "other guid: {}", pretty_name(hob_guid)),
             Hob::Broken => write!(f, "broken"),
         }
