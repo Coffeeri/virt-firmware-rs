@@ -222,11 +222,11 @@ impl<'a> MmVariableRequest<'a> {
         let (header, body) = MmVariableHeader::new(data)?;
         let req = match MmVariableParsedRequest::new(header.function, body) {
             Ok(req) => {
-                debug!("variable/req/ok: {}", req);
+                debug!("variable/req/ok: {req}");
                 Some(req)
             }
             Err(e) => {
-                debug!("variable/req/err: {}", e);
+                debug!("variable/req/err: {e}");
                 None
             }
         };
@@ -380,7 +380,7 @@ impl<'a> MmVariableRequest<'a> {
             MmVariableParsedRequest::LockVariable(id) => self.lock_variable(store, id),
             MmVariableParsedRequest::GetPayloadSize => self.get_payload_size(),
             _ => {
-                error!("variable/unknown: {}", parsed);
+                error!("variable/unknown: {parsed}");
                 panic!();
             }
         }

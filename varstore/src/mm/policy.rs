@@ -118,7 +118,7 @@ impl<'a> MmVarPolicyRequest<'a> {
     }
 
     fn response(&self, status: Status, _reply: Option<&[u8]>) -> Vec<u8> {
-        debug!("policy/rsp: {}", status);
+        debug!("policy/rsp: {status}");
 
         let mut hdr = self.hdr.clone();
         hdr.result.set((status.0 as u64).into());
@@ -194,7 +194,7 @@ impl<'a> MmVarPolicyRequest<'a> {
                     return self.response(e.status(), None);
                 }
                 let policy = res.unwrap();
-                debug!("policy/req/register: {}", policy);
+                debug!("policy/req/register: {policy}");
                 let res = store.policy_register(policy);
                 if let Err(e) = res {
                     return self.response(e.status(), None);
@@ -207,7 +207,7 @@ impl<'a> MmVarPolicyRequest<'a> {
                 self.response(Status::SUCCESS, None)
             }
             _ => {
-                debug!("policy/req: unsupported command 0x{:x}", cmd);
+                debug!("policy/req: unsupported command 0x{cmd:x}");
                 self.response(Status::UNSUPPORTED, None)
             }
         }

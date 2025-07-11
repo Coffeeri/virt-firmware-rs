@@ -83,7 +83,7 @@ pub fn core_request_dispatch(
 pub fn core_request(store: &mut EfiVarStore, req: &mut [u8]) {
     let res = MmCore::new(req);
     if let Err(e) = res {
-        error!("parse core: {}", e);
+        error!("parse core: {e}");
         return;
     };
 
