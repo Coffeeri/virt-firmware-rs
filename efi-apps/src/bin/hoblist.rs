@@ -12,7 +12,6 @@ use uefi::println;
 
 #[cfg(feature = "fdt")]
 use virtfw_efi_apps::fdt::print_node;
-use virtfw_efi_apps::ovmf_log::MemDebugLog;
 use virtfw_efi_apps::{hobs, misc, qemu, rawhobs};
 
 fn list_raw(hl: hobs::HobList) {
@@ -92,69 +91,6 @@ fn devtree(hl: hobs::HobList) {
     print_devtree(fdt_addr);
 }
 
-fn get_memorylog_address(hl: hobs::HobList) -> Option<u64> {
-    let mut iter = hl.filter_map(|h| match h {
-        hobs::Hob::MemLog(data) => Some(data),
-        _ => None,
-    });
-    iter.next()
-}
-
-fn print_logbuf(logbuf: &[u8]) {
-    for line in logbuf.split(|b| b == &b'\n' || b == &b'\r') {
-        if line.is_empty() {
-            continue;
-        }
-        if let Ok(s) = core::str::from_utf8(line) {
-            println!("{}", s);
-        } else {
-            println!("[ garbage log line ]");
-        }
-    }
-}
-
-fn memorylog(hl: hobs::HobList) {
-    let Some(log_addr) = get_memorylog_address(hl) else {
-        println!("no memory log");
-        return;
-    };
-
-    let Some(log) = MemDebugLog::new(log_addr) else {
-        println!("no valid log found");
-        return;
-    };
-
-    if let Some(ver) = log.hdr.fw_version.split(|b| b == &b'\0').next() {
-        if let Ok(s) = core::str::from_utf8(ver) {
-            println!("[ firmware version: {} ]", s);
-        }
-    }
-
-    if log.hdr.truncated != 0 {
-        println!("[ firmware log is truncated ]");
-    }
-
-    let h = log.hdr.head_offset as usize;
-    let t = log.hdr.tail_offset as usize;
-    let s = log.hdr.log_size as usize;
-    println!("[ head {}, tail {}, size {} ]", h, t, s);
-
-    if h < t {
-        if let Some(buf) = log.log.get(h..t) {
-            print_logbuf(buf);
-        }
-    }
-
-    if h > t {
-        if let Some(buf) = log.log.get(h..s) {
-            print_logbuf(buf);
-        }
-        if let Some(buf) = log.log.get(0..t) {
-            print_logbuf(buf);
-        }
-    }
-}
-
 fn list_hobs() {
     let Some(hl) = hobs::HobList::new() else {
         println!("failed to get hob list");
@@ -174,12 +110,10 @@ fn list_hobs() {
             println!("  mem - list memory allocations");
             println!("  res - list resource descriptions");
             println!("  fdt - check for device tree");
-            println!("  log - check for memory log");
         }
         "mem" | "memory" => list_mem(hl),
         "res" | "resources" => list_res(hl),
         "fdt" | "devicetree" => devtree(hl),
-        "log" | "memorylog" => memorylog(hl),
         _ => list_raw(hl),
     }
 }
