@@ -1,4 +1,4 @@
-#![cfg(feature = "std")]
+#![cfg(all(feature = "std", feature = "json"))]
 
 use virtfw_libefi::efivar::types::EfiVar;
 use virtfw_varstore::json::JsonEfiVarStore;
