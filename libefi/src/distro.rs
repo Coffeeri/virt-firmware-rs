@@ -20,7 +20,7 @@ pub fn envfile_parse_string(data: &str) -> HashMap<String, String> {
             let value = value.trim().trim_matches('"');
             values.insert(key.to_string(), value.to_string());
         } else {
-            debug!("parse error: no '=' in line ({})", line);
+            debug!("parse error: no '=' in line ({line})");
         }
     }
     values
@@ -29,11 +29,11 @@ pub fn envfile_parse_string(data: &str) -> HashMap<String, String> {
 pub fn envfile_parse_file(filename: &str) -> Option<HashMap<String, String>> {
     match fs::read_to_string(filename) {
         Err(e) => {
-            error!("open {}: {}", filename, e);
+            error!("open {filename}: {e}");
             None
         }
         Ok(s) => {
-            debug!("reading {}", filename);
+            debug!("reading {filename}");
             Some(envfile_parse_string(&s))
         }
     }
@@ -56,7 +56,7 @@ pub fn find_esp_path() -> Option<String> {
 
     // fallback
     for candidate in ["/efi", "/boot/efi", "/boot"] {
-        let bootdir = format!("{}/EFI/BOOT", candidate);
+        let bootdir = format!("{candidate}/EFI/BOOT");
         if Path::new(&bootdir).exists() {
             return Some(candidate.to_string());
         }

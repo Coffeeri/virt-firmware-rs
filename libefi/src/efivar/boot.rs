@@ -89,7 +89,7 @@ impl BootOrder {
 
 impl fmt::Display for BootOrder {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let s: Vec<String> = self.0.iter().map(|a| format!("{}", a)).collect();
+        let s: Vec<String> = self.0.iter().map(|a| format!("{a}")).collect();
         write!(f, "{}", s.join(","))
     }
 }
@@ -121,13 +121,13 @@ impl fmt::Display for BootEntryOptData {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             BootEntryOptData::String { string } => {
-                write!(f, "\"{}\"", string)
+                write!(f, "\"{string}\"")
             }
             BootEntryOptData::Guid { guid } => {
-                write!(f, "{}", guid)
+                write!(f, "{guid}")
             }
             BootEntryOptData::Data { bytes } => {
-                write!(f, "{:?}", bytes)
+                write!(f, "{bytes:?}")
             }
             BootEntryOptData::None => Ok(()),
         }

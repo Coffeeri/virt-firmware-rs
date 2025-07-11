@@ -289,12 +289,12 @@ impl fmt::Display for DevPathNode {
                     write!(f, "PciRoot()")
                 }
                 (h, u) => {
-                    write!(f, "Acpi(hid=0x{:x},uid=0x{:x})", h, u)
+                    write!(f, "Acpi(hid=0x{h:x},uid=0x{u:x})")
                 }
             },
 
             DevPathNode::AcpiAdr(adr) => {
-                let s: Vec<String> = adr.iter().map(|a| format!("0x{:x}", a)).collect();
+                let s: Vec<String> = adr.iter().map(|a| format!("0x{a:x}")).collect();
                 write!(f, "Acpi(adr={})", s.join(","))
             }
 
@@ -307,7 +307,7 @@ impl fmt::Display for DevPathNode {
             }
 
             DevPathNode::MsgVendor(guid) => {
-                write!(f, "Vendor({})", guid)
+                write!(f, "Vendor({guid})")
             }
 
             DevPathNode::MsgMac(_) => {
@@ -342,7 +342,7 @@ impl fmt::Display for DevPathNode {
             }
             DevPathNode::MsgUri(uri) => match &uri {
                 None => write!(f, "URI()"),
-                Some(u) => write!(f, "URI(\"{}\")", u),
+                Some(u) => write!(f, "URI(\"{u}\")"),
             },
 
             DevPathNode::MediaHd(part) => {
@@ -350,19 +350,19 @@ impl fmt::Display for DevPathNode {
             }
 
             DevPathNode::MediaVendor(guid) => {
-                write!(f, "Vendor({})", guid)
+                write!(f, "Vendor({guid})")
             }
 
             DevPathNode::MediaFilePath(path) => {
-                write!(f, "File(\"{}\")", path)
+                write!(f, "File(\"{path}\")")
             }
 
             DevPathNode::MediaFwFile(filename) => {
-                write!(f, "FwFile({})", filename)
+                write!(f, "FwFile({filename})")
             }
 
             DevPathNode::MediaFwVol(volume) => {
-                write!(f, "FwVol({})", volume)
+                write!(f, "FwVol({volume})")
             }
 
             DevPathNode::End { subtype: _ } => {
@@ -409,7 +409,7 @@ impl Default for DevPath {
 
 impl fmt::Display for DevPath {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let s: Vec<String> = self.nodes.iter().map(|a| format!("{}", a)).collect();
+        let s: Vec<String> = self.nodes.iter().map(|a| format!("{a}")).collect();
         write!(f, "{}", s.join("/"))
     }
 }

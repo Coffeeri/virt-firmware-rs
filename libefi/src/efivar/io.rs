@@ -307,10 +307,7 @@ impl<T: io::Read> ReadEfiExt for T {
 
             (d, s, len) => {
                 let data = self.read_blob(len)?;
-                debug!(
-                    "devpath node type=0x{:x} subtype=0x{:x} data={:?}",
-                    d, s, data
-                );
+                debug!("devpath node type=0x{d:x} subtype=0x{s:x} data={data:?}");
                 Ok(dp::DevPathNode::Other {
                     devtype: d,
                     subtype: s,

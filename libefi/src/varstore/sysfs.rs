@@ -17,7 +17,7 @@ use zerocopy::FromBytes;
 use crate::efivar::types;
 
 fn varstore_filename(name: &str, guid: &Guid) -> String {
-    let filename = format!("/sys/firmware/efi/efivars/{}-{}", name, guid);
+    let filename = format!("/sys/firmware/efi/efivars/{name}-{guid}");
     filename
 }
 
@@ -46,7 +46,7 @@ pub fn varstore_ls() -> io::Result<Vec<types::EfiVarId>> {
 
 pub fn varstore_read(name: &str, guid: &Guid) -> Option<types::EfiVar> {
     let filename = varstore_filename(name, guid);
-    debug!("reading {}", filename);
+    debug!("reading {filename}");
     let Ok(blob) = fs::read(filename) else {
         return None;
     };
@@ -72,10 +72,10 @@ pub fn varstore_write(var: &types::EfiVar) -> io::Result<()> {
     let attr: u32 = var.attr.into();
     blob.extend_from_slice(&attr.to_le_bytes());
     blob.extend_from_slice(&var.data);
-    trace!("datablob={:?}", blob);
+    trace!("datablob={blob:?}");
 
     let filename = varstore_filename(&var.name, &var.guid);
-    debug!("writing {}", filename);
+    debug!("writing {filename}");
     let mut f = fs::OpenOptions::new()
         .create(true)
         .truncate(true)
@@ -88,7 +88,7 @@ pub fn varstore_write(var: &types::EfiVar) -> io::Result<()> {
 
 pub fn varstore_delete(name: &str, guid: &Guid) -> io::Result<()> {
     let filename = varstore_filename(name, guid);
-    debug!("deleting {}", filename);
+    debug!("deleting {filename}");
     fs::remove_file(filename)?;
     Ok(())
 }

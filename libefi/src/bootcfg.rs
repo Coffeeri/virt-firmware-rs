@@ -36,7 +36,7 @@ impl BootConfig {
         let mut r = Cursor::new(var.data);
         let index = r.read_boot_index();
         if let Err(e) = index {
-            error!("failed to parse {}: {}", name, e);
+            error!("failed to parse {name}: {e}");
             return None;
         };
         Some(index.unwrap())
@@ -47,7 +47,7 @@ impl BootConfig {
         let mut r = Cursor::new(var.data);
         let order = r.read_boot_order();
         if let Err(e) = order {
-            error!("failed to parse BootOrder: {}", e);
+            error!("failed to parse BootOrder: {e}");
             return None;
         };
         Some(order.unwrap())
@@ -185,6 +185,6 @@ impl BootConfig {
             String::new()
         };
 
-        format!("{}  {:32}{}", i, title, prop_str)
+        format!("{i}  {title:32}{prop_str}")
     }
 }
