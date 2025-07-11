@@ -20,6 +20,10 @@ run-uefi-fdt:
 	qemu-efi-$(ARCH) -nographic -net none \
 		-kernel target/$(ARCH)-unknown-uefi/debug/hoblist.efi -append fdt
 
+run-uefi-log:
+	qemu-efi-$(ARCH) -nographic -net none \
+		-kernel target/$(ARCH)-unknown-uefi/debug/debuglog.efi
+
 run-uefi-msr:
 	qemu-efi-$(ARCH) -nographic -net none \
 		-kernel target/$(ARCH)-unknown-uefi/debug/msr.efi
