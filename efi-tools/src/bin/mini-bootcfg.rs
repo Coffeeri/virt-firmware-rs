@@ -41,7 +41,7 @@ fn create_file_boot_entry(
             return None;
         };
         optdata = match cmdline {
-            Some(c) => Some(format!("{} {}", efipath, c)),
+            Some(c) => Some(format!("{efipath} {c}")),
             None => Some(efipath.0),
         }
     } else {
@@ -121,9 +121,9 @@ fn write_variable(var: &EfiVar, dryrun: bool) -> io::Result<()> {
 
 fn delete_variable(name: &str, dryrun: bool) -> io::Result<()> {
     if dryrun {
-        info!("skip delete efivar: {} (dry-run)", name);
+        info!("skip delete efivar: {name} (dry-run)");
     } else {
-        info!("delete efivar: {}", name);
+        info!("delete efivar: {name}");
         sysfs::varstore_delete(name, &guids::EfiGlobalVariable)?;
     }
     Ok(())
@@ -138,7 +138,7 @@ fn write_bootentry(
     wr.write_boot_entry(&entry)?;
 
     let be = EfiVar {
-        name: format!("Boot{}", index),
+        name: format!("Boot{index}"),
         guid: guids::EfiGlobalVariable,
         attr: EfiVarAttr::new_nv_bs_rt(),
         data: wr.into_inner(),
@@ -207,7 +207,7 @@ fn add_bootindex(
             old_order.len()
         } else {
             let Ok(p) = posstr.parse::<usize>() else {
-                return Err(io::Error::other(format!("failed to parse pos: {}", posstr)));
+                return Err(io::Error::other(format!("failed to parse pos: {posstr}")));
             };
             if p > old_order.len() {
                 return Err(io::Error::other(format!(
@@ -226,7 +226,7 @@ fn add_bootindex(
 }
 
 fn remove_bootentry(bootcfg: &BootConfig, index: &boot::BootIndex, dryrun: bool) -> io::Result<()> {
-    let name = format!("Boot{}", index);
+    let name = format!("Boot{index}");
     delete_variable(&name, dryrun)?;
 
     if let Some(next) = bootcfg.next {
@@ -259,8 +259,7 @@ fn boot_successful(bootcfg: &BootConfig, dryrun: bool) -> io::Result<()> {
 
     if let Some(pos) = old_order.position(&current) {
         info!(
-            "BootCurrent ({}) already in BootOrder (position {})",
-            current, pos
+            "BootCurrent ({current}) already in BootOrder (position {pos})"
         );
         return Ok(());
     }
@@ -313,7 +312,7 @@ fn update_csv(bootcfg: &BootConfig, shim_opt: Option<&EfiFile>) -> io::Result<()
         };
 
         let line = format!("{},{},{} ,Comment", basename, entry.title, args);
-        debug!("{}", line);
+        debug!("{line}");
         csvdata.push_str(&line);
         csvdata.push('\n');
     }
@@ -330,13 +329,13 @@ fn show_bootcfg(bootcfg: &BootConfig, verbose: bool) {
                 println!("      devpath: {}", e.devpath);
                 match &e.optdata {
                     boot::BootEntryOptData::String { string } => {
-                        println!("      optdata/string: \"{}\"", string)
+                        println!("      optdata/string: \"{string}\"")
                     }
                     boot::BootEntryOptData::Guid { guid } => {
-                        println!("      optdata/guid: {}", guid)
+                        println!("      optdata/guid: {guid}")
                     }
                     boot::BootEntryOptData::Data { bytes } => {
-                        println!("      optdata/bytes: {:?}", bytes)
+                        println!("      optdata/bytes: {bytes:?}")
                     }
                     boot::BootEntryOptData::None => {}
                 }
@@ -446,7 +445,7 @@ fn main() -> ExitCode {
     if let Some(uki) = cfg.opt_str("add-uki") {
         let efi_uki = match EfiFile::new(&uki) {
             Err(e) => {
-                error!("{}: {}", uki, e);
+                error!("{uki}: {e}");
                 return ExitCode::from(1);
             }
             Ok(u) => u,
@@ -455,7 +454,7 @@ fn main() -> ExitCode {
         let idx_opt = find_boot_entry_for_file(&bootcfg, efi_shim.as_ref().ok(), &efi_uki);
         let index = match idx_opt {
             Some(idx) => {
-                info!("entry exists for {} (Boot{})", uki, idx);
+                info!("entry exists for {uki} (Boot{idx})");
                 idx
             }
             None => &bootcfg.index_unused(),
@@ -468,15 +467,15 @@ fn main() -> ExitCode {
             cfg.opt_str("cmdline"),
         );
         let Some(entry) = entry_opt else {
-            error!("failed to create boot entry for {}", uki);
+            error!("failed to create boot entry for {uki}");
             return ExitCode::from(1);
         };
         if let Err(e) = write_bootentry(index, entry, dryrun) {
-            error!("write boot entry: {}", e);
+            error!("write boot entry: {e}");
             return ExitCode::from(1);
         };
         if let Err(e) = add_bootindex(&bootcfg, index, &cfg) {
-            error!("add boot index: {}", e);
+            error!("add boot index: {e}");
             return ExitCode::from(1);
         };
         return ExitCode::from(0);
@@ -485,7 +484,7 @@ fn main() -> ExitCode {
     if let Some(uki) = cfg.opt_str("remove-uki") {
         let efi_uki = match EfiFile::new(&uki) {
             Err(e) => {
-                error!("{}: {}", uki, e);
+                error!("{uki}: {e}");
                 return ExitCode::from(1);
             }
             Ok(u) => u,
@@ -493,11 +492,11 @@ fn main() -> ExitCode {
 
         let idx_opt = find_boot_entry_for_file(&bootcfg, efi_shim.as_ref().ok(), &efi_uki);
         let Some(idx) = idx_opt else {
-            warn!("no entry found for {}", uki);
+            warn!("no entry found for {uki}");
             return ExitCode::from(0);
         };
         if let Err(e) = remove_bootentry(&bootcfg, idx, dryrun) {
-            error!("remove boot entry: {}", e);
+            error!("remove boot entry: {e}");
             return ExitCode::from(1);
         }
         return ExitCode::from(0);
@@ -505,14 +504,14 @@ fn main() -> ExitCode {
 
     if cfg.opt_present("boot-ok") || cfg.opt_present("boot-successful") {
         if let Err(e) = boot_successful(&bootcfg, dryrun) {
-            error!("update boot order: {}", e);
+            error!("update boot order: {e}");
             return ExitCode::from(1);
         };
         if cfg.opt_present("update-csv") {
             // reload (updated) boot config
             let bootcfg = BootConfig::new();
             if let Err(e) = update_csv(&bootcfg, efi_shim.as_ref().ok()) {
-                error!("update boot.csv: {}", e);
+                error!("update boot.csv: {e}");
                 return ExitCode::from(1);
             }
         }
@@ -521,7 +520,7 @@ fn main() -> ExitCode {
 
     if cfg.opt_present("update-csv") {
         if let Err(e) = update_csv(&bootcfg, efi_shim.as_ref().ok()) {
-            error!("update boot.csv: {}", e);
+            error!("update boot.csv: {e}");
             return ExitCode::from(1);
         }
         return ExitCode::from(0);
@@ -531,15 +530,15 @@ fn main() -> ExitCode {
         let index = bootcfg.index_unused();
         let entry_opt = create_uri_boot_entry(&uri, cfg.opt_str("title"), cfg.opt_str("cmdline"));
         let Some(entry) = entry_opt else {
-            error!("failed to create boot entry for {}", uri);
+            error!("failed to create boot entry for {uri}");
             return ExitCode::from(1);
         };
         if let Err(e) = write_bootentry(&index, entry, dryrun) {
-            error!("write boot entry: {}", e);
+            error!("write boot entry: {e}");
             return ExitCode::from(1);
         };
         if let Err(e) = add_bootindex(&bootcfg, &index, &cfg) {
-            error!("add boot index: {}", e);
+            error!("add boot index: {e}");
             return ExitCode::from(1);
         };
         return ExitCode::from(0);
@@ -548,12 +547,12 @@ fn main() -> ExitCode {
     if let Some(nr) = cfg.opt_str("remove-entry") {
         let i = u16::from_str_radix(&nr, 16);
         if let Err(e) = i {
-            error!("parse \"{}\": {}", nr, e);
+            error!("parse \"{nr}\": {e}");
             return ExitCode::from(1);
         }
         let index = boot::BootIndex(i.unwrap());
         if let Err(e) = remove_bootentry(&bootcfg, &index, dryrun) {
-            error!("remove boot entry: {}", e);
+            error!("remove boot entry: {e}");
             return ExitCode::from(1);
         }
         return ExitCode::from(0);
@@ -569,7 +568,7 @@ fn main() -> ExitCode {
             println!("unknown");
             return ExitCode::from(0);
         };
-        println!("{}", name);
+        println!("{name}");
         return ExitCode::from(0);
     }
 
