@@ -143,7 +143,12 @@ impl EfiVarStore {
             attr: variable.attr,
             data: authvar.data.to_vec(),
         };
-        self.set_unchecked(v);
+
+        if v.data.is_empty() {
+            self.delete_unchecked(v);
+        } else {
+            self.set_unchecked(v);
+        }
         Ok(())
     }
 

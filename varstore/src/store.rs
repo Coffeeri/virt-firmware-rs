@@ -86,7 +86,12 @@ impl EfiVarStore {
         self.set_unchecked(var);
     }
 
-    pub fn check_old_new(old: &EfiVar, new: &EfiVar) -> Result<(), Error<&'static str>> {
+    pub(crate) fn delete_unchecked(&mut self, new: EfiVar) {
+        self.variables
+            .retain(|v| v.name != new.name || v.guid != new.guid);
+    }
+
+    pub fn check_old_new(&self, old: &EfiVar, new: &EfiVar) -> Result<(), Error<&'static str>> {
         if old.attr != new.attr {
             return Err(Error::new(Status::INVALID_PARAMETER, "attribute mismatch"));
         }
@@ -173,10 +178,15 @@ impl EfiVarStore {
         let old_opt = self.get_unchecked(&new.name, &new.guid);
         if let Some(old) = old_opt {
             self.check_service(old)?;
-            self.check_attributes(&new)?;
+            self.check_attributes(old)?;
             self.policy_check(&new, false)?;
-            self.variables
-                .retain(|v| v.name != new.name || v.guid != new.guid);
+            if old.attr.time_auth_wr_access() {
+                return Err(Error::new(
+                    Status::SECURITY_VIOLATION,
+                    "tried to delete auth var without pkcs7 signature",
+                ));
+            }
+            self.delete_unchecked(new);
         }
         Ok(())
     }
@@ -187,13 +197,11 @@ impl EfiVarStore {
         }
         let old_opt = self.get_unchecked(&new.name, &new.guid);
         if let Some(old) = old_opt {
-            Self::check_old_new(old, &new)?;
+            self.check_old_new(old, &new)?;
         }
         self.check_service(&new)?;
         self.check_attributes(&new)?;
-
-        let is_new_var = old_opt.is_none();
-        self.policy_check(&new, is_new_var)?;
+        self.policy_check(&new, old_opt.is_none())?;
 
         if new.attr.time_auth_wr_access() {
             return self.set_time_auth(&new);
