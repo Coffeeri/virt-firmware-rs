@@ -1,6 +1,6 @@
 use uefi::prelude::*;
 use uefi::print;
-use uefi::proto::console::text::Input;
+use uefi::proto::console::text::{Input, Key};
 
 pub struct Pager {
     enabled: bool,
@@ -17,14 +17,14 @@ impl Pager {
         }
     }
 
-    fn wait_key(stdin: &mut Input) {
+    fn wait_read_key(stdin: &mut Input) -> Option<Key> {
         let key_event = stdin.wait_for_key_event().unwrap();
         boot::wait_for_event(&mut [key_event]).unwrap();
-        let _ = stdin.read_key();
+        stdin.read_key().unwrap()
     }
 
     fn wait_stdin_key() {
-        system::with_stdin(Self::wait_key);
+        let _key = system::with_stdin(Self::wait_read_key);
     }
 
     pub fn lines(&mut self, n: u32) {
