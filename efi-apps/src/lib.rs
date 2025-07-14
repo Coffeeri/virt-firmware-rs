@@ -6,5 +6,6 @@ pub mod fdt;
 pub mod hobs;
 pub mod misc;
 pub mod ovmf_log;
+pub mod pager;
 pub mod qemu;
 pub mod rawhobs;
