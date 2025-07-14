@@ -1,3 +1,4 @@
+pub mod auth;
 pub mod boot;
 pub mod devpath;
 #[cfg(feature = "std")]

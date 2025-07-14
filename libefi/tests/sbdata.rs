@@ -1,5 +1,6 @@
 #![cfg(feature = "sbdata")]
 
+use virtfw_libefi::efivar::auth::auth_to_esl;
 use virtfw_libefi::efivar::sigdb::EfiSigDB;
 use virtfw_libefi::guids;
 use virtfw_libefi::sb::certs::*;
