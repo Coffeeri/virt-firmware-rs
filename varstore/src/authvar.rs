@@ -149,6 +149,11 @@ impl EfiVarStore {
         } else {
             self.set_unchecked(v);
         }
+
+        if self.is_sb_pk(variable) {
+            self.auth_init();
+        }
+
         Ok(())
     }
 
