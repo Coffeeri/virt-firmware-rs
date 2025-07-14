@@ -5,6 +5,8 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 use crate::guids::{EfiCertPkcs7, RawGuid};
 use crate::types::EfiTime;
 
+pub const WIN_CERT_TYPE_EFI_GUID: u16 = 0x0EF1;
+
 // EFI_VARIABLE_AUTHENTICATION_2
 #[repr(C, packed)]
 #[derive(Debug, Clone, Copy, FromBytes, IntoBytes, KnownLayout, Immutable)]
@@ -25,6 +27,10 @@ pub struct EfiVarAuth2<'a> {
 impl<'a> EfiVarAuth2<'a> {
     pub fn new(auth: &'a [u8]) -> Option<Self> {
         let (header, _) = EfiVarAuth2Header::read_from_prefix(auth).ok()?;
+        if header.revision != 0x0200 || header.certtype != WIN_CERT_TYPE_EFI_GUID {
+            return None;
+        }
+
         let guid: Guid = header.guid.into();
         if guid != EfiCertPkcs7 {
             return None;
