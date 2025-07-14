@@ -5,6 +5,7 @@
 
 use uguid::Guid;
 
+use virtfw_libefi::efivar::auth::auth_to_esl;
 use virtfw_libefi::efivar::sigdb::EfiSigDB;
 use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr};
 use virtfw_libefi::guids;
