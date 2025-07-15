@@ -9,6 +9,7 @@ use uefi::println;
 use uefi::system::with_config_table;
 use uefi::table::cfg::ConfigTableEntry;
 
+use virtfw_efi_apps::misc;
 use virtfw_efi_apps::ovmf_log::MemDebugLog;
 use virtfw_efi_apps::pager::Pager;
 use virtfw_efi_apps::qemu;
@@ -77,7 +78,15 @@ fn find_debuglog(entries: &[ConfigTableEntry]) -> Option<ConfigTableEntry> {
 fn main() -> Status {
     uefi::helpers::init().unwrap();
     log::set_max_level(log::LevelFilter::Info);
-    let mut pager = Pager::new(true);
+
+    let mut use_pager = false;
+    if let Some(cmdline) = misc::cmdline("hoblist") {
+        if cmdline == "-p" {
+            use_pager = true;
+        }
+    }
+
+    let mut pager = Pager::new(use_pager);
 
     if let Some(entry) = with_config_table(find_debuglog) {
         print_debuglog(entry, &mut pager);
