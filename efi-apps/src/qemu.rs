@@ -34,10 +34,14 @@ pub fn is_direct_kernel_load() -> bool {
     qemu_node == img_node
 }
 
-pub fn shutdown_if_direct_kernel_load() {
+pub fn shutdown_if_direct_kernel_load(wait: bool) {
     if is_direct_kernel_load() {
-        debug!("qemu direct kernel boot detected -> wait & poweroff");
-        boot::stall(3_000_000);
+        if wait {
+            debug!("qemu direct kernel boot detected -> wait & poweroff");
+            boot::stall(3_000_000);
+        } else {
+            debug!("qemu direct kernel boot detected -> poweroff");
+        }
         runtime::reset(runtime::ResetType::SHUTDOWN, Status::SUCCESS, None);
     };
 }

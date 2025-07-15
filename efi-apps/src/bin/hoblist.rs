@@ -125,6 +125,6 @@ fn main() -> Status {
 
     list_hobs();
 
-    qemu::shutdown_if_direct_kernel_load();
+    qemu::shutdown_if_direct_kernel_load(true);
     Status::SUCCESS
 }

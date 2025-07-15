@@ -81,7 +81,7 @@ fn main() -> Status {
 
     let mut use_pager = false;
     if let Some(cmdline) = misc::cmdline("hoblist") {
-        if cmdline == "-p" {
+        if cmdline == "-p" || cmdline == "pager" {
             use_pager = true;
         }
     }
@@ -96,6 +96,6 @@ fn main() -> Status {
     }
 
     pager.end();
-    qemu::shutdown_if_direct_kernel_load();
+    qemu::shutdown_if_direct_kernel_load(!use_pager);
     Status::SUCCESS
 }

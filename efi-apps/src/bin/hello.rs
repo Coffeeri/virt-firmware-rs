@@ -16,6 +16,6 @@ fn main() -> Status {
 
     println!("Hello world!");
 
-    qemu::shutdown_if_direct_kernel_load();
+    qemu::shutdown_if_direct_kernel_load(true);
     Status::SUCCESS
 }
