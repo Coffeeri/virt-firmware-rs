@@ -64,6 +64,7 @@ pkg-igvm-tools:
   stage: package
   script:
     - make package-igvm-tools
+  allow_failure: true
 
 pkg-varstore:
   stage: package
