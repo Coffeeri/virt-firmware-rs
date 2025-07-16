@@ -6,6 +6,7 @@ use core::mem::size_of;
 use uguid::Guid;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
+use crate::efivar::types::EfiVar;
 use crate::guids::{EfiCertPkcs7, RawGuid};
 use crate::types::EfiTime;
 
@@ -74,6 +75,33 @@ impl<'a> EfiVarAuth2<'a> {
         pkcs7.extend_from_slice(&data_len_inner.to_be_bytes());
         pkcs7.extend_from_slice(self.pkcs7);
         pkcs7
+    }
+
+    pub fn get_signed_data(&self, variable: &EfiVar) -> Vec<u8> {
+        let mut sdata: Vec<u8> = Vec::new();
+
+        // Variable Name (without terminating \0)
+        let name_bytes: Vec<u8> = variable
+            .name
+            .encode_utf16()
+            .flat_map(|u| u.to_le_bytes())
+            .collect();
+        sdata.extend_from_slice(&name_bytes);
+
+        // Variable Namespace Guid
+        sdata.extend_from_slice(&variable.guid.to_bytes());
+
+        // Attributes
+        let attr: u32 = u32::from(variable.attr);
+        sdata.extend_from_slice(&attr.to_le_bytes());
+
+        // TimeStamp
+        sdata.extend_from_slice(self.header.time.as_bytes());
+
+        // Variable Content
+        sdata.extend_from_slice(self.data);
+
+        sdata
     }
 }
 
