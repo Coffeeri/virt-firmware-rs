@@ -113,7 +113,7 @@ impl EfiVarStore {
             return Ok(());
         }
 
-        // no support (yet) for pkcs7 signature verification -> make vars read-only
+        // TODO: pkcs7 signature verification -> make vars read-only for now
         Err(Error::new(Status::WRITE_PROTECTED, "secure boot auth var"))
     }
 
@@ -126,7 +126,7 @@ impl EfiVarStore {
             return self.check_time_auth_sb(variable, authvar);
         }
 
-        // not implemented yet
+        // TODO: pkcs7 signature verification + store certificate hash
         Err(Error::new(Status::UNSUPPORTED, "time auth bit set"))
     }
 
