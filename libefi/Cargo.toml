@@ -24,3 +24,6 @@ zerocopy.workspace = true
 byteorder = { version = "1", default-features = false }
 log = { version = "0.4", default-features = false }
 udev = { version = "0.9", optional = true }
+
+[dev-dependencies]
+openssl = "0.10"
