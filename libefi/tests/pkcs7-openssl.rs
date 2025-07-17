@@ -32,7 +32,6 @@ fn edk2_store_builder() -> X509StoreBuilder {
 }
 
 fn pk_store() -> X509Store {
-    // trusted kek certificates
     let pk = X509::from_der(REDHAT_PK_KEK_2014).unwrap();
     print_cert("trusted PK cert", &pk);
 
