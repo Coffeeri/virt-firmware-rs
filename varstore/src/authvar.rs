@@ -131,7 +131,7 @@ impl EfiVarStore {
     }
 
     pub(crate) fn set_time_auth(&mut self, variable: &EfiVar) -> Result<(), Error<&'static str>> {
-        let Some(authvar) = EfiVarAuth2::new(&variable.data) else {
+        let Some(authvar) = EfiVarAuth2::new_from_bytes(&variable.data) else {
             return Err(Error::new(Status::INVALID_PARAMETER, "authvar parse error"));
         };
 
