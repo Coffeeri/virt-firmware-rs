@@ -18,7 +18,7 @@ pub struct EfiVarStore {
     exit_boot_service: bool,
 
     // efi variables
-    variables: Vec<EfiVar>,
+    pub(crate) variables: Vec<EfiVar>,
 
     // variable Policies
     pub(crate) policy_locked: bool,

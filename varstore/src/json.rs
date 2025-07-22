@@ -11,7 +11,7 @@ use core::ops::Deref;
 
 use serde::{Deserialize, Serialize};
 use uguid::Guid;
-use zerocopy::FromBytes;
+use zerocopy::{FromBytes, IntoBytes};
 
 use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr};
 use virtfw_libefi::guids;
@@ -19,7 +19,7 @@ use virtfw_libefi::types::EfiTime;
 
 use crate::store::EfiVarStore;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct JsonHexString(String);
 
 impl Deref for JsonHexString {
@@ -36,7 +36,13 @@ impl TryFrom<&JsonHexString> for Vec<u8> {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+impl From<&[u8]> for JsonHexString {
+    fn from(data: &[u8]) -> Self {
+        Self(hex::encode(data))
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
 pub struct JsonEfiVariable {
     pub guid: Guid,
     pub name: String,
@@ -69,6 +75,19 @@ impl TryFrom<&JsonEfiVariable> for EfiVar {
     }
 }
 
+impl From<&EfiVar> for JsonEfiVariable {
+    fn from(v: &EfiVar) -> Self {
+        Self {
+            guid: v.guid,
+            name: v.name.clone(),
+            attr: u32::from(v.attr),
+            data: JsonHexString::from(v.data.as_ref()),
+            time: v.time.map(|t| JsonHexString::from(t.as_bytes())),
+            digest: None,
+        }
+    }
+}
+
 impl fmt::Display for JsonEfiVariable {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let attr = EfiVarAttr::from(self.attr);
@@ -83,7 +102,7 @@ impl fmt::Display for JsonEfiVariable {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
 pub struct JsonEfiVarStore {
     pub version: u32,
     pub variables: Vec<JsonEfiVariable>,
@@ -94,6 +113,19 @@ impl EfiVarStore {
         for jvar in &jstore.variables {
             let var = EfiVar::try_from(jvar).unwrap();
             self.set_unchecked(var);
+        }
+    }
+
+    pub fn json_export(&self) -> JsonEfiVarStore {
+        let variables = self
+            .variables
+            .iter()
+            .filter(|v| v.attr.non_volatile())
+            .map(JsonEfiVariable::from)
+            .collect();
+        JsonEfiVarStore {
+            version: 2,
+            variables,
         }
     }
 }
