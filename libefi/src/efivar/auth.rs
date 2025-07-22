@@ -30,7 +30,7 @@ pub struct EfiVarAuth2<'a> {
 }
 
 impl<'a> EfiVarAuth2<'a> {
-    pub fn new(auth: &'a [u8]) -> Option<Self> {
+    pub fn new_from_bytes(auth: &'a [u8]) -> Option<Self> {
         let (header, _) = EfiVarAuth2Header::read_from_prefix(auth).ok()?;
         if header.revision != 0x0200 || header.certtype != WIN_CERT_TYPE_EFI_GUID {
             return None;
@@ -106,6 +106,6 @@ impl<'a> EfiVarAuth2<'a> {
 }
 
 pub fn auth_to_esl(auth: &[u8]) -> Option<&[u8]> {
-    let authvar = EfiVarAuth2::new(auth)?;
+    let authvar = EfiVarAuth2::new_from_bytes(auth)?;
     Some(authvar.data)
 }
