@@ -182,6 +182,10 @@ impl EfiSigDB {
         let siglist = EfiSigList::new_x509_from_der(owner, data);
         self.siglists.push(siglist);
     }
+
+    pub fn get_x509_list(&self) -> Vec<&[u8]> {
+        self.siglists.iter().filter_map(|s| s.get_x509()).collect()
+    }
 }
 
 impl Default for EfiSigDB {
