@@ -13,7 +13,7 @@ use crate::types::EfiTime;
 pub const WIN_CERT_TYPE_EFI_GUID: u16 = 0x0EF1;
 
 // EFI_VARIABLE_AUTHENTICATION_2
-#[repr(C, packed)]
+#[repr(C)]
 #[derive(Debug, Clone, Copy, FromBytes, IntoBytes, KnownLayout, Immutable)]
 pub struct EfiVarAuth2Header {
     pub time: EfiTime,
