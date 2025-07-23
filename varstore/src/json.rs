@@ -32,7 +32,7 @@ impl Deref for JsonHexString {
 impl TryFrom<&JsonHexString> for Vec<u8> {
     type Error = hex::FromHexError;
     fn try_from(hs: &JsonHexString) -> Result<Self, Self::Error> {
-        hex::decode(hs.0.clone())
+        hex::decode(&hs.0)
     }
 }
 
