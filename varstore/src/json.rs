@@ -11,9 +11,11 @@ use core::ops::Deref;
 
 use serde::{Deserialize, Serialize};
 use uguid::Guid;
+use zerocopy::FromBytes;
 
 use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr};
 use virtfw_libefi::guids;
+use virtfw_libefi::types::EfiTime;
 
 use crate::store::EfiVarStore;
 
@@ -27,10 +29,10 @@ impl Deref for JsonHexString {
     }
 }
 
-impl TryFrom<JsonHexString> for Vec<u8> {
+impl TryFrom<&JsonHexString> for Vec<u8> {
     type Error = hex::FromHexError;
-    fn try_from(hs: JsonHexString) -> Result<Self, Self::Error> {
-        hex::decode(hs.0)
+    fn try_from(hs: &JsonHexString) -> Result<Self, Self::Error> {
+        hex::decode(hs.0.clone())
     }
 }
 
@@ -44,12 +46,26 @@ pub struct JsonEfiVariable {
     pub digest: Option<JsonHexString>,
 }
 
+impl JsonEfiVariable {
+    pub fn parse_time(&self) -> Option<EfiTime> {
+        let Some(hexstr) = self.time.as_ref() else {
+            return None;
+        };
+        let bytes = Vec::<u8>::try_from(hexstr).ok()?;
+        let efitime = EfiTime::read_from_bytes(&bytes).ok()?;
+        Some(efitime)
+    }
+}
+
 impl TryFrom<&JsonEfiVariable> for EfiVar {
     type Error = hex::FromHexError;
     fn try_from(v: &JsonEfiVariable) -> Result<Self, Self::Error> {
         let attr = EfiVarAttr::from(v.attr);
-        let data = Vec::<u8>::try_from(v.data.clone())?;
-        Ok(EfiVar::new_with_vec(&v.guid, &v.name, attr, data))
+        let data = Vec::<u8>::try_from(&v.data)?;
+        let time = v.parse_time();
+        Ok(EfiVar::new_with_vec_full(
+            &v.guid, &v.name, attr, data, time,
+        ))
     }
 }
 
