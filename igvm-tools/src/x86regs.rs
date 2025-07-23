@@ -178,10 +178,14 @@ pub struct ExtFeatureEnableReg {
     pub lme: bool, // long mode enable
     _pad1: bool,
 
-    pub lma: bool, // long mode active
-    pub nxe: bool, // NX enable
+    pub lma: bool,   // long mode active
+    pub nxe: bool,   // NX enable
+    pub svme: bool,  // secure virtual machine enable
+    pub lmsle: bool, // long mode segment limit enable
+    pub ffxsr: bool, // fast fxsave/fxstor
+    pub tce: bool,   // translation cache extension
 
-    #[bits(52)]
+    #[bits(48)]
     _pad2: u64,
 }
 
