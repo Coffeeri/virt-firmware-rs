@@ -120,11 +120,17 @@ pub struct ControlRegister0 {
 }
 
 impl ControlRegister0 {
+    // the *real* reset state
     pub const fn reset() -> Self {
         ControlRegister0::new()
             .with_et(true)
             .with_nw(true)
             .with_cd(true)
+    }
+
+    // do not disable caching
+    pub const fn reset_fast() -> Self {
+        ControlRegister0::new().with_et(true)
     }
 }
 
@@ -184,7 +190,7 @@ fn common_regs() -> Vec<X86Register> {
         base: 0,
         limit: 0xffff,
     };
-    let cr0 = ControlRegister0::reset().into();
+    let cr0 = ControlRegister0::reset_fast().into();
     vec![
         X86Register::Cr0(cr0),
         X86Register::Gdtr(tab),
@@ -334,6 +340,12 @@ pub fn vmsa_context(regs: &[X86Register], features: SevFeatures) -> SevVmsa {
     vmsa.dr6 = 0xffff0ff0;
     vmsa.dr7 = 0x400;
     vmsa.xcr0 = 1;
+
+    // FIXME: cut+paste from https://github.com/roy-hopkins/buildigvm
+    vmsa.pat = 0x0007040600070406;
+    vmsa.efer = 0x1000;
+    vmsa.x87_fcw = 0x37f;
+    vmsa.mxcsr = 0x1f80;
 
     // sev setup
     vmsa.sev_features = features;
