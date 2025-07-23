@@ -23,7 +23,7 @@ doc-efi-tools build-efi-tools clippy-efi-tools clippy-fix-efi-tools release-efi-
 doc-varstore build-varstore clippy-varstore clippy-fix-varstore release-varstore package-varstore : TARGET := --features std
 
 # targets
-default: build clippy $(POST64)
+default: build clippy test $(POST64)
 all: build clippy test $(POST64)
 doc docs: cargo-doc
 test tests: cargo-test
