@@ -197,6 +197,7 @@ fn common_regs() -> Vec<X86Register> {
     let cr0 = ControlRegister0::reset_fast().into();
     vec![
         X86Register::Cr0(cr0),
+        X86Register::Pat(0x0007040600070406),
         X86Register::Gdtr(tab),
         X86Register::Idtr(tab),
     ]
@@ -306,6 +307,7 @@ pub fn native_context(regs: &[X86Register]) -> IgvmNativeVpContextX64 {
             X86Register::Es(_) => {}
             X86Register::Fs(_) => {}
             X86Register::Tr(_) => {}
+            X86Register::Pat(_) => {}
             _ => {
                 panic!("native_context: not implemented: {r:?}");
             }
@@ -344,12 +346,11 @@ pub fn vmsa_context(regs: &[X86Register], features: SevFeatures) -> SevVmsa {
     vmsa.dr6 = 0xffff0ff0;
     vmsa.dr7 = 0x400;
     vmsa.xcr0 = 1;
+    vmsa.x87_fcw = 0x37f; // floating point
+    vmsa.mxcsr = 0x1f80; // sse
 
     // FIXME: cut+paste from https://github.com/roy-hopkins/buildigvm
-    vmsa.pat = 0x0007040600070406;
     vmsa.efer = 0x1000;
-    vmsa.x87_fcw = 0x37f;
-    vmsa.mxcsr = 0x1f80;
 
     // sev setup
     vmsa.sev_features = features;
@@ -359,6 +360,7 @@ pub fn vmsa_context(regs: &[X86Register], features: SevFeatures) -> SevVmsa {
         match r {
             X86Register::Rip(rip) => vmsa.rip = *rip,
             X86Register::Cr0(cr0) => vmsa.cr0 = *cr0,
+            X86Register::Pat(pat) => vmsa.pat = *pat,
             X86Register::Gdtr(tab) => vmsa.gdtr = vmsa_table(tab),
             X86Register::Idtr(tab) => vmsa.idtr = vmsa_table(tab),
             X86Register::Cs(seg) => vmsa.cs = vmsa_segment(seg),
