@@ -349,8 +349,8 @@ pub fn vmsa_context(regs: &[X86Register], features: SevFeatures) -> SevVmsa {
     vmsa.x87_fcw = 0x37f; // floating point
     vmsa.mxcsr = 0x1f80; // sse
 
-    // FIXME: cut+paste from https://github.com/roy-hopkins/buildigvm
-    vmsa.efer = 0x1000;
+    // enable svm
+    vmsa.efer |= u64::from(ExtFeatureEnableReg::new().with_svme(true));
 
     // sev setup
     vmsa.sev_features = features;
