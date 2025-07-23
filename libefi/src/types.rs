@@ -1,7 +1,9 @@
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[repr(C, packed)]
-#[derive(Debug, Clone, Copy, FromBytes, IntoBytes, KnownLayout, Immutable, Eq, PartialEq)]
+#[derive(
+    Debug, Clone, Copy, FromBytes, IntoBytes, KnownLayout, Immutable, Eq, PartialEq, Default,
+)]
 pub struct EfiTime {
     pub year: u16,
     pub month: u8,

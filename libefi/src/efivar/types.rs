@@ -93,12 +93,33 @@ pub struct EfiVar {
 
 impl EfiVar {
     pub fn new_with_vec(guid: &Guid, name: &str, attr: EfiVarAttr, data: Vec<u8>) -> Self {
+        let time = if attr.time_auth_wr_access() {
+            Some(EfiTime::default())
+        } else {
+            None
+        };
         Self {
             guid: *guid,
             name: name.into(),
             attr,
             data,
-            time: None,
+            time,
+        }
+    }
+
+    pub fn new_with_vec_full(
+        guid: &Guid,
+        name: &str,
+        attr: EfiVarAttr,
+        data: Vec<u8>,
+        time: Option<EfiTime>,
+    ) -> Self {
+        Self {
+            guid: *guid,
+            name: name.into(),
+            attr,
+            data,
+            time,
         }
     }
 
