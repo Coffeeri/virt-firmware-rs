@@ -1,7 +1,6 @@
 //! read efi variables from linux sysfs
 
 extern crate std;
-use std::borrow::ToOwned;
 use std::format;
 use std::fs;
 use std::io;
@@ -53,12 +52,12 @@ pub fn varstore_read(name: &str, guid: &Guid) -> Option<types::EfiVar> {
     let Ok((attr, data)) = u32::read_from_prefix(&blob) else {
         return None;
     };
-    Some(types::EfiVar {
-        name: name.to_string(),
-        guid: guid.to_owned(),
-        attr: types::EfiVarAttr::from(attr),
-        data: data.to_vec(),
-    })
+    Some(types::EfiVar::new_from_slice(
+        guid,
+        name,
+        types::EfiVarAttr::from(attr),
+        data,
+    ))
 }
 
 pub fn varstore_read_id(id: &types::EfiVarId) -> Option<types::EfiVar> {

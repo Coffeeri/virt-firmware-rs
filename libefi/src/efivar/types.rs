@@ -2,11 +2,14 @@
 
 extern crate alloc;
 use alloc::string::String;
+use alloc::vec;
 use alloc::vec::Vec;
 
 use bitfield_struct::bitfield;
 use uguid::Guid;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
+
+use crate::types::EfiTime;
 
 #[bitfield(u32)]
 #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Eq, PartialEq)]
@@ -85,4 +88,26 @@ pub struct EfiVar {
     pub guid: Guid,
     pub attr: EfiVarAttr,
     pub data: Vec<u8>,
+    pub time: Option<EfiTime>,
+}
+
+impl EfiVar {
+    pub fn new_with_vec(guid: &Guid, name: &str, attr: EfiVarAttr, data: Vec<u8>) -> Self {
+        Self {
+            guid: *guid,
+            name: name.into(),
+            attr,
+            data,
+            time: None,
+        }
+    }
+
+    pub fn new_from_slice(guid: &Guid, name: &str, attr: EfiVarAttr, data: &[u8]) -> Self {
+        Self::new_with_vec(guid, name, attr, data.into())
+    }
+
+    pub fn new_from_bool(guid: &Guid, name: &str, attr: EfiVarAttr, value: bool) -> Self {
+        let data = if value { vec![1] } else { vec![0] };
+        Self::new_with_vec(guid, name, attr, data)
+    }
 }

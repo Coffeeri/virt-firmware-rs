@@ -57,14 +57,14 @@ fn kek_store() -> X509Store {
 
 #[test]
 fn test_dbx_update_pkcs7() {
-    let variable = EfiVar {
-        guid: guids::EfiImageSecurityDatabase,
-        name: "dbx".to_string(),
-        attr: EfiVarAttr::new_nv_bs_rt()
+    let variable = EfiVar::new_with_vec(
+        &guids::EfiImageSecurityDatabase,
+        "dbx",
+        EfiVarAttr::new_nv_bs_rt()
             .with_time_auth_wr_access(true)
             .with_append_write(true),
-        data: Vec::new(),
-    };
+        Vec::new(),
+    );
 
     let authvar = EfiVarAuth2::new_from_bytes(DBX_X86_64).expect("Failed to parse DBX update");
     let pkcs7 = Pkcs7::from_der(&authvar.get_pkcs7()).expect("Failed to parse PKCS#7");
