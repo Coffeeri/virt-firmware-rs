@@ -151,12 +151,8 @@ impl MmVariableParsedRequest {
                     return Err(Error::new(Status::BAD_BUFFER_SIZE, "invalid data size"));
                 };
                 let guid = Guid::from_bytes(access.guid);
-                let var = EfiVar {
-                    guid,
-                    name: String::from(name),
-                    attr: access.attributes,
-                    data: data.to_vec(),
-                };
+                let var =
+                    EfiVar::new_from_slice(&guid, &String::from(name), access.attributes, data);
                 MmVariableParsedRequest::SetVariable(var)
             }
             QUERY_VARIABLE_INFO => MmVariableParsedRequest::QueryVariableInfo,

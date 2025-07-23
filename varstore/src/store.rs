@@ -76,13 +76,7 @@ impl EfiVarStore {
         attr: EfiVarAttr,
         boolean: bool,
     ) {
-        let b = if boolean { [1] } else { [0] };
-        let var = EfiVar {
-            guid: *guid,
-            name: name.into(),
-            attr,
-            data: b.to_vec(),
-        };
+        let var = EfiVar::new_from_bool(guid, name, attr, boolean);
         self.set_unchecked(var);
     }
 

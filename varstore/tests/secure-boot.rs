@@ -10,30 +10,30 @@ const DATA_SB_DBX: &[u8] = include_bytes!("data/enroll/dbx.auth");
 
 #[test]
 fn sb_enroll() {
-    let pk = EfiVar {
-        guid: guids::EfiGlobalVariable,
-        name: SB_PK.to_string(),
-        attr: EfiVarAttr::new_nv_bs_rt().with_time_auth_wr_access(true),
-        data: DATA_SB_PK.to_vec(),
-    };
-    let kek = EfiVar {
-        guid: guids::EfiGlobalVariable,
-        name: SB_KEK.to_string(),
-        attr: EfiVarAttr::new_nv_bs_rt().with_time_auth_wr_access(true),
-        data: DATA_SB_KEK.to_vec(),
-    };
-    let db = EfiVar {
-        guid: guids::EfiImageSecurityDatabase,
-        name: SB_DB.to_string(),
-        attr: EfiVarAttr::new_nv_bs_rt().with_time_auth_wr_access(true),
-        data: DATA_SB_DB.to_vec(),
-    };
-    let dbx = EfiVar {
-        guid: guids::EfiImageSecurityDatabase,
-        name: SB_DBX.to_string(),
-        attr: EfiVarAttr::new_nv_bs_rt().with_time_auth_wr_access(true),
-        data: DATA_SB_DBX.to_vec(),
-    };
+    let pk = EfiVar::new_from_slice(
+        &guids::EfiGlobalVariable,
+        SB_PK,
+        EfiVarAttr::new_nv_bs_rt().with_time_auth_wr_access(true),
+        DATA_SB_PK,
+    );
+    let kek = EfiVar::new_from_slice(
+        &guids::EfiGlobalVariable,
+        SB_KEK,
+        EfiVarAttr::new_nv_bs_rt().with_time_auth_wr_access(true),
+        DATA_SB_KEK,
+    );
+    let db = EfiVar::new_from_slice(
+        &guids::EfiImageSecurityDatabase,
+        SB_DB,
+        EfiVarAttr::new_nv_bs_rt().with_time_auth_wr_access(true),
+        DATA_SB_DB,
+    );
+    let dbx = EfiVar::new_from_slice(
+        &guids::EfiImageSecurityDatabase,
+        SB_DBX,
+        EfiVarAttr::new_nv_bs_rt().with_time_auth_wr_access(true),
+        DATA_SB_DBX,
+    );
 
     let mut store = EfiVarStore::new();
 

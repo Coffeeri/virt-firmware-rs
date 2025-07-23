@@ -61,12 +61,12 @@ impl EfiVarStore {
         sigs.extend_from_slice(&guids::EfiCertSha512.to_bytes());
         sigs.extend_from_slice(&guids::EfiCertRsa2048.to_bytes());
         sigs.extend_from_slice(&guids::EfiCertX509.to_bytes());
-        let var = EfiVar {
-            guid: guids::EfiGlobalVariable,
-            name: "SignatureSupport".into(),
-            attr: EfiVarAttr::new_bs_rt(),
-            data: sigs,
-        };
+        let var = EfiVar::new_with_vec(
+            &guids::EfiGlobalVariable,
+            "SignatureSupport",
+            EfiVarAttr::new_bs_rt(),
+            sigs,
+        );
         self.set_unchecked(var);
     }
 
@@ -137,12 +137,7 @@ impl EfiVarStore {
 
         self.check_time_auth(variable, &authvar)?;
 
-        let v = EfiVar {
-            guid: variable.guid,
-            name: variable.name.clone(),
-            attr: variable.attr,
-            data: authvar.data.to_vec(),
-        };
+        let v = EfiVar::new_from_slice(&variable.guid, &variable.name, variable.attr, authvar.data);
 
         if v.data.is_empty() {
             self.delete_unchecked(v);

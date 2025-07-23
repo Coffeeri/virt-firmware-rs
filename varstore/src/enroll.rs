@@ -17,12 +17,12 @@ use crate::store::EfiVarStore;
 
 impl EfiVarStore {
     fn enroll_sigdb(&mut self, guid: &Guid, name: &str, sigdb: &EfiSigDB) {
-        let var = EfiVar {
-            guid: *guid,
-            name: name.into(),
-            attr: EfiVarAttr::new_nv_bs_rt().with_time_auth_wr_access(true),
-            data: sigdb.into(),
-        };
+        let var = EfiVar::new_with_vec(
+            guid,
+            name,
+            EfiVarAttr::new_nv_bs_rt().with_time_auth_wr_access(true),
+            sigdb.into(),
+        );
         self.set_unchecked(var);
     }
 

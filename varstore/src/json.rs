@@ -49,12 +49,7 @@ impl TryFrom<&JsonEfiVariable> for EfiVar {
     fn try_from(v: &JsonEfiVariable) -> Result<Self, Self::Error> {
         let attr = EfiVarAttr::from(v.attr);
         let data = Vec::<u8>::try_from(v.data.clone())?;
-        Ok(EfiVar {
-            guid: v.guid,
-            name: v.name.clone(),
-            attr,
-            data,
-        })
+        Ok(EfiVar::new_with_vec(&v.guid, &v.name, attr, data))
     }
 }
 
