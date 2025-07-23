@@ -137,12 +137,13 @@ fn write_bootentry(
     let mut wr = Cursor::new(Vec::new());
     wr.write_boot_entry(&entry)?;
 
-    let be = EfiVar {
-        name: format!("Boot{index}"),
-        guid: guids::EfiGlobalVariable,
-        attr: EfiVarAttr::new_nv_bs_rt(),
-        data: wr.into_inner(),
-    };
+    let name = format!("Boot{index}");
+    let be = EfiVar::new_with_vec(
+        &guids::EfiGlobalVariable,
+        &name,
+        EfiVarAttr::new_nv_bs_rt(),
+        wr.into_inner(),
+    );
 
     info!(
         "set efivar: {} = \"{}\" {} {}",
@@ -153,12 +154,12 @@ fn write_bootentry(
 }
 
 fn write_bootnext(index: &boot::BootIndex, dryrun: bool) -> io::Result<()> {
-    let bn = EfiVar {
-        name: "BootNext".to_string(),
-        guid: guids::EfiGlobalVariable,
-        attr: EfiVarAttr::new_nv_bs_rt(),
-        data: Vec::from(index),
-    };
+    let bn = EfiVar::new_with_vec(
+        &guids::EfiGlobalVariable,
+        "BootNext",
+        EfiVarAttr::new_nv_bs_rt(),
+        Vec::from(index),
+    );
 
     debug!("set efivar: {} = {}", bn.name, index);
     write_variable(&bn, dryrun)?;
@@ -170,12 +171,12 @@ fn update_bootorder(
     old_order: &boot::BootOrder,
     dryrun: bool,
 ) -> io::Result<()> {
-    let bo = EfiVar {
-        name: "BootOrder".to_string(),
-        guid: guids::EfiGlobalVariable,
-        attr: EfiVarAttr::new_nv_bs_rt(),
-        data: Vec::from(new_order),
-    };
+    let bo = EfiVar::new_with_vec(
+        &guids::EfiGlobalVariable,
+        "BootOrder",
+        EfiVarAttr::new_nv_bs_rt(),
+        Vec::from(new_order),
+    );
 
     debug!("old efivar: {} = {}", bo.name, old_order);
     debug!("set efivar: {} = {}", bo.name, new_order);
@@ -258,9 +259,7 @@ fn boot_successful(bootcfg: &BootConfig, dryrun: bool) -> io::Result<()> {
     };
 
     if let Some(pos) = old_order.position(&current) {
-        info!(
-            "BootCurrent ({current}) already in BootOrder (position {pos})"
-        );
+        info!("BootCurrent ({current}) already in BootOrder (position {pos})");
         return Ok(());
     }
 

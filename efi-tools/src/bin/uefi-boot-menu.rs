@@ -61,12 +61,12 @@ fn main() -> ExitCode {
     };
 
     let bi: &BootIndex = menulist[s];
-    let bn = EfiVar {
-        name: "BootNext".to_string(),
-        guid: guids::EfiGlobalVariable,
-        attr: EfiVarAttr::new_nv_bs_rt(),
-        data: Vec::from(bi),
-    };
+    let bn = EfiVar::new_with_vec(
+        &guids::EfiGlobalVariable,
+        "BootNext",
+        EfiVarAttr::new_nv_bs_rt(),
+        Vec::from(bi),
+    );
     debug!("{bn:?}");
     println!("Setting BootNext to {bi}");
     if let Err(e) = sysfs::varstore_write(&bn) {
