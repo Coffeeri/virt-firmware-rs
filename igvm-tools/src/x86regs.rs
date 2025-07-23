@@ -345,7 +345,7 @@ pub fn vmsa_context(regs: &[X86Register], features: SevFeatures) -> SevVmsa {
     // reset defaults for things not in X86Register
     vmsa.dr6 = 0xffff0ff0;
     vmsa.dr7 = 0x400;
-    vmsa.xcr0 = 1;
+    vmsa.xcr0 = 1; // xsave config
     vmsa.x87_fcw = 0x37f; // floating point
     vmsa.mxcsr = 0x1f80; // sse
 
