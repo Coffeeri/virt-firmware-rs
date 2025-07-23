@@ -349,9 +349,6 @@ pub fn vmsa_context(regs: &[X86Register], features: SevFeatures) -> SevVmsa {
     vmsa.x87_fcw = 0x37f; // floating point
     vmsa.mxcsr = 0x1f80; // sse
 
-    // enable svm
-    vmsa.efer |= u64::from(ExtFeatureEnableReg::new().with_svme(true));
-
     // sev setup
     vmsa.sev_features = features;
 
@@ -375,6 +372,9 @@ pub fn vmsa_context(regs: &[X86Register], features: SevFeatures) -> SevVmsa {
             }
         }
     }
+
+    // amd fixup: enable svm
+    vmsa.efer |= u64::from(ExtFeatureEnableReg::new().with_svme(true));
 
     vmsa
 }
