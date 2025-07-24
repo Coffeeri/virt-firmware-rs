@@ -229,14 +229,22 @@ fn main() -> ExitCode {
     if let Some(infile) = cfg.opt_str("input") {
         info!("reading {}", &infile);
 
+        // code
         let firmware_res = fs::read(&infile);
         if let Err(e) = firmware_res {
             error!("read {}: {}", &infile, e);
             return ExitCode::from(1);
         }
         let firmware = firmware_res.unwrap();
-        let ovmfmeta = OvmfMeta::new(&firmware);
 
+        let ovmfmeta = OvmfMeta::new(&firmware);
+        if cfg.opt_present("meta") {
+            if let Some(m) = ovmfmeta.as_ref() {
+                print_ovmfmeta(m)
+            }
+        }
+
+        // vars
         let uefivars = if let Some(varsfile) = cfg.opt_str("vars") {
             info!("reading {}", &varsfile);
             let uefivars_res = fs::read(&varsfile);
@@ -248,12 +256,6 @@ fn main() -> ExitCode {
         } else {
             None
         };
-
-        if cfg.opt_present("meta") {
-            if let Some(m) = ovmfmeta.as_ref() {
-                print_ovmfmeta(m)
-            }
-        }
 
         let mut builder = Builder::new();
 
