@@ -9,7 +9,7 @@ use std::process::ExitCode;
 use virtfw_igvm_tools::builder::Builder;
 use virtfw_igvm_tools::inspect::inspect_igvm;
 use virtfw_igvm_tools::ovmfmeta::OvmfMeta;
-use virtfw_igvm_tools::x86regs::real_mode_regs;
+use virtfw_igvm_tools::x86regs::{flat32_mode_regs, real_mode_regs};
 
 #[derive(Parser, Debug)]
 #[command(version, about = "igvm-wrap -- wrap classic native firmware image as igvm", long_about = None)]
@@ -29,6 +29,10 @@ struct Args {
     /// enable sev-snp platform
     #[arg(long)]
     snp: bool,
+
+    /// boot firmware in protected mode
+    #[arg(long)]
+    flat32: bool,
 
     /// input firmware image
     #[arg(short, long, value_name = "CODE")]
@@ -88,19 +92,32 @@ fn main() -> ExitCode {
         // native
         if !cfg.no_native {
             builder.add_native_platform();
+            if cfg.flat32 {
+                let regs = flat32_mode_regs();
+                builder.add_native_context(&regs);
+            } else {
+                // nothing to do, this is the default
+            }
         }
 
         // sev-snp
         if cfg.snp {
+            let regs = if cfg.flat32 {
+                flat32_mode_regs()
+            } else {
+                real_mode_regs()
+            };
             builder.add_snp_platform();
-            builder.add_snp_vmsa_context(&real_mode_regs());
+            builder.add_snp_vmsa_context(&regs);
             if let Some(m) = ovmfmeta.as_ref() {
                 builder.add_ovmf_snp_pages(m);
             }
         }
 
         // firmware code
-        builder.add_firmware_1m(&firmware);
+        if !cfg.flat32 {
+            builder.add_firmware_1m(&firmware);
+        }
         builder.add_firmware_4g(&firmware);
 
         // uefi vars
