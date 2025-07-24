@@ -1,6 +1,8 @@
 use igvm::{IgvmDirectiveHeader, IgvmFile, IgvmInitializationHeader, IgvmPlatformHeader};
 use igvm_defs::{IgvmPageDataFlags, IgvmPageDataType, IgvmPlatformType, PAGE_SIZE_4K};
 
+use crate::x86regs::{ControlRegister0, ExtFeatureEnableReg};
+
 pub fn format_compat(igvm: &IgvmFile, compat: u32) -> String {
     let platforms: Vec<IgvmPlatformType> = igvm
         .platforms()
@@ -16,6 +18,20 @@ pub fn format_compat(igvm: &IgvmFile, compat: u32) -> String {
         .collect();
 
     format!("compat 0x{compat:x} {platforms:?}")
+}
+
+pub fn format_entry(efer: u64, cr0: u64, cs: u16, rip: u64) -> String {
+    let lma = u64::from(ExtFeatureEnableReg::new().with_lma(true));
+    if (efer & lma) != 0 {
+        return format!("lm64, rip {rip:x}");
+    }
+
+    let pe = u64::from(ControlRegister0::new().with_pe(true));
+    if (cr0 & pe) != 0 {
+        return format!("pm32, eip {rip:x}");
+    }
+
+    format!("rm16, cs:ip {cs:x}:{rip:x}")
 }
 
 pub fn inspect_platforms(igvm: &IgvmFile) {
@@ -56,15 +72,29 @@ pub fn inspect_directives(igvm: &IgvmFile) {
     {
         match d {
             IgvmDirectiveHeader::SnpVpContext {
-                compatibility_mask, ..
-            } => {
-                println!("SnpVpContext: {}", format_compat(igvm, *compatibility_mask));
-            }
-            IgvmDirectiveHeader::X64NativeVpContext {
-                compatibility_mask, ..
+                compatibility_mask,
+                vmsa,
+                ..
             } => {
                 println!(
-                    "X64NativeVpContext: {}",
+                    "SnpVpContext: {}, {}",
+                    format_entry(vmsa.efer, vmsa.cr0, vmsa.cs.selector, vmsa.rip),
+                    format_compat(igvm, *compatibility_mask)
+                );
+            }
+            IgvmDirectiveHeader::X64NativeVpContext {
+                compatibility_mask,
+                context,
+                ..
+            } => {
+                println!(
+                    "X64NativeVpContext: {}, {}",
+                    format_entry(
+                        context.efer,
+                        context.cr0,
+                        context.code_selector,
+                        context.rip
+                    ),
                     format_compat(igvm, *compatibility_mask)
                 );
             }
@@ -88,9 +118,7 @@ pub fn inspect_directives(igvm: &IgvmFile) {
                 parameter_area_index,
                 ..
             } => {
-                println!(
-                    "ParameterArea: idx {parameter_area_index}, bytes 0x{number_of_bytes:x}"
-                );
+                println!("ParameterArea: idx {parameter_area_index}, bytes 0x{number_of_bytes:x}");
             }
 
             IgvmDirectiveHeader::EnvironmentInfo(p) => {
