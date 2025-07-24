@@ -194,9 +194,7 @@ fn common_regs() -> Vec<X86Register> {
         base: 0,
         limit: 0xffff,
     };
-    let cr0 = ControlRegister0::reset_fast().into();
     vec![
-        X86Register::Cr0(cr0),
         X86Register::Pat(0x0007040600070406),
         X86Register::Gdtr(tab),
         X86Register::Idtr(tab),
@@ -204,6 +202,7 @@ fn common_regs() -> Vec<X86Register> {
 }
 
 pub fn real_mode_regs() -> Vec<X86Register> {
+    let cr0 = ControlRegister0::reset_fast().into();
     let code = SegmentRegister {
         base: 0xffff0000,
         limit: 0xffff,
@@ -223,6 +222,7 @@ pub fn real_mode_regs() -> Vec<X86Register> {
         attributes: SegmentAttributes::tss16().into(),
     };
     let mut regs = vec![
+        X86Register::Cr0(cr0),
         X86Register::Rip(0xfff0),
         X86Register::Cs(code),
         X86Register::Ss(data),
@@ -238,6 +238,7 @@ pub fn real_mode_regs() -> Vec<X86Register> {
 }
 
 pub fn flat32_mode_regs() -> Vec<X86Register> {
+    let cr0 = ControlRegister0::reset_fast().with_pe(true).into();
     let code = SegmentRegister {
         base: 0,
         limit: 0xffffffff,
@@ -257,6 +258,7 @@ pub fn flat32_mode_regs() -> Vec<X86Register> {
         attributes: SegmentAttributes::tss3264().into(),
     };
     let mut regs = vec![
+        X86Register::Cr0(cr0),
         X86Register::Rip(0xfffffff0),
         X86Register::Cs(code),
         X86Register::Ss(data),
