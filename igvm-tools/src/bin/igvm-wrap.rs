@@ -160,6 +160,13 @@ impl Builder {
         self
     }
 
+    fn add_uefivars(&mut self, uefivars: &[u8], fwsize: usize) -> &mut Builder {
+        // varstore (below 4G + firmware code)
+        let varsbase = (1u64 << 32) as usize - uefivars.len() - fwsize;
+        self.add_data_pages(varsbase, uefivars);
+        self
+    }
+
     fn finalize(&self) -> Result<IgvmFile, igvm::Error> {
         IgvmFile::new(
             self.revision,
@@ -181,7 +188,8 @@ fn parse_args() -> Option<getopts::Matches> {
     opts.optflag("", "no-native", "disable native platform");
     opts.optflag("", "snp", "enable sev-snp platform");
 
-    opts.optopt("i", "input", "input bios image", "BIOS");
+    opts.optopt("i", "input", "input firmware image", "CODE");
+    opts.optopt("", "vars", "input uefi vars image", "VARS");
     opts.optopt("o", "output", "output igvm image", "IGVM");
 
     let cfg_res = opts.parse(&args[1..]);
@@ -229,6 +237,18 @@ fn main() -> ExitCode {
         let firmware = firmware_res.unwrap();
         let ovmfmeta = OvmfMeta::new(&firmware);
 
+        let uefivars = if let Some(varsfile) = cfg.opt_str("vars") {
+            info!("reading {}", &varsfile);
+            let uefivars_res = fs::read(&varsfile);
+            if let Err(e) = uefivars_res {
+                error!("read {}: {}", &varsfile, e);
+                return ExitCode::from(1);
+            }
+            Some(uefivars_res.unwrap())
+        } else {
+            None
+        };
+
         if cfg.opt_present("meta") {
             if let Some(m) = ovmfmeta.as_ref() {
                 print_ovmfmeta(m)
@@ -236,20 +256,30 @@ fn main() -> ExitCode {
         }
 
         let mut builder = Builder::new();
+
+        // native
         if !cfg.opt_present("no-native") {
-            // native
             builder.add_native_platform();
         }
+
+        // sev-snp
         if cfg.opt_present("snp") {
-            // sev-snp
             builder.add_snp_platform();
             builder.add_snp_vmsa_context(&real_mode_regs());
             if let Some(m) = ovmfmeta.as_ref() {
                 builder.add_ovmf_snp_pages(m);
             }
         }
+
+        // firmware code
         builder.add_firmware_1m(&firmware);
         builder.add_firmware_4g(&firmware);
+
+        // uefi vars
+        if let Some(v) = uefivars {
+            builder.add_uefivars(&v, firmware.len());
+        }
+
         let igvm_res = builder.finalize();
         if let Err(e) = igvm_res {
             error!("build igvm: {e}");
