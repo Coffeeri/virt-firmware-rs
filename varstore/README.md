@@ -25,11 +25,11 @@ What is needed still:
 
 ## Features
 
-- `std`: Enables support for the standard library.  Used for test
+* `std`: Enables support for the standard library.  Used for test
   cases.
 
-- `json`: Enables read/write variables from/to JSON format, using
+* `json`: Enables read/write variables from/to JSON format, using
   serde.  Used for test cases.
 
-- `sbtest`: Enable support for booting test kernel builds in secure
+* `sbtest`: Enable support for booting test kernel builds in secure
   boot mode (include `Red Hat Test Certifying CA` in `db`).
