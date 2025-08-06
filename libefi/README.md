@@ -12,7 +12,7 @@ Support to read/write efi variables via efivarfs
 
 ## Features
 
-* `std`: Enable support for the standard libary.
+* `std`: Enable support for the standard library.
 
 * `udev`: Enable support for udev.  Needed to map linux file names to
   efi device paths.
