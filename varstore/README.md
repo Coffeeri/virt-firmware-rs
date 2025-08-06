@@ -8,17 +8,28 @@ Project goals:
 
 What is there:
 
- * basic variable store implementation (store.rs).
- * support for variable locking and variable policies (policy.rs).
- * partial support for authenticated variables + secure boot (authvar.rs).
- * parser for json variable store format used by qemu (json.rs).
- * parser for EFI_MM_COMMUNICATE protocol buffers (mm/).
- * code to parse and replay EFI_MM_COMMUNICATE protocol traces (pcap/).
- * test cases (tests/).
- * test utilities (src/bin/).
+ * core variable store implementation.
+ * support for variable locking and variable policies.
+ * partial support for authenticated variables + secure boot.
+ * parser for EFI_MM_COMMUNICATE protocol buffers.
+ * parser for json variable store format used by qemu.
+ * code to parse and replay EFI_MM_COMMUNICATE protocol traces.
+ * test cases and test utilities.
 
 What is needed still:
 
- * more test cases.
  * full support for authenticated variables (needs pkcs7 signature verification).
  * support for persistent variables in svsm (needs svsm storage support).
+ * better documentation.
+ * more test cases.
+
+## Features
+
+- `std`: Enables support for the standard library.  Used for test
+  cases.
+
+- `json`: Enables read/write variables from/to JSON format, using
+  serde.  Used for test cases.
+
+- `sbtest`: Enable support for booting test kernel builds in secure
+  boot mode (include `Red Hat Test Certifying CA` in `db`).
