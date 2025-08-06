@@ -14,7 +14,7 @@ fn main() -> Status {
     uefi::helpers::init().unwrap();
     log::set_max_level(log::LevelFilter::Info);
 
-    println!("Hello world!");
+    println!("Hello efi world!");
 
     qemu::shutdown_if_direct_kernel_load(true);
     Status::SUCCESS
