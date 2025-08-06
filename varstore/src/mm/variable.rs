@@ -1,5 +1,5 @@
 //!
-//! [WIP] EfiSmmVariableProtocol reimplementation
+//! EfiSmmVariableProtocol reimplementation
 //!
 use alloc::string::String;
 use alloc::vec::Vec;

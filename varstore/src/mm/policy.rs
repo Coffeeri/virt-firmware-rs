@@ -1,5 +1,5 @@
 //!
-//! [WIP] VarCheckPolicyLibMmiHandler + Edk2VariablePolicyProtocol reimplementation
+//! VarCheckPolicyLibMmiHandler + Edk2VariablePolicyProtocol reimplementation
 //!
 use alloc::string::String;
 use alloc::vec::Vec;

@@ -1,5 +1,5 @@
 //!
-//! efi variable store implementation [WIP]
+//! efi variable store implementation
 //!
 
 #![allow(clippy::collapsible_else_if)]
