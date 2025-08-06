@@ -24,10 +24,10 @@ doc-varstore build-varstore clippy-varstore clippy-fix-varstore release-varstore
 
 # targets
 default: all
-all: build clippy test docs $(POST64)
+all: build clippy test docs
 doc docs: cargo-doc
 test tests: cargo-test
-build: $(BIOS32) cargo-build
+build: $(BIOS32) cargo-build $(POST64)
 clippy: cargo-clippy
 clippy-fix: cargo-clippy-fix
 release: $(BIOS32) cargo-release
