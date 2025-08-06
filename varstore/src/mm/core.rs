@@ -1,3 +1,6 @@
+//!
+//! EFI_MM_COMMUNICATE parser
+//!
 use alloc::vec::Vec;
 use core::fmt::Display;
 use log::error;
