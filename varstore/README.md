@@ -9,6 +9,8 @@ Project goals:
 What is there:
 
  * basic variable store implementation (store.rs).
+ * support for variable locking and variable policies (policy.rs).
+ * partial support for authenticated variables + secure boot (authvar.rs).
  * parser for json variable store format used by qemu (json.rs).
  * parser for EFI_MM_COMMUNICATE protocol buffers (mm/).
  * code to parse and replay EFI_MM_COMMUNICATE protocol traces (pcap/).
@@ -17,8 +19,6 @@ What is there:
 
 What is needed still:
 
- * support for authenticated efi variables.
- * support for secure boot.
- * support for variable locking and variable policies.
  * more test cases.
- * svsm integration.
+ * full support for authenticated variables (needs pkcs7 signature verification).
+ * support for persistent variables in svsm (needs svsm storage support).
