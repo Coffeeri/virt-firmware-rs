@@ -1,6 +1,9 @@
+//! efi data types
+
 use core::cmp::Ordering;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
+/// EFI_TIME in edk2
 #[repr(C)]
 #[derive(
     Debug, Clone, Copy, FromBytes, IntoBytes, KnownLayout, Immutable, Eq, PartialEq, Default,

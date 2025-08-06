@@ -56,6 +56,7 @@ pub const PcdDatabase: Guid = guid!("9b3ada4f-ae56-4c24-8dea-f03b7558ae50");
 pub const SecPlatformInformation2: Guid = guid!("9e9f374b-8f16-4230-9824-5846ee766a97");
 pub const OvmfMemDebugLog: Guid = guid!("95305139-b20f-4723-8425-627c888ff121");
 
+/// Translate GUIDs to names.  Return None for unknown GUIDs.
 pub fn try_pretty_name(guid: &Guid) -> Option<&'static str> {
     match *guid {
         EfiCustomModeEnable => Some("EfiCustomModeEnable"),
@@ -101,6 +102,8 @@ pub fn try_pretty_name(guid: &Guid) -> Option<&'static str> {
     }
 }
 
+/// Translate GUIDs to names.  Unknown GUIDs will be returned in
+/// standard GUID string representation instead of the name.
 pub fn pretty_name(guid: &Guid) -> String {
     match try_pretty_name(guid) {
         Some(name) => name.to_string(),

@@ -1,4 +1,4 @@
-//! read efi variables from linux sysfs
+//! read/write efi variables from linux efivarfs
 
 extern crate std;
 use std::format;

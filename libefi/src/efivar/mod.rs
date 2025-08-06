@@ -1,3 +1,4 @@
+//! efi variable data type support
 pub mod auth;
 pub mod boot;
 pub mod devpath;

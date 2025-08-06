@@ -1,5 +1,5 @@
+#![doc = include_str!("../README.md")]
 #![no_std]
-
 #[cfg(feature = "std")]
 pub mod bootcfg;
 #[cfg(feature = "std")]
