@@ -16,7 +16,7 @@ stages:
 compile:
   stage: build
   script:
-    - make default
+    - make build
     - make doc
   artifacts:
     when: on_success
