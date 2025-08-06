@@ -1,3 +1,4 @@
+//! pci config space data structures and access functions
 pub mod ecam;
 pub mod x86;
 

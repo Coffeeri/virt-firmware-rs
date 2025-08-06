@@ -1,3 +1,4 @@
+//! simple serial port (16550) driver
 #![cfg(target_arch = "x86_64")]
 
 use core::fmt::Write;

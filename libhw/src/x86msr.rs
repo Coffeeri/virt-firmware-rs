@@ -1,3 +1,4 @@
+//! x86 msr support
 #![cfg(target_arch = "x86_64")]
 
 use core::arch::asm;

@@ -1,3 +1,4 @@
+//! x86 pci config space access via port 0xcf8
 #![cfg(target_arch = "x86_64")]
 
 use bitfield_struct::bitfield;

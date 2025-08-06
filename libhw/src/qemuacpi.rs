@@ -1,3 +1,4 @@
+//! setup qemu acpi devices, support vm poweroff aka qemu exit
 #![cfg(target_arch = "x86_64")]
 
 use crate::ioport::outw;

@@ -1,3 +1,4 @@
+//! qemu fw_cfg access
 pub mod mmio;
 pub mod x86;
 

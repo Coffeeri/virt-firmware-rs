@@ -1,3 +1,4 @@
+//! mmio access functions (x86, arm)
 mod arm;
 mod x86;
 

@@ -1,3 +1,4 @@
+//! pci express config space access via ecam
 use bitfield_struct::bitfield;
 
 use crate::mmio;
