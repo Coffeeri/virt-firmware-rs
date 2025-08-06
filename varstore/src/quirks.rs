@@ -1,5 +1,5 @@
 //!
-//! efi variable store implementation -- handle authenticated variables
+//! efi variable store implementation -- quirks
 //!
 use virtfw_libefi::efivar::types::EfiVarAttr;
 use virtfw_libefi::guids;
