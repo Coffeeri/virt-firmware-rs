@@ -5,6 +5,7 @@ arch=$(uname -m)
 case "$arch" in
     aarch64)
         efiarch="aa64"
+        efishell="/usr/share/edk2/aarch64/Shell.efi"
         ;;
     x86_64)
         efiarch="x64"
@@ -22,7 +23,7 @@ if test ! -d "/sys/firmware/efi"; then
 fi
 
 if test ! -f "$efishell"; then
-    echo "no EFI shell found"
+    echo "no EFI shell found (try 'dnf install edk2-shell-$efiarch')"
     exit 1
 fi
 
