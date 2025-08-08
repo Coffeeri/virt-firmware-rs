@@ -115,6 +115,11 @@ fn main() -> ExitCode {
             }
         }
 
+        // parameters
+        if let Some(m) = ovmfmeta.as_ref() {
+            builder.add_ovmf_igvm_params(m);
+        }
+
         // firmware code
         if !cfg.flat32 {
             builder.add_firmware_1m(&firmware);
