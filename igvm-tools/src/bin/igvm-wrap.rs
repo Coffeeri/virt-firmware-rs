@@ -52,6 +52,7 @@ fn main() -> ExitCode {
 
     stderrlog::new()
         .module(module_path!())
+        .module("virtfw_igvm_tools::ovmfmeta")
         .verbosity(stderrlog::LogLevelNum::Debug)
         .init()
         .unwrap();
