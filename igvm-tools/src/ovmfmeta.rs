@@ -11,6 +11,7 @@ pub const OVMF_META_SEV_SECRET: Guid = guid!("4c2eb361-7d9b-4cc3-8081-127c90d3d2
 pub const OVMF_META_SEV_HASHES: Guid = guid!("7255371f-3a3b-4b04-927b-1da6efa8d454");
 pub const OVMF_META_SEV_LIST: Guid = guid!("dc886566-984a-4798-a75e-5585a7bf67cc");
 pub const OVMF_META_TDX_LIST: Guid = guid!("e47a6535-984a-4798-865e-4685a7bf8ec2");
+pub const OVMF_META_IGVM_PARAM: Guid = guid!("784fa70e-3176-4677-8a20-04b68699e374");
 
 #[repr(C, packed)]
 #[derive(Debug, FromBytes)]
@@ -30,7 +31,7 @@ struct OvmfMetaListHead {
 
 #[repr(C, packed)]
 #[derive(Debug, FromBytes)]
-struct OvmfMetaSevEntry {
+struct OvmfMetaSevIgvmEntry {
     base: u32,
     size: u32,
     kind: u32,
@@ -61,6 +62,10 @@ pub enum OvmfRegionType {
     TdxFvVars,
     TdxTdHob,
     TdxMemory,
+
+    IgvmParamArea,
+    IgvmParamMemoryMap,
+    IgvmHobArea,
 }
 
 impl OvmfRegionType {
@@ -71,6 +76,15 @@ impl OvmfRegionType {
             0x03 => OvmfRegionType::SevCpuid,
             0x04 => OvmfRegionType::SevSvsmCca,
             0x10 => OvmfRegionType::SevHashes,
+            _ => OvmfRegionType::Undefined,
+        }
+    }
+
+    pub fn new_igvm(t: u32) -> OvmfRegionType {
+        match t {
+            0x100 => OvmfRegionType::IgvmParamArea,
+            0x101 => OvmfRegionType::IgvmParamMemoryMap,
+            0x200 => OvmfRegionType::IgvmHobArea,
             _ => OvmfRegionType::Undefined,
         }
     }
@@ -94,10 +108,18 @@ pub struct OvmfRegion {
 }
 
 impl OvmfRegion {
-    fn new_sev(entry: &OvmfMetaSevEntry) -> OvmfRegion {
+    fn new_sev(entry: &OvmfMetaSevIgvmEntry) -> OvmfRegion {
         OvmfRegion {
             memory: (entry.base as usize, entry.size as usize),
             etype: OvmfRegionType::new_sev(entry.kind),
+            ..Default::default()
+        }
+    }
+
+    fn new_igvm(entry: &OvmfMetaSevIgvmEntry) -> OvmfRegion {
+        OvmfRegion {
+            memory: (entry.base as usize, entry.size as usize),
+            etype: OvmfRegionType::new_igvm(entry.kind),
             ..Default::default()
         }
     }
@@ -179,7 +201,7 @@ impl OvmfMeta<'_> {
                 let (head, mut items) = OvmfMetaListHead::read_from_prefix(sev).ok()?;
                 debug!("    {head:?}");
                 for _ in 0..head.entries {
-                    let (e, r) = OvmfMetaSevEntry::read_from_prefix(items).ok()?;
+                    let (e, r) = OvmfMetaSevIgvmEntry::read_from_prefix(items).ok()?;
                     if e.size != 0 {
                         let region = OvmfRegion::new_sev(&e);
                         self.regions.push(region);
@@ -198,6 +220,23 @@ impl OvmfMeta<'_> {
                     let (e, r) = OvmfMetaTdxEntry::read_from_prefix(items).ok()?;
                     if e.mem_size != 0 {
                         let region = OvmfRegion::new_tdx(&e);
+                        self.regions.push(region);
+                    }
+                    items = r;
+                }
+            }
+            OVMF_META_IGVM_PARAM => {
+                let (listbase, _) = u32::read_from_prefix(blk).ok()?;
+                let start = self.firmware.len().checked_sub(listbase as usize)?;
+                debug!("  igvm param 0x{listbase:x} -> 0x{start:x}");
+                let (_, param) = self.firmware.split_at_checked(start)?;
+                let (head, mut items) = OvmfMetaListHead::read_from_prefix(param).ok()?;
+                debug!("    {head:?}");
+                for _ in 0..head.entries {
+                    let (e, r) = OvmfMetaSevIgvmEntry::read_from_prefix(items).ok()?;
+                    if e.size != 0 {
+                        debug!("    {e:?}");
+                        let region = OvmfRegion::new_igvm(&e);
                         self.regions.push(region);
                     }
                     items = r;
