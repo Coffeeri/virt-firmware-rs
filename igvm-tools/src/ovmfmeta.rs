@@ -199,7 +199,7 @@ impl OvmfMeta<'_> {
                 let (listbase, _) = u32::read_from_prefix(blk).ok()?;
                 let start = self.firmware.len().checked_sub(listbase as usize)?;
                 debug!("  sev addr 0x{listbase:x} -> 0x{start:x}");
-                let (_, sev) = self.firmware.split_at_checked(start)?;
+                let sev = self.firmware.get(start..)?;
                 let (head, mut items) = OvmfMetaListHead::read_from_prefix(sev).ok()?;
                 debug!("    {head:?}");
                 for _ in 0..head.entries {
@@ -215,7 +215,7 @@ impl OvmfMeta<'_> {
                 let (listbase, _) = u32::read_from_prefix(blk).ok()?;
                 let start = self.firmware.len().checked_sub(listbase as usize)?;
                 debug!("  tdx addr 0x{listbase:x} -> 0x{start:x}");
-                let (_, tdx) = self.firmware.split_at_checked(start)?;
+                let tdx = self.firmware.get(start..)?;
                 let (head, mut items) = OvmfMetaListHead::read_from_prefix(tdx).ok()?;
                 debug!("    {head:?}");
                 for _ in 0..head.entries {
@@ -231,7 +231,7 @@ impl OvmfMeta<'_> {
                 let (listbase, _) = u32::read_from_prefix(blk).ok()?;
                 let start = self.firmware.len().checked_sub(listbase as usize)?;
                 debug!("  igvm param 0x{listbase:x} -> 0x{start:x}");
-                let (_, param) = self.firmware.split_at_checked(start)?;
+                let param = self.firmware.get(start..)?;
                 let (head, mut items) = OvmfMetaListHead::read_from_prefix(param).ok()?;
                 debug!("    {head:?}");
                 for _ in 0..head.entries {
@@ -258,7 +258,7 @@ impl OvmfMeta<'_> {
         };
 
         let s = firmware.len().checked_sub(0x20)?;
-        let (f, _) = firmware.split_at(s);
+        let f = firmware.get(..s)?;
         let (g, mut m1, _) = Self::meta_blk(f)?;
 
         if g == OVMF_META_LIST {
