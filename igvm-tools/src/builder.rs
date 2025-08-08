@@ -6,8 +6,8 @@ use igvm::{
     IgvmPlatformHeader, IgvmRevision,
 };
 use igvm_defs::{
-    IgvmPageDataFlags, IgvmPageDataType, IgvmPlatformType, IGVM_VHS_SUPPORTED_PLATFORM,
-    PAGE_SIZE_4K,
+    IgvmPageDataFlags, IgvmPageDataType, IgvmPlatformType, IGVM_VHS_PARAMETER,
+    IGVM_VHS_PARAMETER_INSERT, IGVM_VHS_SUPPORTED_PLATFORM, PAGE_SIZE_4K,
 };
 
 use crate::ovmfmeta::{OvmfMeta, OvmfRegionType};
@@ -130,6 +130,42 @@ impl Builder {
                 self.add_empty_pages(r.memory.0, r.memory.1, SEV_SNP_COMPAT, t);
             }
         }
+        self
+    }
+
+    pub fn add_ovmf_igvm_params(&mut self, ovmfmeta: &OvmfMeta) -> &mut Builder {
+        let Some(area) = &ovmfmeta
+            .regions
+            .iter()
+            .find(|r| r.etype == OvmfRegionType::IgvmParamArea)
+        else {
+            return self;
+        };
+
+        self.directives.push(IgvmDirectiveHeader::ParameterArea {
+            parameter_area_index: 0,
+            number_of_bytes: area.memory.1 as u64,
+            initial_data: Vec::new(),
+        });
+
+        for r in &ovmfmeta.regions {
+            if r.etype == OvmfRegionType::IgvmParamMemoryMap {
+                let param = IGVM_VHS_PARAMETER {
+                    parameter_area_index: 0,
+                    byte_offset: r.memory.0 as u32,
+                };
+                self.directives.push(IgvmDirectiveHeader::MemoryMap(param));
+            }
+        }
+
+        self.directives.push(IgvmDirectiveHeader::ParameterInsert(
+            IGVM_VHS_PARAMETER_INSERT {
+                parameter_area_index: 0,
+                gpa: area.memory.0 as u64,
+                compatibility_mask: self.compatibility_mask_all,
+            },
+        ));
+
         self
     }
 

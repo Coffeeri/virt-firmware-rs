@@ -48,7 +48,7 @@ struct OvmfMetaTdxEntry {
     flags: u32,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum OvmfRegionType {
     Undefined,
 
