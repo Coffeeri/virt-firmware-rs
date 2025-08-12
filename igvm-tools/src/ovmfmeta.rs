@@ -210,7 +210,7 @@ impl OvmfMeta<'_> {
         Some(())
     }
 
-    pub fn new(firmware: &[u8]) -> Option<OvmfMeta> {
+    pub fn new(firmware: &[u8]) -> Option<OvmfMeta<'_>> {
         let mut ovmfmeta = OvmfMeta {
             firmware,
             regions: Vec::new(),
