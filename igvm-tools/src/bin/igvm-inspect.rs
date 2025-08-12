@@ -54,7 +54,7 @@ fn main() -> ExitCode {
         .unwrap();
 
     for arg in &cfg.free {
-        info!("{arg}");
+        info!("inspecting {arg}");
 
         let blob = std::fs::read(arg).expect("file read error");
         let igvm = IgvmFile::new_from_binary(&blob, None).expect("file parse error");
