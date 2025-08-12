@@ -36,51 +36,59 @@ struct Args {
     verbose: bool,
 
     /// add boot entry for UKI image FILE
-    #[arg(long, value_name = "FILE")]
+    #[arg(long, value_name = "FILE", help_heading = "Update UKI boot entries")]
     add_uki: Option<String>,
 
     /// remove boot entry for UKI image FILE
-    #[arg(long, value_name = "FILE")]
+    #[arg(long, value_name = "FILE", help_heading = "Update UKI boot entries")]
     remove_uki: Option<String>,
 
     /// override cmd line for boot entry
-    #[arg(long, value_name = "CMDLINE")]
+    #[arg(long, value_name = "CMDLINE", help_heading = "Update UKI boot entries")]
     cmdline: Option<String>,
 
     /// boot is successful.
-    #[arg(long = "boot-ok", visible_alias = "boot-successful")]
+    #[arg(
+        long = "boot-ok",
+        visible_alias = "boot-successful",
+        help_heading = "Update UKI boot entries"
+    )]
     boot_successful: bool,
 
     /// update BOOT.CSV
-    #[arg(long)]
+    #[arg(long, help_heading = "Update UKI boot entries")]
     update_csv: bool,
 
     /// add boot entry to netboot URI
-    #[arg(long, value_name = "URI")]
+    #[arg(long, value_name = "URI", help_heading = "Update other boot entries")]
     add_uri: Option<String>,
 
     /// remove boot entry NNNN
-    #[arg(long, value_name = "NNNN")]
+    #[arg(long, value_name = "NNNN", help_heading = "Update other boot entries")]
     remove_entry: Option<String>,
 
     /// boot added entry once (via BootNext)
-    #[arg(long = "boot-next", visible_alias = "once")]
+    #[arg(
+        long = "boot-next",
+        visible_alias = "once",
+        help_heading = "Options for entry updates"
+    )]
     boot_next: bool,
 
     /// place added entry at POS to BootOrder
-    #[arg(long, value_name = "POS")]
+    #[arg(long, value_name = "POS", help_heading = "Options for entry updates")]
     boot_order: Option<String>,
 
     /// do not actually update the configuration
-    #[arg(long)]
+    #[arg(long, help_heading = "Options for entry updates")]
     dry_run: bool,
 
     /// set title for boot entry
-    #[arg(long, value_name = "TITLE")]
+    #[arg(long, value_name = "TITLE", help_heading = "Options for entry updates")]
     title: Option<String>,
 
     /// print boot loader name
-    #[arg(long)]
+    #[arg(long, help_heading = "Print system information")]
     print_loader: bool,
 }
 
