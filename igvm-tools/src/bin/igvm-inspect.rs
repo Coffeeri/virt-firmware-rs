@@ -1,10 +1,22 @@
+use clap::Parser;
 use log::info;
-use std::env;
 use std::process::ExitCode;
 
 use igvm::{IgvmDirectiveHeader, IgvmFile};
 use virtfw_igvm_tools::inspect::inspect_igvm;
 use virtfw_igvm_tools::ovmfmeta::OvmfMeta;
+
+#[derive(Parser, Debug)]
+#[command(version, about = "igvm-inspect -- inspect igvm file content", long_about = None)]
+struct Args {
+    /// print ovmf metadata
+    #[arg(long)]
+    meta: bool,
+
+    /// files to inspect
+    #[arg()]
+    files: Vec<String>,
+}
 
 fn resetvector(d: &IgvmDirectiveHeader) -> Option<&[u8]> {
     match d {
@@ -19,33 +31,8 @@ fn resetvector(d: &IgvmDirectiveHeader) -> Option<&[u8]> {
     }
 }
 
-fn parse_args() -> Option<getopts::Matches> {
-    let args: Vec<String> = env::args().collect();
-    let mut opts = getopts::Options::new();
-
-    opts.optflag("h", "help", "print this help text");
-    opts.optflag("", "meta", "print ovmf metadata");
-
-    let cfg_res = opts.parse(&args[1..]);
-    let Ok(cfg) = cfg_res else {
-        println!("{:?}", cfg_res.err());
-        return None;
-    };
-    if cfg.opt_present("help") {
-        print!(
-            "{}",
-            opts.usage("igvm-inspect -- inspect igvm file content")
-        );
-        return None;
-    };
-
-    Some(cfg)
-}
-
 fn main() -> ExitCode {
-    let Some(cfg) = parse_args() else {
-        return ExitCode::from(1);
-    };
+    let cfg = Args::parse();
 
     stderrlog::new()
         .module(module_path!())
@@ -53,7 +40,7 @@ fn main() -> ExitCode {
         .init()
         .unwrap();
 
-    for arg in &cfg.free {
+    for arg in &cfg.files {
         info!("inspecting {arg}");
 
         let blob = std::fs::read(arg).expect("file read error");
@@ -61,7 +48,7 @@ fn main() -> ExitCode {
 
         inspect_igvm(&igvm);
 
-        if cfg.opt_present("meta") {
+        if cfg.meta {
             for page in igvm.directives().iter().filter_map(resetvector) {
                 if let Some(ovmfmeta) = OvmfMeta::new(page) {
                     ovmfmeta.print();

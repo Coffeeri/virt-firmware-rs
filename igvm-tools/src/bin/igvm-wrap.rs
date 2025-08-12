@@ -1,8 +1,8 @@
 //!
 //! wrap classic native firmware image as igvm
 //!
+use clap::Parser;
 use log::{error, info};
-use std::env;
 use std::fs;
 use std::process::ExitCode;
 
@@ -11,41 +11,40 @@ use virtfw_igvm_tools::inspect::inspect_igvm;
 use virtfw_igvm_tools::ovmfmeta::OvmfMeta;
 use virtfw_igvm_tools::x86regs::real_mode_regs;
 
-fn parse_args() -> Option<getopts::Matches> {
-    let args: Vec<String> = env::args().collect();
-    let mut opts = getopts::Options::new();
+#[derive(Parser, Debug)]
+#[command(version, about = "igvm-wrap -- wrap classic native firmware image as igvm", long_about = None)]
+struct Args {
+    /// print ovmf metadata
+    #[arg(long)]
+    meta: bool,
 
-    opts.optflag("h", "help", "print this help text");
-    opts.optflag("", "meta", "print ovmf metadata");
-    opts.optflag("", "inspect", "inspect generated igvm");
+    /// inspect generated igvm
+    #[arg(long)]
+    inspect: bool,
 
-    opts.optflag("", "no-native", "disable native platform");
-    opts.optflag("", "snp", "enable sev-snp platform");
+    /// disable native platform
+    #[arg(long)]
+    no_native: bool,
 
-    opts.optopt("i", "input", "input firmware image", "CODE");
-    opts.optopt("", "vars", "input uefi vars image", "VARS");
-    opts.optopt("o", "output", "output igvm image", "IGVM");
+    /// enable sev-snp platform
+    #[arg(long)]
+    snp: bool,
 
-    let cfg_res = opts.parse(&args[1..]);
-    let Ok(cfg) = cfg_res else {
-        println!("{:?}", cfg_res.err());
-        return None;
-    };
-    if cfg.opt_present("help") {
-        print!(
-            "{}",
-            opts.usage("igvm-wrap -- wrap classic native firmware image as igvm")
-        );
-        return None;
-    };
+    /// input firmware image
+    #[arg(short, long, value_name = "CODE")]
+    input: Option<String>,
 
-    Some(cfg)
+    /// input uefi vars image
+    #[arg(long, value_name = "VARS")]
+    vars: Option<String>,
+
+    /// output igvm image
+    #[arg(short, long, value_name = "IGVM")]
+    output: Option<String>,
 }
 
 fn main() -> ExitCode {
-    let Some(cfg) = parse_args() else {
-        return ExitCode::from(1);
-    };
+    let cfg = Args::parse();
 
     stderrlog::new()
         .module(module_path!())
@@ -53,7 +52,7 @@ fn main() -> ExitCode {
         .init()
         .unwrap();
 
-    if let Some(infile) = cfg.opt_str("input") {
+    if let Some(infile) = cfg.input {
         info!("reading {}", &infile);
 
         // code
@@ -65,14 +64,14 @@ fn main() -> ExitCode {
         let firmware = firmware_res.unwrap();
 
         let ovmfmeta = OvmfMeta::new(&firmware);
-        if cfg.opt_present("meta") {
+        if cfg.meta {
             if let Some(m) = ovmfmeta.as_ref() {
                 m.print();
             }
         }
 
         // vars
-        let uefivars = if let Some(varsfile) = cfg.opt_str("vars") {
+        let uefivars = if let Some(varsfile) = cfg.vars {
             info!("reading {}", &varsfile);
             let uefivars_res = fs::read(&varsfile);
             if let Err(e) = uefivars_res {
@@ -87,12 +86,12 @@ fn main() -> ExitCode {
         let mut builder = Builder::new();
 
         // native
-        if !cfg.opt_present("no-native") {
+        if !cfg.no_native {
             builder.add_native_platform();
         }
 
         // sev-snp
-        if cfg.opt_present("snp") {
+        if cfg.snp {
             builder.add_snp_platform();
             builder.add_snp_vmsa_context(&real_mode_regs());
             if let Some(m) = ovmfmeta.as_ref() {
@@ -116,12 +115,12 @@ fn main() -> ExitCode {
         }
         let igvm = igvm_res.unwrap();
 
-        if cfg.opt_present("inspect") {
+        if cfg.inspect {
             println!("IGVM image");
             inspect_igvm(&igvm);
         }
 
-        if let Some(outfile) = cfg.opt_str("output") {
+        if let Some(outfile) = cfg.output {
             let mut blob = Vec::new();
             let res = igvm.serialize(&mut blob);
             if let Err(e) = res {

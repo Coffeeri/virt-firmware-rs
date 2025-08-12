@@ -15,7 +15,7 @@ uguid.workspace = true
 zerocopy.workspace = true
 
 bitfield-struct = "0.11"
-getopts = "0.2"
+clap = { version = "4.5.4", features = ["derive"] }
 igvm = "0.3"
 igvm_defs = "0.3"
 log = "0.4"
