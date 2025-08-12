@@ -232,4 +232,11 @@ impl OvmfMeta<'_> {
 
         Some(ovmfmeta)
     }
+
+    pub fn print(&self) {
+        println!("OVMF regions");
+        for r in &self.regions {
+            println!("  {r}");
+        }
+    }
 }

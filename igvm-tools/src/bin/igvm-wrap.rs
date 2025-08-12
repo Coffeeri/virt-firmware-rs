@@ -42,13 +42,6 @@ fn parse_args() -> Option<getopts::Matches> {
     Some(cfg)
 }
 
-fn print_ovmfmeta(ovmfmeta: &OvmfMeta) {
-    println!("OVMF regions");
-    for r in &ovmfmeta.regions {
-        println!("  {r}");
-    }
-}
-
 fn main() -> ExitCode {
     let Some(cfg) = parse_args() else {
         return ExitCode::from(1);
@@ -74,7 +67,7 @@ fn main() -> ExitCode {
         let ovmfmeta = OvmfMeta::new(&firmware);
         if cfg.opt_present("meta") {
             if let Some(m) = ovmfmeta.as_ref() {
-                print_ovmfmeta(m)
+                m.print();
             }
         }
 
