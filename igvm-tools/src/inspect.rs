@@ -161,6 +161,7 @@ pub fn inspect_pagedata(igvm: &IgvmFile) {
     let mut prev_type: Option<IgvmPageDataType> = None;
     let mut prev_flags: Option<IgvmPageDataFlags> = None;
     let mut prev_compat: Option<u32> = None;
+    let mut prev_empty: Option<bool> = None;
     let mut page_count: u64 = 0;
 
     for d in igvm
@@ -181,6 +182,7 @@ pub fn inspect_pagedata(igvm: &IgvmFile) {
                 && prev_type == Some(*data_type)
                 && prev_flags == Some(*flags)
                 && prev_compat == Some(*compatibility_mask)
+                && prev_empty == Some(data.is_empty())
             {
                 next_gpa = Some(*gpa + PAGE_SIZE_4K);
                 page_count += 1;
@@ -212,6 +214,7 @@ pub fn inspect_pagedata(igvm: &IgvmFile) {
             prev_type = Some(*data_type);
             prev_flags = Some(*flags);
             prev_compat = Some(*compatibility_mask);
+            prev_empty = Some(data.is_empty());
         }
     }
     if page_count > 0 {
