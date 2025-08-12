@@ -1,10 +1,10 @@
 ///
 /// test utility: dump pcap files
 ///
+use clap::Parser;
+use log::{error, info};
 use std::process::ExitCode;
 use uguid::Guid;
-
-use log::{error, info};
 
 use virtfw_libefi::guids;
 use virtfw_varstore::json::JsonEfiVarStore;
@@ -14,6 +14,30 @@ use virtfw_varstore::mm::variable::{MmVariableHeader, MmVariableRequest};
 use virtfw_varstore::pcap::parse::{VarstorePcapItem, VarstorePcapParser};
 use virtfw_varstore::pcap::replay::replay_pcap;
 use virtfw_varstore::store::EfiVarStore;
+
+#[derive(Parser, Debug)]
+#[command(version, about = "dump varstore pcap files", long_about = None)]
+struct Args {
+    /// turn on debug logging
+    #[arg(short, long)]
+    debug: bool,
+
+    /// print pcap file
+    #[arg(short, long)]
+    print: bool,
+
+    /// replay pcap file
+    #[arg(long)]
+    replay: bool,
+
+    /// pcap file (print or replay)
+    #[arg(long, value_name = "PCAP")]
+    pcap: Option<String>,
+
+    /// json file (initial replay state)
+    #[arg(long, value_name = "JSON")]
+    json: Option<String>,
+}
 
 fn print_request(data: &[u8]) {
     let core = MmCore::new(data).unwrap();
@@ -75,31 +99,10 @@ fn print_pcap(filename: &str) -> std::io::Result<()> {
     Ok(())
 }
 
-fn parse_args() -> Option<getopts::Matches> {
-    let args: Vec<String> = std::env::args().collect();
-    let mut opts = getopts::Options::new();
-    opts.optflag("h", "help", "print this help text");
-    opts.optflag("d", "debug", "turn on debug logging");
-    opts.optflag("p", "print", "print pcap file");
-    opts.optflag("", "replay", "replay pcap file");
-    opts.optopt("", "pcap", "pcap file (print or replay)", "PCAP");
-    opts.optopt("", "json", "json file (initial replay state)", "JSON");
+fn main() -> ExitCode {
+    let cfg = Args::parse();
 
-    let cfg_res = opts.parse(&args[1..]);
-    let Ok(cfg) = cfg_res else {
-        println!("{:?}", cfg_res.err());
-        return None;
-    };
-    if cfg.opt_present("help") {
-        print!("{}", opts.usage("dump varstore pcap files"));
-        return None;
-    };
-
-    Some(cfg)
-}
-
-fn loginit(cfg: &getopts::Matches) {
-    let loglevel = if cfg.opt_present("debug") {
+    let loglevel = if cfg.debug {
         stderrlog::LogLevelNum::Debug
     } else {
         stderrlog::LogLevelNum::Info
@@ -111,16 +114,9 @@ fn loginit(cfg: &getopts::Matches) {
         .verbosity(loglevel)
         .init()
         .unwrap();
-}
 
-fn main() -> ExitCode {
-    let Some(cfg) = parse_args() else {
-        return ExitCode::from(1);
-    };
-    loginit(&cfg);
-
-    if let Some(pcap) = cfg.opt_str("pcap") {
-        if cfg.opt_present("print") {
+    if let Some(pcap) = cfg.pcap {
+        if cfg.print {
             let res = print_pcap(&pcap);
             if let Err(e) = res {
                 error!("{e}");
@@ -129,10 +125,10 @@ fn main() -> ExitCode {
             }
         }
 
-        if cfg.opt_present("replay") {
+        if cfg.replay {
             let mut store = EfiVarStore::new();
 
-            if let Some(filename) = cfg.opt_str("json") {
+            if let Some(filename) = cfg.json {
                 let Ok(content) = std::fs::read_to_string(filename) else {
                     error!("read json file");
                     return ExitCode::from(1);

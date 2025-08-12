@@ -19,7 +19,7 @@ name = "json-read"
 required-features = [ "std", "json" ]
 
 [features]
-std = [ "zerocopy/std", "dep:flate2", "dep:getopts", "dep:stderrlog" ]
+std = [ "zerocopy/std", "dep:flate2", "dep:clap", "dep:stderrlog" ]
 json = [ "dep:serde", "dep:serde_json", "uguid/serde" ]
 sbtest = [ "virtfw-libefi/sbtest" ]
 
@@ -28,7 +28,7 @@ uguid.workspace = true
 zerocopy.workspace = true
 
 flate2 = { version = "1", optional = true }
-getopts = { version = "0.2", optional = true }
+clap = { version = "4.5.4", features = ["derive"], optional = true }
 hex = { version = "0.4", default-features = false, features = [ "alloc" ] }
 log = { version = "0.4", default-features = false }
 serde = { version = "1", optional = true, default-features = false, features = [ "alloc", "derive" ] }
