@@ -2,8 +2,8 @@
 //! Generate BOOT.CVS for UKIs
 //!
 
+use clap::Parser;
 use log::{debug, error, info};
-use std::env;
 use std::path::PathBuf;
 use std::process::ExitCode;
 use std::str::FromStr;
@@ -11,31 +11,27 @@ use std::str::FromStr;
 use virtfw_efi_tools::shimcsv::write_boot_csv;
 use virtfw_libefi::distro::efi_arch;
 
-fn parse_args() -> Option<getopts::Matches> {
-    let args: Vec<String> = env::args().collect();
-    let mut opts = getopts::Options::new();
-    opts.optflag("h", "help", "print this help text");
-    opts.optopt("l", "loglevel", "set loglevel", "LEVEL");
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    /// set loglevel
+    #[arg(short, long, value_name = "LEVEL")]
+    loglevel: Option<String>,
 
-    opts.optopt("", "esp", "set efi system partition location", "ESP");
-    opts.optopt("", "csv", "override csv output location", "CSV");
+    /// set efi system partition location
+    #[arg(long, value_name = "ESP")]
+    esp: Option<String>,
 
-    let cfg_res = opts.parse(&args[1..]);
-    let Ok(cfg) = cfg_res else {
-        println!("{:?}", cfg_res.err());
-        return None;
-    };
-    if cfg.opt_present("help") {
-        print!("{}", opts.usage("generate-boot-csv"));
-        return None;
-    };
-
-    Some(cfg)
+    /// override csv output location
+    #[arg(long, value_name = "CSV")]
+    csv: Option<String>,
 }
 
-fn loginit(cfg: &getopts::Matches) {
+fn main() -> ExitCode {
+    let args = Args::parse();
+
     let deflevel = stderrlog::LogLevelNum::Info;
-    let loglevel = if let Some(s) = cfg.opt_str("loglevel") {
+    let loglevel = if let Some(s) = args.loglevel {
         if let Ok(l) = log::Level::from_str(&s) {
             stderrlog::LogLevelNum::from(l)
         } else {
@@ -49,15 +45,8 @@ fn loginit(cfg: &getopts::Matches) {
         .verbosity(loglevel)
         .init()
         .unwrap();
-}
 
-fn main() -> ExitCode {
-    let Some(cfg) = parse_args() else {
-        return ExitCode::from(1);
-    };
-    loginit(&cfg);
-
-    let esp = cfg.opt_str("esp").unwrap_or("/efi".to_string());
+    let esp = args.esp.unwrap_or("/efi".to_string());
     let arch = efi_arch();
 
     let shim_name = format!("shim{arch}.efi");
@@ -72,7 +61,7 @@ fn main() -> ExitCode {
     info!("shim: {}", shim_path.display());
 
     let mut csv_path;
-    if let Some(csv_opt) = cfg.opt_str("csv") {
+    if let Some(csv_opt) = args.csv {
         csv_path = PathBuf::from(csv_opt);
     } else {
         csv_path = shim_path.to_owned();

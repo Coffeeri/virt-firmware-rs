@@ -1,12 +1,16 @@
+use clap::Parser;
 use der::Decode;
 use log::error;
-use std::env;
 use uguid::Guid;
 use x509_cert::Certificate;
 
 use virtfw_libefi::efivar::sigdb::EfiSigDB;
 use virtfw_libefi::guids;
 use virtfw_libefi::varstore::sysfs;
+
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {}
 
 fn print_cert(cert: &Certificate) {
     let tbs = &cert.tbs_certificate;
@@ -44,24 +48,6 @@ fn print_sigdb(name: &str, guid: &Guid) {
     }
 }
 
-fn parse_args() -> Option<getopts::Matches> {
-    let args: Vec<String> = env::args().collect();
-    let mut opts = getopts::Options::new();
-    opts.optflag("h", "help", "print this help text");
-
-    let cfg_res = opts.parse(&args[1..]);
-    let Ok(cfg) = cfg_res else {
-        println!("{:?}", cfg_res.err());
-        return None;
-    };
-    if cfg.opt_present("help") {
-        print!("{}", opts.usage("uefi boot menu"));
-        return None;
-    };
-
-    Some(cfg)
-}
-
 fn loginit() {
     stderrlog::new()
         .module(module_path!())
@@ -72,9 +58,7 @@ fn loginit() {
 }
 
 fn main() {
-    let Some(_cfg) = parse_args() else {
-        return;
-    };
+    Args::parse();
     loginit();
 
     print_sigdb("PK", &guids::EfiGlobalVariable);

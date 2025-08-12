@@ -1,5 +1,5 @@
+use clap::Parser;
 use log::{debug, error};
-use std::env;
 use std::process::{Command, ExitCode};
 
 use dialoguer::theme::ColorfulTheme;
@@ -11,24 +11,22 @@ use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr};
 use virtfw_libefi::guids;
 use virtfw_libefi::varstore::sysfs;
 
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    /// enable debug logging
+    #[arg(short, long)]
+    debug: bool,
+
+    /// reboot after picking an entry
+    #[arg(short, long)]
+    reboot: bool,
+}
+
 fn main() -> ExitCode {
-    let args: Vec<String> = env::args().collect();
-    let mut opts = getopts::Options::new();
-    opts.optflag("h", "help", "print this help text");
-    opts.optflag("d", "debug", "enable debug logging");
-    opts.optflag("r", "reboot", "reboot after picking an entry");
+    let cfg = Args::parse();
 
-    let cfg_res = opts.parse(&args[1..]);
-    let Ok(cfg) = cfg_res else {
-        println!("{:?}", cfg_res.err());
-        return ExitCode::from(1);
-    };
-    if cfg.opt_present("help") {
-        print!("{}", opts.usage("uefi boot menu"));
-        return ExitCode::from(0);
-    };
-
-    let loglevel = if cfg.opt_present("debug") {
+    let loglevel = if cfg.debug {
         stderrlog::LogLevelNum::Debug
     } else {
         stderrlog::LogLevelNum::Info
@@ -74,7 +72,7 @@ fn main() -> ExitCode {
         return ExitCode::from(1);
     }
 
-    if cfg.opt_present("reboot") {
+    if cfg.reboot {
         println!("Rebooting");
         let _ = Command::new("reboot")
             .spawn()

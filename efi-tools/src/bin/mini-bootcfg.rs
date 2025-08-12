@@ -1,5 +1,5 @@
+use clap::Parser;
 use log::{debug, error, info, warn};
-use std::env;
 use std::io;
 use std::io::Cursor;
 use std::process::ExitCode;
@@ -20,12 +20,76 @@ use virtfw_libefi::varstore::sysfs;
 
 use virtfw_efi_tools::shimcsv::write_boot_csv;
 
+#[derive(Parser, Debug)]
+#[command(version, about = "bootcfg - show and manage uefi boot entries", long_about = None)]
+struct Args {
+    /// set loglevel
+    #[arg(short, long, value_name = "LEVEL")]
+    loglevel: Option<String>,
+
+    /// print boot configuration
+    #[arg(short, long)]
+    show: bool,
+
+    /// more verbose output
+    #[arg(short, long)]
+    verbose: bool,
+
+    /// add boot entry for UKI image FILE
+    #[arg(long, value_name = "FILE")]
+    add_uki: Option<String>,
+
+    /// remove boot entry for UKI image FILE
+    #[arg(long, value_name = "FILE")]
+    remove_uki: Option<String>,
+
+    /// override cmd line for boot entry
+    #[arg(long, value_name = "CMDLINE")]
+    cmdline: Option<String>,
+
+    /// boot is successful.
+    #[arg(long = "boot-ok", visible_alias = "boot-successful")]
+    boot_successful: bool,
+
+    /// update BOOT.CSV
+    #[arg(long)]
+    update_csv: bool,
+
+    /// add boot entry to netboot URI
+    #[arg(long, value_name = "URI")]
+    add_uri: Option<String>,
+
+    /// remove boot entry NNNN
+    #[arg(long, value_name = "NNNN")]
+    remove_entry: Option<String>,
+
+    /// boot added entry once (via BootNext)
+    #[arg(long = "boot-next", visible_alias = "once")]
+    boot_next: bool,
+
+    /// place added entry at POS to BootOrder
+    #[arg(long, value_name = "POS")]
+    boot_order: Option<String>,
+
+    /// do not actually update the configuration
+    #[arg(long)]
+    dry_run: bool,
+
+    /// set title for boot entry
+    #[arg(long, value_name = "TITLE")]
+    title: Option<String>,
+
+    /// print boot loader name
+    #[arg(long)]
+    print_loader: bool,
+}
+
 fn create_file_boot_entry(
     bootcfg: &BootConfig,
     shim_opt: Option<&EfiFile>,
     uki: &EfiFile,
-    title: Option<String>,
-    cmdline: Option<String>,
+    title: Option<&String>,
+    cmdline: Option<&String>,
 ) -> Option<boot::BootEntry> {
     let devpath;
     let optdata;
@@ -50,11 +114,11 @@ fn create_file_boot_entry(
             return None;
         }
         devpath = uki.devpath();
-        optdata = cmdline.map(|c| c.to_string())
+        optdata = cmdline.map(|c| c.to_string());
     };
 
     let t = match title {
-        Some(t) => t,
+        Some(t) => t.clone(),
         None => uki.basename().unwrap(),
     };
 
@@ -63,14 +127,14 @@ fn create_file_boot_entry(
 
 fn create_uri_boot_entry(
     uri: &str,
-    title: Option<String>,
-    cmdline: Option<String>,
+    title: Option<&String>,
+    cmdline: Option<&String>,
 ) -> Option<boot::BootEntry> {
     let mut devpath = dp::DevPath::new();
     devpath.push(dp::DevPathNode::MsgUri(Some(uri.to_string())));
     let optdata = cmdline.map(|c| c.to_string());
     let t = match title {
-        Some(t) => t,
+        Some(t) => t.clone(),
         None => uri.split('/').next_back().unwrap().to_string(),
     };
     Some(boot::BootEntry::new_boot(&t, devpath, optdata))
@@ -188,16 +252,12 @@ fn update_bootorder(
     Ok(())
 }
 
-fn add_bootindex(
-    bootcfg: &BootConfig,
-    index: &boot::BootIndex,
-    cfg: &getopts::Matches,
-) -> io::Result<()> {
-    let dryrun = cfg.opt_present("dry-run");
-    if cfg.opt_present("once") || cfg.opt_present("boot-next") {
+fn add_bootindex(bootcfg: &BootConfig, index: &boot::BootIndex, cfg: &Args) -> io::Result<()> {
+    let dryrun = cfg.dry_run;
+    if cfg.boot_next {
         write_bootnext(index, dryrun)?;
     }
-    if let Some(posstr) = cfg.opt_str("boot-order") {
+    if let Some(posstr) = &cfg.boot_order {
         let old_order = if let Some(o) = &bootcfg.order {
             o
         } else {
@@ -334,7 +394,7 @@ fn show_bootcfg(bootcfg: &BootConfig, verbose: bool) {
                         println!("      optdata/guid: {guid}")
                     }
                     boot::BootEntryOptData::Data { bytes } => {
-                        println!("      optdata/bytes: {bytes:?}")
+                        println!("      optdata/bytes: {:?}", bytes)
                     }
                     boot::BootEntryOptData::None => {}
                 }
@@ -344,69 +404,12 @@ fn show_bootcfg(bootcfg: &BootConfig, verbose: bool) {
     }
 }
 
-fn parse_args() -> Option<getopts::Matches> {
-    let args: Vec<String> = env::args().collect();
-    let mut opts = getopts::Options::new();
-    opts.optflag("h", "help", "print this help text");
-    opts.optopt("l", "loglevel", "set loglevel", "LEVEL");
+fn main() -> ExitCode {
+    let cfg = Args::parse();
 
-    // show status
-    opts.optflag("s", "show", "print boot configuration");
-    opts.optflag("v", "verbose", "more verbose output");
-
-    // uki entry updates
-    opts.optopt("", "add-uki", "add boot entry for UKI image FILE", "FILE");
-    opts.optopt(
-        "",
-        "remove-uki",
-        "remove boot entry for UKI image FILE",
-        "FILE",
-    );
-    opts.optopt("", "cmdline", "override cmd line for boot entry", "CMDLINE");
-
-    opts.optflag("", "boot-ok", "boot is successful.");
-    opts.optflag("", "boot-successful", "boot is successful.");
-    opts.optflag("", "update-csv", "update BOOT.CSV");
-
-    // other entry updates
-    opts.optopt("", "add-uri", "add boot entry to netboot URI", "URI");
-    opts.optopt("", "remove-entry", "remove boot entry NNNN", "NNNN");
-
-    // boot entry update options
-    opts.optflag("", "once", "boot added entry once (via BootNext)");
-    opts.optflag("", "boot-next", "boot added entry once (via BootNext)");
-    opts.optopt(
-        "",
-        "boot-order",
-        "place added entry at POS to BootOrder",
-        "POS",
-    );
-    opts.optflag("", "dry-run", "do not actually update the configuration");
-    opts.optopt("", "title", "set title for boot entry", "TITLE");
-
-    // system info
-    opts.optflag("", "print-loader", "print boot loader name");
-
-    let cfg_res = opts.parse(&args[1..]);
-    let Ok(cfg) = cfg_res else {
-        println!("{:?}", cfg_res.err());
-        return None;
-    };
-    if cfg.opt_present("help") {
-        print!(
-            "{}",
-            opts.usage("bootcfg - show and manage uefi boot entries")
-        );
-        return None;
-    };
-
-    Some(cfg)
-}
-
-fn loginit(cfg: &getopts::Matches) {
     let deflevel = stderrlog::LogLevelNum::Info;
-    let loglevel = if let Some(s) = cfg.opt_str("loglevel") {
-        if let Ok(l) = log::Level::from_str(&s) {
+    let loglevel = if let Some(s) = cfg.loglevel.as_ref() {
+        if let Ok(l) = log::Level::from_str(s) {
             stderrlog::LogLevelNum::from(l)
         } else {
             deflevel
@@ -420,15 +423,9 @@ fn loginit(cfg: &getopts::Matches) {
         .verbosity(loglevel)
         .init()
         .unwrap();
-}
 
-fn main() -> ExitCode {
-    let Some(cfg) = parse_args() else {
-        return ExitCode::from(1);
-    };
-    loginit(&cfg);
-    let dryrun = cfg.opt_present("dry-run");
-    let verbose = cfg.opt_present("verbose");
+    let dryrun = cfg.dry_run;
+    let verbose = cfg.verbose;
 
     let osinfo = LinuxOsInfo::new();
     let bootcfg = BootConfig::new();
@@ -436,13 +433,13 @@ fn main() -> ExitCode {
     let shim = osinfo.shim_path().unwrap();
     let efi_shim = EfiFile::new(&shim);
 
-    if cfg.opt_present("show") {
+    if cfg.show {
         show_bootcfg(&bootcfg, verbose);
         return ExitCode::from(0);
     }
 
-    if let Some(uki) = cfg.opt_str("add-uki") {
-        let efi_uki = match EfiFile::new(&uki) {
+    if let Some(ref uki) = cfg.add_uki {
+        let efi_uki = match EfiFile::new(uki) {
             Err(e) => {
                 error!("{uki}: {e}");
                 return ExitCode::from(1);
@@ -462,8 +459,8 @@ fn main() -> ExitCode {
             &bootcfg,
             efi_shim.as_ref().ok(),
             &efi_uki,
-            cfg.opt_str("title"),
-            cfg.opt_str("cmdline"),
+            cfg.title.as_ref(),
+            cfg.cmdline.as_ref(),
         );
         let Some(entry) = entry_opt else {
             error!("failed to create boot entry for {uki}");
@@ -480,8 +477,8 @@ fn main() -> ExitCode {
         return ExitCode::from(0);
     }
 
-    if let Some(uki) = cfg.opt_str("remove-uki") {
-        let efi_uki = match EfiFile::new(&uki) {
+    if let Some(ref uki) = cfg.remove_uki {
+        let efi_uki = match EfiFile::new(uki) {
             Err(e) => {
                 error!("{uki}: {e}");
                 return ExitCode::from(1);
@@ -501,12 +498,12 @@ fn main() -> ExitCode {
         return ExitCode::from(0);
     }
 
-    if cfg.opt_present("boot-ok") || cfg.opt_present("boot-successful") {
+    if cfg.boot_successful {
         if let Err(e) = boot_successful(&bootcfg, dryrun) {
             error!("update boot order: {e}");
             return ExitCode::from(1);
         };
-        if cfg.opt_present("update-csv") {
+        if cfg.update_csv {
             // reload (updated) boot config
             let bootcfg = BootConfig::new();
             if let Err(e) = update_csv(&bootcfg, efi_shim.as_ref().ok()) {
@@ -517,7 +514,7 @@ fn main() -> ExitCode {
         return ExitCode::from(0);
     }
 
-    if cfg.opt_present("update-csv") {
+    if cfg.update_csv {
         if let Err(e) = update_csv(&bootcfg, efi_shim.as_ref().ok()) {
             error!("update boot.csv: {e}");
             return ExitCode::from(1);
@@ -525,9 +522,9 @@ fn main() -> ExitCode {
         return ExitCode::from(0);
     }
 
-    if let Some(uri) = cfg.opt_str("add-uri") {
+    if let Some(ref uri) = cfg.add_uri {
         let index = bootcfg.index_unused();
-        let entry_opt = create_uri_boot_entry(&uri, cfg.opt_str("title"), cfg.opt_str("cmdline"));
+        let entry_opt = create_uri_boot_entry(uri, cfg.title.as_ref(), cfg.cmdline.as_ref());
         let Some(entry) = entry_opt else {
             error!("failed to create boot entry for {uri}");
             return ExitCode::from(1);
@@ -543,8 +540,8 @@ fn main() -> ExitCode {
         return ExitCode::from(0);
     }
 
-    if let Some(nr) = cfg.opt_str("remove-entry") {
-        let i = u16::from_str_radix(&nr, 16);
+    if let Some(ref nr) = cfg.remove_entry {
+        let i = u16::from_str_radix(nr, 16);
         if let Err(e) = i {
             error!("parse \"{nr}\": {e}");
             return ExitCode::from(1);
@@ -557,7 +554,7 @@ fn main() -> ExitCode {
         return ExitCode::from(0);
     }
 
-    if cfg.opt_present("print-loader") {
+    if cfg.print_loader {
         let Some(var) = sysfs::varstore_read("LoaderInfo", &guids::LoaderInfo) else {
             println!("unknown");
             return ExitCode::from(0);

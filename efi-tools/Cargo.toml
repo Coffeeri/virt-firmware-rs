@@ -32,7 +32,7 @@ uguid.workspace = true
 byteorder = "1"
 der = "0.7"
 dialoguer = "0.11"
-getopts = "0.2"
+clap = { version = "4.5.4", features = ["derive"] }
 glob = "0.3"
 log = "0.4"
 stderrlog = "0.6"
