@@ -15,6 +15,11 @@ halt:
         .code32
         .section .text32, "ax"
 
+start32x:
+        // load our gdt
+        lgdtl	0xffffff70
+        ljmpl	$8, $start32
+
 start32:
         // load data segments
         mov	$0x10, %ax
@@ -123,7 +128,14 @@ start16:
         .section .entry16, "ax"
         .global entry16
 entry16:
-        // f000:fff0
-        jmp	start16
+        // f000:fff0 / fffffff0
+        mov     %cr0, %eax
+        test    $1,%al
+        jz      is16
+        .code32
+        jmp	start32x
+        .code16
+is16:
+        jmp     start16
 entry16e:
         .fill 16 - (entry16e - entry16),1,0
