@@ -20,7 +20,7 @@ halt:
 
         .section .gdt, "a"
 gdts:
-        // f000:ff00
+        // f000:ff00 / ffffff00
         // null descriptor
         .quad   0
         // flat 32-bit code segment
@@ -41,17 +41,17 @@ gdte:
 
         .section .gdtd, "a"
 gdtd:
-        // f000:ff70
+        // f000:ff70 / ffffff70
         // gdt descriptor
         .word   gdte - gdts - 1
-        .long   0x000fff00 // gdts
+        .long   0xffffff00 // gdts
 
         .code16
         .section .text16, "ax"
 
 start16:
-        // f000:ff80
-        lgdtw	%cs:0xff70
+        // f000:ff80 / ffffff80
+        lgdtl	%cs:0xff70
         mov	$1, %eax	// protected mode
         mov	%eax, %cr0
         ljmpl	$8, $start32
