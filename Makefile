@@ -52,14 +52,18 @@ realclean: clean
 
 # cargo post-processing
 BIOS64	:= mini hello
-BIOSBIN	:= $(patsubst %,target/x86_64-unknown-none/debug/%.bin,$(BIOS64))
 BIOSELF	:= $(patsubst %,target/x86_64-unknown-none/debug/%,$(BIOS64))
+BIOSBIN	:= $(patsubst %,target/x86_64-unknown-none/debug/%.bin,$(BIOS64))
+IGVM	:= $(patsubst %,target/x86_64-unknown-none/debug/%.igvm,$(BIOS64))
 
-cargo-post: $(BIOSBIN)
+cargo-post: $(BIOSBIN) $(IGVM)
 $(BIOSELF): build-bios-64
 
 %.bin: %
 	objcopy -O binary $< $@
+
+%.igvm: %.bin build-igvm-tools
+	target/debug/igvm-wrap --input $< --output $@
 
 # non-cargo subdirs
 build-bios-32:
