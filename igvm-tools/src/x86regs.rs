@@ -2,6 +2,7 @@ use bitfield_struct::bitfield;
 use igvm::registers::{SegmentRegister, TableRegister, X86Register};
 use igvm::snp_defs::{SevFeatures, SevSelector, SevVmsa};
 use igvm_defs::IgvmNativeVpContextX64;
+use zerocopy::FromZeros;
 
 // for igvm::registers::SegmentRegister
 #[bitfield(u16)]
@@ -274,9 +275,7 @@ pub fn flat32_mode_regs() -> Vec<X86Register> {
 }
 
 pub fn native_context(regs: &[X86Register]) -> IgvmNativeVpContextX64 {
-    // Temporary unsafe stopgap.  Once igvm switched to zerocopy 0.8 we can
-    // simply use IgvmNativeVpContextX64::new_zeroed() instead.
-    let mut ctx: IgvmNativeVpContextX64 = unsafe { core::mem::zeroed() };
+    let mut ctx = IgvmNativeVpContextX64::new_zeroed();
 
     for r in regs {
         match r {
@@ -340,9 +339,7 @@ fn vmsa_table(tab: &TableRegister) -> SevSelector {
 }
 
 pub fn vmsa_context(regs: &[X86Register], features: SevFeatures) -> SevVmsa {
-    // Temporary unsafe stopgap.  Once igvm switched to zerocopy 0.8
-    // we can simply use SevVmsa::new_zeroed() instead.
-    let mut vmsa: SevVmsa = unsafe { core::mem::zeroed() };
+    let mut vmsa = SevVmsa::new_zeroed();
 
     // reset defaults for things not in X86Register
     vmsa.dr6 = 0xffff0ff0;
