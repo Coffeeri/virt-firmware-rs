@@ -232,3 +232,17 @@ pub fn inspect_igvm(igvm: &IgvmFile) {
     inspect_directives(igvm);
     inspect_pagedata(igvm);
 }
+
+// usage: igvm.directives().iter().filter_map(resetvector)
+pub fn find_resetvector(d: &IgvmDirectiveHeader) -> Option<&[u8]> {
+    match d {
+        IgvmDirectiveHeader::PageData { gpa, data, .. } => {
+            if *gpa == 0xfffff000 {
+                Some(data)
+            } else {
+                None
+            }
+        }
+        _ => None,
+    }
+}

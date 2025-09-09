@@ -2,8 +2,8 @@ use clap::Parser;
 use log::info;
 use std::process::ExitCode;
 
-use igvm::{IgvmDirectiveHeader, IgvmFile};
-use virtfw_igvm_tools::inspect::inspect_igvm;
+use igvm::IgvmFile;
+use virtfw_igvm_tools::inspect::{find_resetvector, inspect_igvm};
 use virtfw_igvm_tools::ovmfmeta::OvmfMeta;
 
 #[derive(Parser, Debug)]
@@ -16,19 +16,6 @@ struct Args {
     /// files to inspect
     #[arg()]
     files: Vec<String>,
-}
-
-fn resetvector(d: &IgvmDirectiveHeader) -> Option<&[u8]> {
-    match d {
-        IgvmDirectiveHeader::PageData { gpa, data, .. } => {
-            if *gpa == 0xfffff000 {
-                Some(data)
-            } else {
-                None
-            }
-        }
-        _ => None,
-    }
 }
 
 fn main() -> ExitCode {
@@ -49,7 +36,7 @@ fn main() -> ExitCode {
         inspect_igvm(&igvm);
 
         if cfg.meta {
-            for page in igvm.directives().iter().filter_map(resetvector) {
+            for page in igvm.directives().iter().filter_map(find_resetvector) {
                 if let Some(ovmfmeta) = OvmfMeta::new(page) {
                     ovmfmeta.print();
                 }
