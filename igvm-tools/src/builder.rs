@@ -134,10 +134,11 @@ impl Builder {
     }
 
     pub fn add_data_pages(&mut self, base: usize, data: &[u8]) -> &mut Builder {
-        let pages = data.len() / PAGE_SIZE_4K as usize;
+        let psize = PAGE_SIZE_4K as usize;
+        let pages = data.len().div_ceil(psize);
         for pg in 0..pages {
-            let start = pg * PAGE_SIZE_4K as usize;
-            let end = start + PAGE_SIZE_4K as usize;
+            let start = pg * psize;
+            let end = min(start + psize, data.len());
             let page = IgvmDirectiveHeader::PageData {
                 gpa: (base + start) as u64,
                 compatibility_mask: self.compatibility_mask_all,
