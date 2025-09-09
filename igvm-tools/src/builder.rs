@@ -25,16 +25,19 @@ pub struct Builder {
 }
 
 impl Builder {
-    pub fn new() -> Builder {
-        let revision = IgvmRevision::V2 {
+    fn revision() -> IgvmRevision {
+        IgvmRevision::V2 {
             arch: Arch::X64,
             page_size: PAGE_SIZE_4K.try_into().unwrap(),
-        };
+        }
+    }
+
+    pub fn new() -> Builder {
         let platforms = Vec::new();
         let initializations = Vec::new();
         let directives = Vec::new();
         Builder {
-            revision,
+            revision: Self::revision(),
             platforms,
             initializations,
             directives,
@@ -183,5 +186,22 @@ impl Builder {
 impl Default for Builder {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl From<&IgvmFile> for Builder {
+    fn from(igvm: &IgvmFile) -> Builder {
+        let mut compatibility_mask_all = 0;
+        for p in igvm.platforms() {
+            let IgvmPlatformHeader::SupportedPlatform(sp) = p;
+            compatibility_mask_all |= sp.compatibility_mask;
+        }
+        Builder {
+            revision: Self::revision(),
+            platforms: igvm.platforms().to_vec(),
+            initializations: igvm.initializations().to_vec(),
+            directives: igvm.directives().to_vec(),
+            compatibility_mask_all,
+        }
     }
 }
