@@ -179,7 +179,12 @@ impl Builder {
         self
     }
 
-    pub fn add_data_pages(&mut self, base: usize, data: &[u8]) -> &mut Builder {
+    pub fn add_data_pages_flags(
+        &mut self,
+        base: usize,
+        data: &[u8],
+        flags: IgvmPageDataFlags,
+    ) -> &mut Builder {
         let psize = PAGE_SIZE_4K as usize;
         let pages = data.len().div_ceil(psize);
         for pg in 0..pages {
@@ -188,13 +193,23 @@ impl Builder {
             let page = IgvmDirectiveHeader::PageData {
                 gpa: (base + start) as u64,
                 compatibility_mask: self.compatibility_mask_all,
-                flags: IgvmPageDataFlags::new(),
+                flags,
                 data_type: IgvmPageDataType::NORMAL,
                 data: data[start..end].to_vec(),
             };
             self.directives.push(page);
         }
         self
+    }
+
+    pub fn add_data_pages(&mut self, base: usize, data: &[u8]) -> &mut Builder {
+        let flags = IgvmPageDataFlags::new();
+        self.add_data_pages_flags(base, data, flags)
+    }
+
+    pub fn add_data_pages_unmeasured(&mut self, base: usize, data: &[u8]) -> &mut Builder {
+        let flags = IgvmPageDataFlags::new().with_unmeasured(true);
+        self.add_data_pages_flags(base, data, flags)
     }
 
     pub fn add_firmware_4g(&mut self, firmware: &[u8]) -> &mut Builder {
