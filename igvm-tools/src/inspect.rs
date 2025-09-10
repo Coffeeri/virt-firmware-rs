@@ -202,7 +202,7 @@ pub fn inspect_pagedata(igvm: &IgvmFile) {
                 data_type,
                 if flags.is_2mb_page() { "2m" } else { "4k" },
                 if flags.unmeasured() {
-                    ",unmeasured"
+                    ", unmeasured"
                 } else {
                     ""
                 },
