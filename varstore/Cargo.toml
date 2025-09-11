@@ -18,10 +18,15 @@ required-features = [ "std", "json" ]
 name = "json-read"
 required-features = [ "std", "json" ]
 
+[[bin]]
+name = "setup-efi-vars"
+required-features = [ "std", "json", "pem" ]
+
 [features]
 std = [ "zerocopy/std", "dep:flate2", "dep:clap", "dep:stderrlog" ]
 json = [ "dep:serde", "dep:serde_json", "uguid/serde" ]
 sbtest = [ "virtfw-libefi/sbtest" ]
+pem = [ "der/pem", "x509-cert/pem" ]
 
 [dependencies]
 uguid.workspace = true
@@ -35,5 +40,8 @@ serde = { version = "1", optional = true, default-features = false, features = [
 serde_json = { version = "1", optional = true, default-features = false, features = [ "alloc" ] }
 stderrlog = { version = "0.6", optional = true }
 uefi = { version = "0.35", features = [ "alloc" ] }
+
+der = { version = "0.7.10" }
+x509-cert = { version = "0.2.5", default-features = false }
 
 virtfw-libefi = { path = "../libefi", version = "0.5.0", features = [ "sbdata", "x509" ] }
