@@ -10,6 +10,9 @@ pub const MICROSOFT_DB_UEFI_2011: &[u8] = include_bytes!("microsoft.com/ms-uefi-
 pub const MICROSOFT_DB_UEFI_2023: &[u8] = include_bytes!("microsoft.com/ms-uefi-2023.der");
 pub const MICROSOFT_DB_UEFI_ROM_2023: &[u8] = include_bytes!("microsoft.com/ms-uefi-2023.der");
 
+pub const MICROSOFT_DB_WINDOWS_2011: &[u8] = include_bytes!("microsoft.com/windows-2011.der");
+pub const MICROSOFT_DB_WINDOWS_2023: &[u8] = include_bytes!("microsoft.com/windows-2023.der");
+
 // used for test builds, private key is public
 #[cfg(feature = "sbtest")]
 pub const REDHAT_DB_TEST_INSECURE_2012: &[u8] =
