@@ -54,7 +54,8 @@ realclean: clean
 BIOS64	:= hello
 BIOSELF	:= $(patsubst %,target/x86_64-unknown-none/debug/%,$(BIOS64))
 BIOSBIN	:= $(patsubst %,target/x86_64-unknown-none/debug/%.bin,$(BIOS64))
-IGVM	:= $(patsubst %,target/x86_64-unknown-none/debug/%.igvm,$(BIOS64))
+IGVM	:= $(patsubst %,target/x86_64-unknown-none/debug/%.16.igvm,$(BIOS64))
+IGVM	+= $(patsubst %,target/x86_64-unknown-none/debug/%.32.igvm,$(BIOS64))
 
 cargo-post: $(BIOSBIN) $(IGVM)
 $(BIOSELF): build-bios-64
@@ -62,8 +63,11 @@ $(BIOSELF): build-bios-64
 %.bin: %
 	objcopy -O binary $< $@
 
-%.igvm: %.bin build-igvm-tools
+%.16.igvm: %.bin build-igvm-tools
 	target/debug/igvm-wrap --input $< --output $@
+
+%.32.igvm: %.bin build-igvm-tools
+	target/debug/igvm-wrap --input $< --output $@ --flat32
 
 # non-cargo subdirs
 build-bios-32:
