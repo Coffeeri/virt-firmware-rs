@@ -9,6 +9,6 @@ ${image}.bin`.
 The startup code (`entry64.S`) will first switch to 32-bit mode, then
 to long mode, finally call into rust code.
 
-### mini
+### hello
 
-Print hello world to serial console, halt.
+Print hello world to serial console, poweroff
