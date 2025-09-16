@@ -11,7 +11,7 @@ authors.workspace = true
 edition.workspace = true
 
 [features]
-std = [ "zerocopy/std", "byteorder/std", "log/std" ]
+std = [ "zerocopy/std", "byteorder/std", "log/std", "dep:chrono" ]
 udev = [ "std", "dep:udev" ]
 sbdata = []
 sbtest = []
@@ -22,6 +22,7 @@ uguid.workspace = true
 zerocopy.workspace = true
 
 byteorder = { version = "1", default-features = false }
+chrono = { version = "0.4", optional = true }
 log = { version = "0.4", default-features = false }
 udev = { version = "0.9", optional = true }
 

@@ -3,6 +3,9 @@
 use core::cmp::Ordering;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
+#[cfg(feature = "std")]
+use chrono::{Datelike, Timelike, Utc};
+
 /// EFI_TIME in edk2
 #[repr(C)]
 #[derive(
@@ -20,6 +23,26 @@ pub struct EfiTime {
     pub timezone: i16,
     pub daylight: u8,
     _pad2: u8,
+}
+
+impl EfiTime {
+    #[cfg(feature = "std")]
+    pub fn now() -> Self {
+        let t = Utc::now();
+        Self {
+            year: t.year() as u16,
+            month: t.month() as u8,
+            day: t.day() as u8,
+            hour: t.hour() as u8,
+            minute: t.minute() as u8,
+            second: t.second() as u8,
+            nanosecond: 0,
+            timezone: 0,
+            daylight: 0,
+            _pad1: 0,
+            _pad2: 0,
+        }
+    }
 }
 
 impl PartialOrd for EfiTime {
