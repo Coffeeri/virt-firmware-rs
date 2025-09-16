@@ -54,6 +54,23 @@ impl<'a> EfiVarAuth2<'a> {
         })
     }
 
+    pub fn new_from_data(time: &EfiTime, data: &'a [u8]) -> Self {
+        let length = size_of::<EfiVarAuth2Header>() as u32 - 16;
+        let header = EfiVarAuth2Header {
+            time: *time,
+            length,
+            revision: 0x0200,
+            certtype: WIN_CERT_TYPE_EFI_GUID,
+            guid: EfiCertPkcs7.into(),
+        };
+
+        Self {
+            header,
+            pkcs7: &[],
+            data,
+        }
+    }
+
     /// Return pkcs7 signature.  Add envelope if needed.
     pub fn get_pkcs7(&self) -> Vec<u8> {
         let wrap: [u8; 13] = [
@@ -111,8 +128,23 @@ impl<'a> EfiVarAuth2<'a> {
     }
 }
 
+impl From<&EfiVarAuth2<'_>> for Vec<u8> {
+    fn from(authvar: &EfiVarAuth2) -> Vec<u8> {
+        let mut auth = Vec::new();
+        auth.extend_from_slice(authvar.header.as_bytes());
+        auth.extend_from_slice(authvar.pkcs7);
+        auth.extend_from_slice(authvar.data);
+        auth
+    }
+}
+
 /// Unpack efi signature database from authenticated variable update.
 pub fn auth_to_esl(auth: &[u8]) -> Option<&[u8]> {
     let authvar = EfiVarAuth2::new_from_bytes(auth)?;
     Some(authvar.data)
+}
+
+pub fn esl_to_auth(time: &EfiTime, esl: &[u8]) -> Vec<u8> {
+    let authvar = &EfiVarAuth2::new_from_data(time, esl);
+    authvar.into()
 }
