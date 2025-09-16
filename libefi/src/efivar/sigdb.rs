@@ -93,6 +93,19 @@ impl EfiSigList {
         }
     }
 
+    pub fn new_sha256_from_list(owner: &Guid, list: Vec<[u8; 32]>) -> Self {
+        let entries = list
+            .into_iter()
+            .map(|i| EfiSignature::new(owner, &i))
+            .collect();
+        Self {
+            kind: guids::EfiCertSha256,
+            header_data: Vec::new(),
+            entry_size: 32 + 16,
+            entries,
+        }
+    }
+
     pub fn new_pk_external_mgmt() -> Self {
         let data: &[u8] = &[0];
         let signature = EfiSignature::new(&guids::OvmfEnrollDefaultKeys, data);
@@ -180,6 +193,11 @@ impl EfiSigDB {
 
     pub fn add_x509_from_der(&mut self, owner: &Guid, data: &[u8]) {
         let siglist = EfiSigList::new_x509_from_der(owner, data);
+        self.siglists.push(siglist);
+    }
+
+    pub fn add_sha256_from_list(&mut self, owner: &Guid, list: Vec<[u8; 32]>) {
+        let siglist = EfiSigList::new_sha256_from_list(owner, list);
         self.siglists.push(siglist);
     }
 
