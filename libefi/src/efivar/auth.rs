@@ -144,6 +144,7 @@ pub fn auth_to_esl(auth: &[u8]) -> Option<&[u8]> {
     Some(authvar.data)
 }
 
+/// generate update with timestamp (but without pkcs7 signature)
 pub fn esl_to_auth(time: &EfiTime, esl: &[u8]) -> Vec<u8> {
     let authvar = &EfiVarAuth2::new_from_data(time, esl);
     authvar.into()
