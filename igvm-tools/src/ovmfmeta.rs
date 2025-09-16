@@ -65,6 +65,7 @@ pub enum OvmfRegionType {
 
     IgvmParamArea,
     IgvmParamMemoryMap,
+    IgvmParamVpCount,
     IgvmHobArea,
 }
 
@@ -84,6 +85,7 @@ impl OvmfRegionType {
         match t {
             0x100 => OvmfRegionType::IgvmParamArea,
             0x101 => OvmfRegionType::IgvmParamMemoryMap,
+            0x102 => OvmfRegionType::IgvmParamVpCount,
             0x200 => OvmfRegionType::IgvmHobArea,
             _ => OvmfRegionType::Undefined,
         }

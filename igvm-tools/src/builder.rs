@@ -149,12 +149,22 @@ impl Builder {
         });
 
         for r in &ovmfmeta.regions {
-            if r.etype == OvmfRegionType::IgvmParamMemoryMap {
-                let param = IGVM_VHS_PARAMETER {
-                    parameter_area_index: 0,
-                    byte_offset: r.memory.0 as u32,
-                };
-                self.directives.push(IgvmDirectiveHeader::MemoryMap(param));
+            match r.etype {
+                OvmfRegionType::IgvmParamMemoryMap => {
+                    let param = IGVM_VHS_PARAMETER {
+                        parameter_area_index: 0,
+                        byte_offset: r.memory.0 as u32,
+                    };
+                    self.directives.push(IgvmDirectiveHeader::MemoryMap(param));
+                }
+                OvmfRegionType::IgvmParamVpCount => {
+                    let param = IGVM_VHS_PARAMETER {
+                        parameter_area_index: 0,
+                        byte_offset: r.memory.0 as u32,
+                    };
+                    self.directives.push(IgvmDirectiveHeader::VpCount(param));
+                }
+                _ => {}
             }
         }
 
