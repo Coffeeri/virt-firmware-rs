@@ -40,6 +40,17 @@ impl EfiTime {
             ..Default::default()
         }
     }
+
+    pub fn initial() -> Self {
+        // should be old enough that it predates any secure boot
+        // related authenticated variable time stamps.
+        Self {
+            year: 2010,
+            month: 1,
+            day: 1,
+            ..Default::default()
+        }
+    }
 }
 
 impl PartialOrd for EfiTime {
