@@ -60,6 +60,9 @@ impl<'a> EfiVarAuth2<'a> {
             0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x07, 0x02, 0xa0, 0x82,
         ];
 
+        if self.pkcs7.is_empty() {
+            return self.pkcs7.to_vec();
+        }
         if self.pkcs7.get(4..17) == Some(&wrap) {
             return self.pkcs7.to_vec();
         }
