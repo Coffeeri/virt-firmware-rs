@@ -36,7 +36,7 @@ impl EfiTime {
             hour: t.hour() as u8,
             minute: t.minute() as u8,
             second: t.second() as u8,
-            nanosecond: 0,
+            nanosecond: t.nanosecond(),
             timezone: 0,
             daylight: 0,
             _pad1: 0,
