@@ -76,7 +76,7 @@ impl EfiVarStore {
 
     pub fn enroll_dbx_native(&mut self) {
         if let Some(auth) = DBX_NATIVE {
-            let esl = auth_to_esl(auth).unwrap();
+            let (_ts, esl) = auth_to_esl(auth).unwrap();
             let dbx = EfiSigDB::new_from_bytes(esl).unwrap();
             self.enroll_dbx(&dbx);
         }
