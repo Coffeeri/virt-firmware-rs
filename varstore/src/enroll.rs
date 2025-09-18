@@ -46,7 +46,8 @@ impl EfiVarStore {
 
     pub fn enroll_pk_mgmt(&mut self) {
         let pk = EfiSigDB::new_pk_external_mgmt();
-        self.enroll_pk(None, &pk);
+        let ts = EfiTime::initial();
+        self.enroll_pk(Some(ts), &pk);
     }
 
     pub fn enroll_kek_microsoft(&mut self) {
