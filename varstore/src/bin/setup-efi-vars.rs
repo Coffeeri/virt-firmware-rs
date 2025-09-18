@@ -80,10 +80,10 @@ fn loginit() {
 }
 
 fn cert_is_pem(data: &[u8]) -> bool {
-    let Ok(s) = std::str::from_utf8(&data) else {
+    let Ok(s) = std::str::from_utf8(data) else {
         return false;
     };
-    s.find("-----BEGIN").is_some()
+    s.contains("-----BEGIN")
 }
 
 fn cert_load(filename: &str) -> Vec<u8> {
@@ -91,8 +91,7 @@ fn cert_load(filename: &str) -> Vec<u8> {
 
     if cert_is_pem(&data) {
         let cert = Certificate::from_pem(&data).expect("parse pem cert");
-        let der = cert.to_der().expect("serialize cert");
-        der
+        cert.to_der().expect("serialize cert")
     } else {
         data
     }
