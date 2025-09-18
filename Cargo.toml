@@ -18,14 +18,14 @@ authors = [ "Gerd Hoffmann <kraxel@redhat.com>" ]
 edition = "2021"
 
 [workspace.dependencies]
-bitfield-struct = "0.11"
+bitfield-struct = { version = "0.11" }
 byteorder = { version = "1", default-features = false }
 clap = { version = "4.5.4", features = ["derive"] }
 der = { version = "0.7.10" }
 log = { version = "0.4", default-features = false }
 serde = { version = "1", default-features = false, features = [ "alloc", "derive" ] }
 serde_json = { version = "1", default-features = false, features = [ "alloc" ]  }
-stderrlog = "0.6"
-uguid = "2"
+stderrlog = { version = "0.6" }
+uguid = { version = "2" }
 x509-cert = { version = "0.2.5", default-features = false }
 zerocopy = { version = "0.8", features = [ "derive" ] }
