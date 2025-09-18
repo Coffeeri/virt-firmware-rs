@@ -22,12 +22,13 @@ bitfield-struct.workspace = true
 uguid.workspace = true
 zerocopy.workspace = true
 
+der = { workspace = true, optional = true }
+
 byteorder = { version = "1", default-features = false }
 chrono = { version = "0.4", optional = true }
 log = { version = "0.4", default-features = false }
 udev = { version = "0.9", optional = true }
 
-der = { version = "0.7.10", optional = true }
 x509-cert = { version = "0.2.5", optional = true, default-features = false }
 
 [dev-dependencies]
