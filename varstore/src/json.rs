@@ -1,7 +1,7 @@
 //!
 //! read/write json efi varstore
 //!
-//! https://gitlab.com/qemu-project/qemu/-/blob/master/qapi/uefi.json
+//! <https://gitlab.com/qemu-project/qemu/-/blob/master/qapi/uefi.json>
 //!
 use alloc::string::String;
 use alloc::vec::Vec;
@@ -54,9 +54,7 @@ pub struct JsonEfiVariable {
 
 impl JsonEfiVariable {
     pub fn parse_time(&self) -> Option<EfiTime> {
-        let Some(hexstr) = self.time.as_ref() else {
-            return None;
-        };
+        let hexstr = self.time.as_ref()?;
         let bytes = Vec::<u8>::try_from(hexstr).ok()?;
         let efitime = EfiTime::read_from_bytes(&bytes).ok()?;
         Some(efitime)
