@@ -20,6 +20,7 @@ edition = "2021"
 [workspace.dependencies]
 bitfield-struct = "0.11"
 byteorder = { version = "1", default-features = false }
+clap = { version = "4.5.4", features = ["derive"] }
 der = { version = "0.7.10" }
 uguid = "2"
 x509-cert = { version = "0.2.5", default-features = false }
