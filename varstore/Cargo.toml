@@ -36,12 +36,12 @@ x509-cert.workspace = true
 zerocopy.workspace = true
 
 clap = { workspace = true, optional = true }
+stderrlog = { workspace = true , optional = true }
 
 flate2 = { version = "1", optional = true }
 hex = { version = "0.4", default-features = false, features = [ "alloc" ] }
 serde = { version = "1", optional = true, default-features = false, features = [ "alloc", "derive" ] }
 serde_json = { version = "1", optional = true, default-features = false, features = [ "alloc" ] }
-stderrlog = { version = "0.6", optional = true }
 uefi = { version = "0.35", features = [ "alloc" ] }
 
 virtfw-libefi = { path = "../libefi", version = "0.5.0", features = [ "sbdata", "x509" ] }
