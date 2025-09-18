@@ -26,6 +26,18 @@ pub struct EfiTime {
 }
 
 impl EfiTime {
+    pub fn new(year: u16, month: u8, day: u8, hour: u8, minute: u8, second: u8) -> Self {
+        Self {
+            year,
+            month,
+            day,
+            hour,
+            minute,
+            second,
+            ..Default::default()
+        }
+    }
+
     #[cfg(feature = "std")]
     pub fn now() -> Self {
         let t = Utc::now();
@@ -48,6 +60,21 @@ impl EfiTime {
             year: 2010,
             month: 1,
             day: 1,
+            ..Default::default()
+        }
+    }
+}
+
+#[cfg(feature = "x509")]
+impl From<&der::DateTime> for EfiTime {
+    fn from(dt: &der::DateTime) -> Self {
+        Self {
+            year: dt.year(),
+            month: dt.month(),
+            day: dt.day(),
+            hour: dt.hour(),
+            minute: dt.minutes(),
+            second: dt.seconds(),
             ..Default::default()
         }
     }

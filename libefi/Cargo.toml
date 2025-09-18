@@ -14,7 +14,8 @@ edition.workspace = true
 std = [ "zerocopy/std", "byteorder/std", "log/std", "dep:chrono" ]
 udev = [ "std", "dep:udev" ]
 sbdata = []
-sbtest = []
+sbtest = [ "sbdata" ]
+x509 = [ "sbdata" , "dep:der", "dep:x509-cert" ]
 
 [dependencies]
 bitfield-struct.workspace = true
@@ -25,6 +26,9 @@ byteorder = { version = "1", default-features = false }
 chrono = { version = "0.4", optional = true }
 log = { version = "0.4", default-features = false }
 udev = { version = "0.9", optional = true }
+
+der = { version = "0.7.10", optional = true }
+x509-cert = { version = "0.2.5", optional = true, default-features = false }
 
 [dev-dependencies]
 openssl = "0.10"

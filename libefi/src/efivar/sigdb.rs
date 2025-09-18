@@ -10,6 +10,11 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::guids;
 
+#[cfg(feature = "x509")]
+use crate::sb::certs::info::CertInfo;
+#[cfg(feature = "x509")]
+use crate::types::EfiTime;
+
 #[repr(C, packed)]
 #[derive(Debug, FromBytes, IntoBytes, KnownLayout, Immutable)]
 struct EfiSigListHeader {
@@ -203,6 +208,16 @@ impl EfiSigDB {
 
     pub fn get_x509_list(&self) -> Vec<&[u8]> {
         self.siglists.iter().filter_map(|s| s.get_x509()).collect()
+    }
+
+    #[cfg(feature = "x509")]
+    pub fn get_x509_mtime(&self) -> Option<EfiTime> {
+        self.siglists
+            .iter()
+            .filter_map(|s| s.get_x509())
+            .filter_map(|c| CertInfo::new_from_der(c))
+            .map(|i| i.not_before)
+            .max()
     }
 }
 

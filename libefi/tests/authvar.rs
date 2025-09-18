@@ -1,4 +1,4 @@
-#![cfg(feature = "sbdata")]
+#![cfg(all(feature = "std", feature = "sbdata"))]
 
 use virtfw_libefi::efivar::auth::{auth_to_esl, esl_to_auth};
 use virtfw_libefi::efivar::sigdb::EfiSigDB;
