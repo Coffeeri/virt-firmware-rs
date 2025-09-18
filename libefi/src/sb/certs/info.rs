@@ -14,7 +14,7 @@ pub struct CertInfo {
 
 impl CertInfo {
     pub fn new_from_der(der: &[u8]) -> Option<Self> {
-        let cert = Certificate::from_der(&der).ok()?;
+        let cert = Certificate::from_der(der).ok()?;
         let subject = cert.tbs_certificate.subject;
         let issuer = cert.tbs_certificate.issuer;
         let not_before = cert.tbs_certificate.validity.not_before.to_date_time();

@@ -215,7 +215,7 @@ impl EfiSigDB {
         self.siglists
             .iter()
             .filter_map(|s| s.get_x509())
-            .filter_map(|c| CertInfo::new_from_der(c))
+            .filter_map(CertInfo::new_from_der)
             .map(|i| i.not_before)
             .max()
     }
