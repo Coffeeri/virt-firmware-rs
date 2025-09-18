@@ -13,6 +13,7 @@ fn authvar() {
     let ts = EfiTime::now();
     let esl = Vec::<u8>::from(&pk);
     let auth = esl_to_auth(&ts, &esl);
-    let verify = auth_to_esl(&auth).unwrap();
-    assert_eq!(esl, verify);
+    let (check_ts, check_esl) = auth_to_esl(&auth).unwrap();
+    assert_eq!(ts, check_ts);
+    assert_eq!(esl, check_esl);
 }

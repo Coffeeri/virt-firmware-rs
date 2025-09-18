@@ -28,7 +28,7 @@ fn enroll_db_microsoft() {
 
 #[test]
 fn parse_dbxupdate_aarch64() {
-    let esl = auth_to_esl(DBX_AARCH64).unwrap();
+    let (_ts, esl) = auth_to_esl(DBX_AARCH64).unwrap();
     let sigdb = EfiSigDB::new_from_bytes(esl).unwrap();
     let siglist = sigdb.siglists.first().unwrap();
     assert_eq!(siglist.entries.len(), 26);
@@ -36,7 +36,7 @@ fn parse_dbxupdate_aarch64() {
 
 #[test]
 fn parse_dbxupdate_x86_64() {
-    let esl = auth_to_esl(DBX_X86_64).unwrap();
+    let (_ts, esl) = auth_to_esl(DBX_X86_64).unwrap();
     let sigdb = EfiSigDB::new_from_bytes(esl).unwrap();
     let siglist = sigdb.siglists.first().unwrap();
     assert_eq!(siglist.entries.len(), 430);

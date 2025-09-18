@@ -139,9 +139,9 @@ impl From<&EfiVarAuth2<'_>> for Vec<u8> {
 }
 
 /// Unpack efi signature database from authenticated variable update.
-pub fn auth_to_esl(auth: &[u8]) -> Option<&[u8]> {
+pub fn auth_to_esl(auth: &[u8]) -> Option<(EfiTime, &[u8])> {
     let authvar = EfiVarAuth2::new_from_bytes(auth)?;
-    Some(authvar.data)
+    Some((authvar.header.time, authvar.data))
 }
 
 /// generate update with timestamp (but without pkcs7 signature)
