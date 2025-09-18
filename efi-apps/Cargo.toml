@@ -14,10 +14,10 @@ edition.workspace = true
 fdt = [ "dep:fdt" ]
 
 [dependencies]
+log.workspace = true
 zerocopy.workspace = true
 
 fdt = { version = "0.1", optional = true }
-log = "0.4"
 serde = { version = "1", default-features = false, features = [ "alloc", "derive" ] }
 serde_json = { version = "1", default-features = false, features = [ "alloc" ]  }
 uefi = { version = "0.35", features = ["panic_handler", "logger", "log-debugcon", "alloc", "global_allocator" ] }

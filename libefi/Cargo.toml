@@ -20,6 +20,7 @@ x509 = [ "sbdata" , "dep:der", "dep:x509-cert" ]
 [dependencies]
 bitfield-struct.workspace = true
 byteorder.workspace = true
+log.workspace = true
 uguid.workspace = true
 zerocopy.workspace = true
 
@@ -27,7 +28,6 @@ der = { workspace = true, optional = true }
 x509-cert = { workspace = true, optional = true }
 
 chrono = { version = "0.4", optional = true }
-log = { version = "0.4", default-features = false }
 udev = { version = "0.9", optional = true }
 
 [dev-dependencies]
