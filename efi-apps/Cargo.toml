@@ -23,5 +23,5 @@ fdt = { version = "0.1", optional = true }
 uefi = { version = "0.35", features = ["panic_handler", "logger", "log-debugcon", "alloc", "global_allocator" ] }
 uefi-raw = "0.11"
 
-virtfw-libhw = { path = "../libhw", version = "0.2.1", features = ["alloc"] }
+virtfw-libhw = { workspace = true, features = ["alloc"] }
 virtfw-libefi = { path = "../libefi", version = "0.5.0" }
