@@ -24,4 +24,4 @@ uefi = { version = "0.35", features = ["panic_handler", "logger", "log-debugcon"
 uefi-raw = "0.11"
 
 virtfw-libhw = { workspace = true, features = ["alloc"] }
-virtfw-libefi = { path = "../libefi", version = "0.5.0" }
+virtfw-libefi = { workspace = true }

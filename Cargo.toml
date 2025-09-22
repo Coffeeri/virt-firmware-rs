@@ -31,3 +31,4 @@ x509-cert = { version = "0.2.5", default-features = false }
 zerocopy = { version = "0.8", features = [ "derive" ] }
 
 virtfw-libhw = { path = "libhw", version = "0.2.1" }
+virtfw-libefi = { path = "libefi", version = "0.5.0" }
