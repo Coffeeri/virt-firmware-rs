@@ -7,35 +7,9 @@ use x509_cert::Certificate;
 use virtfw_libefi::efivar::auth::auth_to_esl;
 use virtfw_libefi::efivar::sigdb::EfiSigDB;
 use virtfw_libefi::guids;
-use virtfw_libefi::sb::certs::*;
+use virtfw_libefi::sb::certs::profiles::SecureBootProfile;
 use virtfw_libefi::sb::dbx::*;
 use virtfw_varstore::store::EfiVarStore;
-
-#[derive(Debug, Clone)]
-enum Profile {
-    None,
-    Win11,
-    Win23,
-    Uefi11,
-    Uefi23,
-    All,
-}
-
-impl FromStr for Profile {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "none" => Ok(Self::None),
-            "win11" => Ok(Self::Win11),
-            "win23" => Ok(Self::Win23),
-            "uefi11" => Ok(Self::Uefi11),
-            "uefi23" => Ok(Self::Uefi23),
-            "all" => Ok(Self::All),
-            _ => Err(format!("unknown profile: {s}")),
-        }
-    }
-}
 
 #[derive(Debug, Clone)]
 enum EfiArch {
@@ -60,7 +34,7 @@ impl FromStr for EfiArch {
 struct Args {
     /// select 'db' profile (none, win11, win23, uefi11, uefi23, all)
     #[arg(long, value_name = "NAME")]
-    profile: Profile,
+    profile: SecureBootProfile,
 
     /// select efi architecture (x64, aa64)
     #[arg(long, value_name = "ARCH")]
@@ -103,30 +77,7 @@ fn main() {
 
     let mut store = EfiVarStore::new();
 
-    let mut db = EfiSigDB::new();
-    match cfg.profile {
-        Profile::None => {}
-        Profile::Win11 => {
-            db.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_DB_WINDOWS_2011);
-            db.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_DB_WINDOWS_2023);
-        }
-        Profile::Win23 => {
-            db.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_DB_WINDOWS_2023);
-        }
-        Profile::Uefi11 => {
-            db.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_DB_UEFI_2011);
-            db.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_DB_UEFI_2023);
-        }
-        Profile::Uefi23 => {
-            db.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_DB_UEFI_2023);
-        }
-        Profile::All => {
-            db.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_DB_WINDOWS_2011);
-            db.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_DB_WINDOWS_2023);
-            db.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_DB_UEFI_2011);
-            db.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_DB_UEFI_2023);
-        }
-    }
+    let mut db = cfg.profile.sigdb();
 
     for filename in cfg.db_cert {
         let der = cert_load(&filename);
