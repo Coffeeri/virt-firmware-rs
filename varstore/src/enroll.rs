@@ -9,6 +9,7 @@ use virtfw_libefi::efivar::auth::auth_to_esl;
 use virtfw_libefi::efivar::sigdb::EfiSigDB;
 use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr};
 use virtfw_libefi::guids;
+use virtfw_libefi::sb::certs::profiles::SecureBootProfile;
 use virtfw_libefi::sb::certs::*;
 use virtfw_libefi::sb::dbx::*;
 use virtfw_libefi::types::EfiTime;
@@ -58,12 +59,14 @@ impl EfiVarStore {
         self.enroll_kek(ts, &kek);
     }
 
-    pub fn enroll_db_microsoft_uefi(&mut self) {
-        let mut db = EfiSigDB::new();
-        db.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_DB_UEFI_2011);
-        db.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_DB_UEFI_2023);
+    pub fn enroll_db_profile(&mut self, profile: SecureBootProfile) {
+        let db = profile.sigdb();
         let ts = db.get_x509_mtime();
         self.enroll_db(ts, &db);
+    }
+
+    pub fn enroll_db_microsoft_uefi(&mut self) {
+        self.enroll_db_profile(SecureBootProfile::Uefi11);
     }
 
     // Enroll all certs, including the rh test cert which is used to
@@ -71,13 +74,7 @@ impl EfiVarStore {
     // actually protect anything.
     #[cfg(feature = "sbtest")]
     pub fn enroll_db_test_insecure(&mut self) {
-        let mut db = EfiSigDB::new();
-        db.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_DB_UEFI_2011);
-        db.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_DB_UEFI_2023);
-        db.add_x509_from_der(&guids::OvmfEnrollDefaultKeys, REDHAT_DB_UEFI_2024);
-        db.add_x509_from_der(&guids::OvmfEnrollDefaultKeys, REDHAT_DB_TEST_INSECURE_2012);
-        let ts = db.get_x509_mtime();
-        self.enroll_db(ts, &db);
+        self.enroll_db_profile(SecureBootProfile::RedHatTest);
     }
 
     pub fn enroll_dbx_native(&mut self) {
