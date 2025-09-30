@@ -20,13 +20,12 @@ pub struct CertInfo {
 
 impl CertInfo {
     fn attr(name: &Name, oid: &ObjectIdentifier) -> Option<String> {
-        name.0
-            .iter()
-            .flat_map(|x| x.0.iter())
-            .find(|x| x.oid == *oid)?
-            .value
-            .decode_as()
-            .ok()
+        for attr in name.0.iter() {
+            if attr.0.iter().any(|x| x.oid == *oid) {
+                return Some(attr.to_string());
+            }
+        }
+        None
     }
 
     pub fn new_from_der(der: &[u8]) -> Option<Self> {
