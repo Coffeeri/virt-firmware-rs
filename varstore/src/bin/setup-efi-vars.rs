@@ -66,12 +66,8 @@ fn main() {
         db.add_x509_from_der(&guids::OvmfEnrollDefaultKeys, &der);
     }
 
-    let auth = match cfg.arch {
-        Some(EfiArch::X64) => Some(DBX_X86_64),
-        Some(EfiArch::Aa64) => Some(DBX_AARCH64),
-        None => DBX_NATIVE,
-    };
-    let (dbx_ts, esl) = auth_to_esl(auth.expect("dbx missing")).unwrap();
+    let auth = get_dbx_opt(cfg.arch);
+    let (dbx_ts, esl) = auth_to_esl(auth).unwrap();
     let dbx = EfiSigDB::new_from_bytes(esl).unwrap();
 
     store.enroll_db(db.get_x509_mtime(), &db);
