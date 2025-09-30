@@ -1,6 +1,7 @@
 //! efi data types
 
 use core::cmp::Ordering;
+use core::fmt;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[cfg(feature = "std")]
@@ -110,5 +111,11 @@ impl Ord for EfiTime {
             return self.nanosecond.cmp(&other.nanosecond);
         }
         Ordering::Equal
+    }
+}
+
+impl fmt::Display for EfiTime {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:04}-{:02}-{:02}", self.year, self.month, self.day)
     }
 }
