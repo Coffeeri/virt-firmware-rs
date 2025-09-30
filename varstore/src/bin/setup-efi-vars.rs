@@ -1,33 +1,15 @@
 use clap::Parser;
-use std::str::FromStr;
 
 use der::{DecodePem, Encode};
 use x509_cert::Certificate;
 
+use virtfw_libefi::arch::EfiArch;
 use virtfw_libefi::efivar::auth::auth_to_esl;
 use virtfw_libefi::efivar::sigdb::EfiSigDB;
 use virtfw_libefi::guids;
 use virtfw_libefi::sb::certs::profiles::SecureBootProfile;
 use virtfw_libefi::sb::dbx::*;
 use virtfw_varstore::store::EfiVarStore;
-
-#[derive(Debug, Clone)]
-enum EfiArch {
-    X64,
-    Aa64,
-}
-
-impl FromStr for EfiArch {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "x64" | "x86_64" => Ok(Self::X64),
-            "aa64" | "aarch64" => Ok(Self::Aa64),
-            _ => Err(format!("unknown arch: {s}")),
-        }
-    }
-}
 
 #[derive(Parser, Debug)]
 #[command(version, about = "generate uefi variable store in json format", long_about = None)]
