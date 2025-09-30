@@ -1,29 +1,34 @@
 use clap::Parser;
-use der::Decode;
 use log::error;
 use uguid::Guid;
-use x509_cert::Certificate;
 
 use virtfw_libefi::efivar::sigdb::EfiSigDB;
 use virtfw_libefi::guids;
+use virtfw_libefi::sb::certs::info::CertInfo;
 use virtfw_libefi::varstore::sysfs;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {}
 
-fn print_cert(cert: &Certificate) {
-    let tbs = &cert.tbs_certificate;
-    if tbs.subject == tbs.issuer {
-        println!("    subject: {} (self-signed)", tbs.subject);
+fn print_cert(der: &[u8]) {
+    let info = CertInfo::new_from_der(der).expect("x509 cert parse error");
+    if info.subject == info.issuer {
+        println!(
+            "    subject: {} (self-signed)",
+            info.subject_cn.unwrap_or("no CN".to_string())
+        );
     } else {
-        println!("    subject: {}", tbs.subject);
-        println!("    issuer : {}", tbs.issuer);
+        println!(
+            "    subject: {}",
+            info.subject_cn.unwrap_or("no CN".to_string())
+        );
+        println!(
+            "    issuer : {}",
+            info.issuer_cn.unwrap_or("no CN".to_string())
+        );
     }
-    println!(
-        "    valid  : {} -> {}",
-        tbs.validity.not_before, tbs.validity.not_after
-    );
+    println!("    valid  : {} -> {}", info.not_before, info.not_after);
 }
 
 fn print_sigdb(name: &str, guid: &Guid) {
@@ -41,9 +46,7 @@ fn print_sigdb(name: &str, guid: &Guid) {
     for siglist in sigdb.siglists {
         println!("  {siglist}");
         if let Some(der) = siglist.get_x509() {
-            if let Ok(cert) = Certificate::from_der(der) {
-                print_cert(&cert);
-            }
+            print_cert(der);
         }
     }
 }
@@ -51,7 +54,6 @@ fn print_sigdb(name: &str, guid: &Guid) {
 fn loginit() {
     stderrlog::new()
         .module(module_path!())
-        .module("libefi")
         .verbosity(stderrlog::LogLevelNum::Debug)
         .init()
         .unwrap();
