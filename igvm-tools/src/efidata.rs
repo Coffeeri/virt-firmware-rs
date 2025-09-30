@@ -105,4 +105,8 @@ impl<'b> EfiIgvmDataList<'b> {
             .map(|d| (d.addr, d.blob))
             .collect()
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.data.is_empty()
+    }
 }

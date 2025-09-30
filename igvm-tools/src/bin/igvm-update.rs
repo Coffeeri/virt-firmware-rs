@@ -12,6 +12,7 @@ use sha2::{Digest, Sha256};
 use virtfw_libefi::efivar::auth::esl_to_auth;
 use virtfw_libefi::efivar::sigdb::EfiSigDB;
 use virtfw_libefi::guids;
+use virtfw_libefi::sb::certs::profiles::SecureBootProfile;
 use virtfw_libefi::sb::certs::*;
 use virtfw_libefi::sb::dbx::*;
 use virtfw_libefi::types::EfiTime;
@@ -37,13 +38,17 @@ struct Args {
     #[arg(short, long, value_name = "KERNEL")]
     kernel: Option<String>,
 
+    /// add authenticode sha256 hashes for shim and kernel to 'db'
+    #[arg(long, visible_alias = "add-hash")]
+    add_hash_sha256: bool,
+
     /// add microsoft certificates to 'db'
     #[arg(long)]
     add_cert_ms: bool,
 
-    /// add authenticode sha256 hashes for shim and kernel to 'db'
-    #[arg(long, visible_alias = "add-hash")]
-    add_hash_sha256: bool,
+    /// select 'db' profile (none, win11, win23, uefi11, uefi23, all)
+    #[arg(long, value_name = "NAME")]
+    profile: Option<SecureBootProfile>,
 
     /// inspect updated igvm
     #[arg(long)]
@@ -103,17 +108,19 @@ fn igvm_add_kernel(
     let kek_blob = esl_to_auth(&kek_ts, &Vec::<u8>::from(&kek));
 
     // db
-    let mut db = EfiSigDB::new();
-    if cfg.add_cert_ms {
-        info!("add microsoft uefi certificates to 'db'");
-        db.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_DB_UEFI_2011);
-        db.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_DB_UEFI_2023);
-    }
+    let secureboot = cfg.add_hash_sha256 || cfg.add_cert_ms;
+    let mut db = if cfg.add_cert_ms {
+        let profile = cfg.profile.as_ref().unwrap_or(&SecureBootProfile::Uefi11);
+        info!("add microsoft uefi certificates to 'db' ({profile:?})");
+        profile.sigdb()
+    } else {
+        EfiSigDB::new()
+    };
     if cfg.add_hash_sha256 && !shalist.is_empty() {
         info!("add authenticode sha256 hash(es) to 'db'");
         db.add_sha256_from_list(&guids::OvmfEnrollDefaultKeys, shalist);
     }
-    if db.siglists.is_empty() {
+    if secureboot && db.siglists.is_empty() {
         info!("add dummy authenticode sha256 hash to 'db'");
         db.add_sha256_from_list(&guids::OvmfEnrollDefaultKeys, siglist_dummy());
     }
@@ -129,14 +136,19 @@ fn igvm_add_kernel(
     let dbx_blob = DBX_X86_64;
 
     // calculate load addresses + create hobs
-    hoblist.add(&pk_blob, EfiIgvmDataType::Pk, true);
-    hoblist.add(&kek_blob, EfiIgvmDataType::Kek, true);
-    hoblist.add(&db_blob, EfiIgvmDataType::Db, true);
-    hoblist.add(dbx_blob, EfiIgvmDataType::Dbx, true);
+    if secureboot {
+        info!("add secure boot signature databases");
+        hoblist.add(&pk_blob, EfiIgvmDataType::Pk, true);
+        hoblist.add(&kek_blob, EfiIgvmDataType::Kek, true);
+        hoblist.add(&db_blob, EfiIgvmDataType::Db, true);
+        hoblist.add(dbx_blob, EfiIgvmDataType::Dbx, true);
+    }
     if let Some(b) = shim_blob {
+        info!("add shim efi binary");
         hoblist.add(b, EfiIgvmDataType::Shim, false);
     }
     if let Some(b) = kernel_blob {
+        info!("add kernel efi binary");
         hoblist.add(b, EfiIgvmDataType::Kernel, false);
     }
 
@@ -154,9 +166,12 @@ fn igvm_add_kernel(
         .expect("igvm: no hob area found");
 
     // add igvm data index hob
-    debug!("{hobarea}");
-    let hobs_blob = hoblist.hobs();
-    builder.add_data_pages(hobarea.memory.0, &hobs_blob);
+    if !hoblist.is_empty() {
+        info!("add efidata hoblist");
+        debug!("hobarea: {hobarea}");
+        let hobs_blob = hoblist.hobs();
+        builder.add_data_pages(hobarea.memory.0, &hobs_blob);
+    }
 
     // add data
     for (addr, blob) in hoblist.blobs(true) {
