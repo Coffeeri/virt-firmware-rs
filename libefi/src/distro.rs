@@ -1,4 +1,5 @@
 extern crate std;
+use log::{debug, error};
 use std::collections::HashMap;
 use std::format;
 use std::fs;
@@ -6,7 +7,7 @@ use std::path::Path;
 use std::process::Command;
 use std::string::{String, ToString};
 
-use log::{debug, error};
+use crate::arch::EfiArch;
 
 pub fn envfile_parse_string(data: &str) -> HashMap<String, String> {
     let mut values = HashMap::new();
@@ -40,11 +41,7 @@ pub fn envfile_parse_file(filename: &str) -> Option<HashMap<String, String>> {
 }
 
 pub fn efi_arch() -> &'static str {
-    match std::env::consts::ARCH {
-        "x86_64" => "x64",
-        "aarch64" => "aa64",
-        a => a,
-    }
+    EfiArch::native().name()
 }
 
 pub fn find_esp_path() -> Option<String> {
@@ -101,7 +98,7 @@ impl LinuxOsInfo {
             "{}/EFI/{}/shim{}.efi",
             esp,
             self.esp_distro_dir(),
-            efi_arch()
+            EfiArch::native().name(),
         );
         Some(path)
     }
