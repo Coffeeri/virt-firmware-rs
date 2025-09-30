@@ -111,7 +111,7 @@ fn igvm_add_kernel(
     let secureboot = cfg.add_hash_sha256 || cfg.add_cert_ms;
     let mut db = if cfg.add_cert_ms {
         let profile = cfg.profile.as_ref().unwrap_or(&SecureBootProfile::Uefi11);
-        info!("add microsoft uefi certificates to 'db' ({profile:?})");
+        info!("add microsoft uefi certificates to 'db' (profile: {profile:?})");
         profile.sigdb()
     } else {
         EfiSigDB::new()
