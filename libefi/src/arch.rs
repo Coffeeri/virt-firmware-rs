@@ -5,7 +5,7 @@ use alloc::format;
 use alloc::string::String;
 use core::str::FromStr;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum EfiArch {
     X64,
     Aa64,
