@@ -18,7 +18,7 @@ struct Args {
     #[arg(long, value_name = "NAME")]
     profile: SecureBootProfile,
 
-    /// select efi architecture (x64, aa64)
+    /// select efi architecture for 'dbx' (x64, aa64)
     #[arg(long, value_name = "ARCH")]
     arch: Option<EfiArch>,
 
