@@ -9,7 +9,7 @@ use std::process::ExitCode;
 use std::str::FromStr;
 
 use virtfw_efi_tools::shimcsv::write_boot_csv;
-use virtfw_libefi::distro::efi_arch;
+use virtfw_libefi::arch::EfiArch;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -47,9 +47,9 @@ fn main() -> ExitCode {
         .unwrap();
 
     let esp = args.esp.unwrap_or("/efi".to_string());
-    let arch = efi_arch();
+    let arch = EfiArch::native();
 
-    let shim_name = format!("shim{arch}.efi");
+    let shim_name = format!("shim{}.efi", arch.name());
     let shim_glob = format!("{esp}/EFI/*/{shim_name}");
     debug!("find shim: {shim_glob}");
 
@@ -66,7 +66,7 @@ fn main() -> ExitCode {
     } else {
         csv_path = shim_path.to_owned();
         csv_path.pop();
-        csv_path.push(format!("BOOT{}.CSV", arch.to_uppercase()));
+        csv_path.push(format!("BOOT{}.CSV", arch.name_uc()));
     }
     info!("csv: {}", csv_path.display());
 
