@@ -9,6 +9,7 @@ use authenticode::authenticode_digest;
 use object::read::pe;
 use sha2::{Digest, Sha256};
 
+use virtfw_libefi::arch::EfiArch;
 use virtfw_libefi::efivar::auth::esl_to_auth;
 use virtfw_libefi::efivar::sigdb::EfiSigDB;
 use virtfw_libefi::guids;
@@ -49,6 +50,10 @@ struct Args {
     /// select 'db' profile (none, win11, win23, uefi11, uefi23, all)
     #[arg(long, value_name = "NAME")]
     profile: Option<SecureBootProfile>,
+
+    /// select efi architecture for 'dbx' (x64, aa64)
+    #[arg(long, value_name = "ARCH")]
+    arch: Option<EfiArch>,
 
     /// inspect updated igvm
     #[arg(long)]
@@ -133,7 +138,7 @@ fn igvm_add_kernel(
     let db_blob = esl_to_auth(&db_ts, &Vec::<u8>::from(&db));
 
     // dbx
-    let dbx_blob = DBX_X86_64;
+    let dbx_blob = get_dbx_opt(cfg.arch);
 
     // calculate load addresses + create hobs
     if secureboot {
