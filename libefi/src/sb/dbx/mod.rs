@@ -20,3 +20,10 @@ pub fn get_dbx(arch: EfiArch) -> &'static [u8] {
 pub fn get_dbx_native() -> &'static [u8] {
     get_dbx(EfiArch::native())
 }
+
+pub fn get_dbx_opt(arch: Option<EfiArch>) -> &'static [u8] {
+    match arch {
+        Some(a) => get_dbx(a),
+        None => get_dbx_native(),
+    }
+}
