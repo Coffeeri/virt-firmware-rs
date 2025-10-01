@@ -30,6 +30,10 @@ struct Args {
     #[arg(long)]
     snp: bool,
 
+    /// do not generate parameters
+    #[arg(long)]
+    no_params: bool,
+
     /// boot firmware in protected mode
     #[arg(long)]
     flat32: bool,
@@ -116,7 +120,9 @@ fn main() -> ExitCode {
 
         // parameters
         if let Some(m) = ovmfmeta.as_ref() {
-            builder.add_ovmf_igvm_params(m);
+            if !cfg.no_params {
+                builder.add_ovmf_igvm_params(m);
+            }
         }
 
         // firmware code
