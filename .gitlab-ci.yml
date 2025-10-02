@@ -76,7 +76,7 @@ pages:
   stage: publish
   script:
     - mkdir -p public/bios-32 public/bios-64 public/efi-apps
-    - for binary in helloefi.efi netboot.efi pciscan.efi; do
+    - for binary in helloefi.efi netboot.efi pciscan.efi hoblist.efi debuglog.efi; do
       mv -v target/x86_64-unknown-uefi/debug/$binary public/efi-apps;
       done
     - mv -v bios-32/*.bin public/bios-32
