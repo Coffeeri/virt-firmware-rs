@@ -35,6 +35,9 @@ fn print_debuglog(cfg: ConfigTableEntry, pager: &mut Pager) {
         return;
     };
 
+    println!("[ firmware log gpa: 0x{:x} ]", cfg.address as u64);
+    pager.lines(1);
+
     if let Some(ver) = log.hdr.fw_version.split(|b| b == &b'\0').next() {
         if let Ok(s) = core::str::from_utf8(ver) {
             println!("[ firmware version: {} ]", s);
