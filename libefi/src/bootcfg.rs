@@ -188,3 +188,9 @@ impl BootConfig {
         format!("{i}  {title:32}{prop_str}")
     }
 }
+
+impl Default for BootConfig {
+    fn default() -> Self {
+        Self::new()
+    }
+}
