@@ -14,7 +14,7 @@ use virtfw_varstore::store::EfiVarStore;
 #[derive(Parser, Debug)]
 #[command(version, about = "generate uefi variable store in json format", long_about = None)]
 struct Args {
-    /// select 'db' profile (none, win11, win23, uefi11, uefi23, all)
+    /// select 'db' profile
     #[arg(long, value_name = "NAME")]
     profile: SecureBootProfile,
 
