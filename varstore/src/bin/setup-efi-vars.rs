@@ -18,13 +18,13 @@ struct Args {
     #[arg(long, value_name = "NAME")]
     profile: SecureBootProfile,
 
-    /// select efi architecture for 'dbx' (x64, aa64)
-    #[arg(long, value_name = "ARCH")]
-    arch: Option<EfiArch>,
-
     /// add certificate to 'db'
     #[arg(long, value_name = "CERT")]
     db_cert: Vec<String>,
+
+    /// select efi architecture for 'dbx'
+    #[arg(long, value_name = "ARCH")]
+    arch: Option<EfiArch>,
 }
 
 fn loginit() {
