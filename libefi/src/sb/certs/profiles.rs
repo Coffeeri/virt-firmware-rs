@@ -89,12 +89,22 @@ impl ValueEnum for SecureBootProfile {
 
     fn to_possible_value(&self) -> Option<PossibleValue> {
         let pv = match self {
-            SecureBootProfile::None => PossibleValue::new("none"),
-            SecureBootProfile::Win11 => PossibleValue::new("win11"),
-            SecureBootProfile::Win23 => PossibleValue::new("win23"),
-            SecureBootProfile::Uefi11 => PossibleValue::new("uefi11"),
-            SecureBootProfile::Uefi23 => PossibleValue::new("uefi23"),
-            SecureBootProfile::All => PossibleValue::new("all"),
+            SecureBootProfile::None => PossibleValue::new("none").help("no certificates"),
+            SecureBootProfile::Win11 => {
+                PossibleValue::new("win11").help("Windows CA certificates, 2011 + 2023")
+            }
+            SecureBootProfile::Win23 => {
+                PossibleValue::new("win23").help("Windows CA certificate, 2023 only")
+            }
+            SecureBootProfile::Uefi11 => {
+                PossibleValue::new("uefi11").help("UEFI CA certificates, 2011 + 2023")
+            }
+            SecureBootProfile::Uefi23 => {
+                PossibleValue::new("uefi23").help("UEFI CA certificate, 2023")
+            }
+            SecureBootProfile::All => {
+                PossibleValue::new("all").help("Both Windows and UEFI CA certificates, 2011 + 2023")
+            }
             #[cfg(feature = "sbtest")]
             SecureBootProfile::RedHatTest => PossibleValue::new("rh-test"),
         };
