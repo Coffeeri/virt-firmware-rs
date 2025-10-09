@@ -47,7 +47,7 @@ struct Args {
     #[arg(long)]
     add_cert_ms: bool,
 
-    /// select 'db' profile (none, win11, win23, uefi11, uefi23, all)
+    /// select 'db' profile
     #[arg(long, value_name = "NAME")]
     profile: Option<SecureBootProfile>,
 
