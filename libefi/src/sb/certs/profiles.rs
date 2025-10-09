@@ -3,11 +3,6 @@ extern crate std;
 #[cfg(feature = "std")]
 use clap::{builder::PossibleValue, ValueEnum};
 
-extern crate alloc;
-use alloc::format;
-use alloc::string::String;
-use core::str::FromStr;
-
 use crate::efivar::sigdb::EfiSigDB;
 use crate::guids::MicrosoftVendor;
 #[cfg(feature = "sbtest")]
@@ -104,26 +99,5 @@ impl ValueEnum for SecureBootProfile {
             SecureBootProfile::RedHatTest => PossibleValue::new("rh-test"),
         };
         Some(pv)
-    }
-}
-
-impl FromStr for SecureBootProfile {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "none" => Ok(Self::None),
-
-            "win11" => Ok(Self::Win11),
-            "win23" => Ok(Self::Win23),
-            "uefi11" => Ok(Self::Uefi11),
-            "uefi23" => Ok(Self::Uefi23),
-            "all" => Ok(Self::All),
-
-            #[cfg(feature = "sbtest")]
-            "rh-test" => Ok(Self::RedHatTest),
-
-            _ => Err(format!("unknown profile: {s}")),
-        }
     }
 }
