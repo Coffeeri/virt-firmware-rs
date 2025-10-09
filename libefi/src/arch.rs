@@ -1,9 +1,9 @@
 //! efi architectures
 
-extern crate alloc;
-use alloc::format;
-use alloc::string::String;
-use core::str::FromStr;
+#[cfg(feature = "std")]
+extern crate std;
+#[cfg(feature = "std")]
+use clap::{builder::PossibleValue, ValueEnum};
 
 #[derive(Debug, Clone, Copy)]
 pub enum EfiArch {
@@ -37,14 +37,18 @@ impl EfiArch {
     }
 }
 
-impl FromStr for EfiArch {
-    type Err = String;
+#[cfg(feature = "std")]
+impl ValueEnum for EfiArch {
+    fn value_variants<'a>() -> &'a [Self] {
+        static VARIANTS: [EfiArch; 2] = [EfiArch::Aa64, EfiArch::X64];
+        &VARIANTS
+    }
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_ref() {
-            "x64" | "x86_64" | "amd64" => Ok(Self::X64),
-            "aa64" | "aarch64" | "arm64" => Ok(Self::Aa64),
-            _ => Err(format!("unknown arch: {s}")),
-        }
+    fn to_possible_value(&self) -> Option<PossibleValue> {
+        let pv = match self {
+            EfiArch::Aa64 => PossibleValue::new("aa64").aliases(["AA64", "aarch64", "arm64"]),
+            EfiArch::X64 => PossibleValue::new("x64").aliases(["X64", "x86_64", "amd64"]),
+        };
+        Some(pv)
     }
 }
