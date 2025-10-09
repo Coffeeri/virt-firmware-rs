@@ -11,7 +11,7 @@ authors.workspace = true
 edition.workspace = true
 
 [features]
-std = [ "zerocopy/std", "byteorder/std", "log/std", "dep:chrono" ]
+std = [ "zerocopy/std", "byteorder/std", "log/std", "dep:chrono", "dep:clap" ]
 udev = [ "std", "dep:udev" ]
 sbdata = []
 sbtest = [ "sbdata" ]
@@ -24,6 +24,7 @@ log.workspace = true
 uguid.workspace = true
 zerocopy.workspace = true
 
+clap = { workspace = true, optional = true }
 der = { workspace = true, optional = true }
 x509-cert = { workspace = true, optional = true }
 

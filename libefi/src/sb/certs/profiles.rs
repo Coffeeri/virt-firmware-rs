@@ -1,3 +1,8 @@
+#[cfg(feature = "std")]
+extern crate std;
+#[cfg(feature = "std")]
+use clap::{builder::PossibleValue, ValueEnum};
+
 extern crate alloc;
 use alloc::format;
 use alloc::string::String;
@@ -64,6 +69,41 @@ impl SecureBootProfile {
             }
         }
         sigdb
+    }
+}
+
+#[cfg(feature = "std")]
+impl ValueEnum for SecureBootProfile {
+    fn value_variants<'a>() -> &'a [Self] {
+        #[cfg(feature = "sbtest")]
+        const SIZE: usize = 7;
+        #[cfg(not(feature = "sbtest"))]
+        const SIZE: usize = 6;
+        static VARIANTS: [SecureBootProfile; SIZE] = [
+            SecureBootProfile::None,
+            SecureBootProfile::Win11,
+            SecureBootProfile::Win23,
+            SecureBootProfile::Uefi11,
+            SecureBootProfile::Uefi23,
+            SecureBootProfile::All,
+            #[cfg(feature = "sbtest")]
+            SecureBootProfile::RedHatTest,
+        ];
+        &VARIANTS
+    }
+
+    fn to_possible_value(&self) -> Option<PossibleValue> {
+        let pv = match self {
+            SecureBootProfile::None => PossibleValue::new("none"),
+            SecureBootProfile::Win11 => PossibleValue::new("win11"),
+            SecureBootProfile::Win23 => PossibleValue::new("win23"),
+            SecureBootProfile::Uefi11 => PossibleValue::new("uefi11"),
+            SecureBootProfile::Uefi23 => PossibleValue::new("uefi23"),
+            SecureBootProfile::All => PossibleValue::new("all"),
+            #[cfg(feature = "sbtest")]
+            SecureBootProfile::RedHatTest => PossibleValue::new("rh-test"),
+        };
+        Some(pv)
     }
 }
 
