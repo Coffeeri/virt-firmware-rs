@@ -7,7 +7,7 @@ use virtfw_igvm_tools::inspect::{find_resetvector, inspect_igvm};
 use virtfw_igvm_tools::ovmfmeta::OvmfMeta;
 
 #[derive(Parser, Debug)]
-#[command(version, about = "igvm-inspect -- inspect igvm file content", long_about = None)]
+#[command(version, name = "igvm-inspect",  about = "inspect igvm file content", long_about = None)]
 struct Args {
     /// print ovmf metadata
     #[arg(long)]

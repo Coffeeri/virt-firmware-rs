@@ -25,7 +25,7 @@ use virtfw_igvm_tools::inspect::{find_resetvector, inspect_igvm};
 use virtfw_igvm_tools::ovmfmeta::{OvmfMeta, OvmfRegionType};
 
 #[derive(Parser, Debug)]
-#[command(version, about = "igvm-kernel -- add kernel to igvm file", long_about = None)]
+#[command(version, name = "igvm-update", about = "add kernel to igvm file", long_about = None)]
 struct Args {
     /// input igvm image
     #[arg(short, long, value_name = "FILE")]

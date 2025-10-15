@@ -12,7 +12,7 @@ use virtfw_igvm_tools::ovmfmeta::OvmfMeta;
 use virtfw_igvm_tools::x86regs::{flat32_mode_regs, real_mode_regs};
 
 #[derive(Parser, Debug)]
-#[command(version, about = "igvm-wrap -- wrap classic native firmware image as igvm", long_about = None)]
+#[command(version, name = "igvm-wrap", about = "wrap classic native firmware image as igvm", long_about = None)]
 struct Args {
     /// print ovmf metadata
     #[arg(long)]
