@@ -12,7 +12,7 @@ use virtfw_libefi::guids;
 use virtfw_libefi::varstore::sysfs;
 
 #[derive(Parser, Debug)]
-#[command(version, about, long_about = None)]
+#[command(version, name = "uefi-boot-menu", about = None, long_about = None)]
 struct Args {
     /// enable debug logging
     #[arg(short, long)]

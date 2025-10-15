@@ -12,7 +12,9 @@ use virtfw_efi_tools::shimcsv::write_boot_csv;
 use virtfw_libefi::arch::EfiArch;
 
 #[derive(Parser, Debug)]
-#[command(version, about, long_about = None)]
+#[command(version, name = "generate-boot-csv",
+          about = "create BOOT.CSV file for fallback.efi",
+          long_about = None)]
 struct Args {
     /// set loglevel
     #[arg(short, long, value_name = "LEVEL")]

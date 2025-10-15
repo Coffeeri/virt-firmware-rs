@@ -21,7 +21,7 @@ use virtfw_libefi::varstore::sysfs;
 use virtfw_efi_tools::shimcsv::write_boot_csv;
 
 #[derive(Parser, Debug)]
-#[command(version, about = "bootcfg - show and manage uefi boot entries", long_about = None)]
+#[command(version, name = "mini-bootcfg", about = "show and manage uefi boot entries", long_about = None)]
 struct Args {
     /// set loglevel
     #[arg(short, long, value_name = "LEVEL")]

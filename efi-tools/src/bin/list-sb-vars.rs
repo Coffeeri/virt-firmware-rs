@@ -8,7 +8,7 @@ use virtfw_libefi::sb::certs::info::CertInfo;
 use virtfw_libefi::varstore::sysfs;
 
 #[derive(Parser, Debug)]
-#[command(version, about, long_about = None)]
+#[command(version, name = "list-sb-vars", about = "list secure boot databases", long_about = None)]
 struct Args {}
 
 fn print_cert(der: &[u8]) {
