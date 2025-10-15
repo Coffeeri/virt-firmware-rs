@@ -12,7 +12,9 @@ use virtfw_libefi::sb::dbx::*;
 use virtfw_varstore::store::EfiVarStore;
 
 #[derive(Parser, Debug)]
-#[command(version, about = "generate uefi variable store in json format", long_about = None)]
+#[command(version, name = "setup-efi-vars",
+          about = "generate uefi variable store in json format",
+          long_about = None)]
 struct Args {
     /// select 'db' profile
     #[arg(long, value_name = "NAME")]

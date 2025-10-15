@@ -16,7 +16,7 @@ use virtfw_varstore::pcap::replay::replay_pcap;
 use virtfw_varstore::store::EfiVarStore;
 
 #[derive(Parser, Debug)]
-#[command(version, about = "dump varstore pcap files", long_about = None)]
+#[command(version, name = "pcap-replay", about = "dump varstore pcap files", long_about = None)]
 struct Args {
     /// turn on debug logging
     #[arg(short, long)]
