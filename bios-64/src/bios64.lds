@@ -15,6 +15,13 @@ SECTIONS
         KEEP(*(.text32))
     }
 
+    /* global offsets */
+    . = ALIGN(4096);
+    section_got = .;
+    .got : {
+        *(.got)
+    }
+
     /* data */
     . = ALIGN(4096);
     section_data = .;
