@@ -17,6 +17,7 @@ SECTIONS
     }
     .bss : {
         *(.bss)
+        *(.bss.*)
     }
 
     . = ALIGN(4096);
