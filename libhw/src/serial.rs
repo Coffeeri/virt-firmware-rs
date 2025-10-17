@@ -59,7 +59,7 @@ impl Log for SerialWriter {
 
     fn log(&self, record: &Record) {
         let mut w = self;
-        let _ = write!(w, "{}: {}", record.level(), record.args());
+        let _ = writeln!(w, "{}: {}", record.level(), record.args());
     }
 
     fn flush(&self) {}
