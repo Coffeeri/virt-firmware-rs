@@ -27,6 +27,13 @@ start32:
         mov	%ax, %es
         mov	%ax, %ss
 
+        // copy 64-bit code + data to ram
+        mov     $copy_from, %esi
+        mov     $copy_start, %edi
+        mov     $copy_end, %ecx
+        sub     $copy_start, %ecx
+        rep     movsb
+
         // setup paging
         mov	$pg4, %eax
         mov	%eax, %cr3
@@ -50,7 +57,7 @@ start32:
         // enter long mode
         ljmpl	$0x18, $start64
 
-        .section .pgtable, "a"
+        .section .pgtable, "aw"
         .align  4096
 pg2:
         // level 2 page tables, using 2M pages

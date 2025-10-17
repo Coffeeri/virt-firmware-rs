@@ -11,44 +11,49 @@ SECTIONS
 {
     /* 64-bit code */
     .text : ALIGN(4096) {
+        copy_start = .;
         *(.text)
         *(.text.*)
-    } > flash
+    } > highram AT > flash
 
-    /* 32-bit code */
-    .text32 : ALIGN(4096) {
-        KEEP(*(.text32))
-    } > flash
+    copy_from = LOADADDR(.text);
+
+    /* exception handler stubs */
+    .stub : ALIGN(4096) {
+        KEEP(*(.stub))
+    } > highram AT > flash
+
+    /* r/o data */
+    .rodata : ALIGN(4096) {
+        *(.rodata)
+        *(.rodata.*)
+    } > highram AT > flash
 
     /* global offsets */
     .got : ALIGN(4096) {
         *(.got)
-    } > flash
+    } > highram AT > flash
+
+    /* page tables */
+    .pgtable : ALIGN(4096) {
+        KEEP(*(.pgtable))
+    } > highram AT > flash
 
     /* data */
     .data : ALIGN(4096) {
         *(.data)
         *(.data.*)
-    } > flash
+    } > highram AT > flash
 
     .bss : ALIGN(4096) {
         *(.bss)
         *(.bss.*)
-    } > flash
+        copy_end = .;
+    } > highram AT > flash
 
-    .rodata : ALIGN(4096) {
-        *(.rodata)
-        *(.rodata.*)
-    } > flash
-
-    /* page tables */
-    .pgtable : ALIGN(4096) {
-        KEEP(*(.pgtable))
-    } > flash
-
-    /* exception handler stubs */
-    .stub 0xffffe000 : {
-        KEEP(*(.stub))
+    /* 32-bit code */
+    .text32 : ALIGN(4096) {
+        KEEP(*(.text32))
     } > flash
 
     /* GDT */
