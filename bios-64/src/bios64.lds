@@ -1,4 +1,4 @@
-ROM_SIZE = 64k;
+ROM_SIZE = 128k;
 
 MEMORY
 {

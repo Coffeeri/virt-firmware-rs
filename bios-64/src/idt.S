@@ -1,7 +1,26 @@
         .code64
         .section .stub, "ax"
 
-stub_start:
+        .global stub_de
+        .global stub_br
+        .global stub_ud
+        .global stub_nm
+        .global stub_df
+        .global stub_ts
+        .global stub_np
+        .global stub_ss
+        .global stub_gp
+        .global stub_pf
+        .global stub_mf
+        .global stub_ac
+        .global stub_mc
+        .global stub_xm
+        .global stub_ve
+        .global stub_cp
+        .global stub_hv
+        .global stub_vc
+        .global stub_sx
+
 stub_de:
         pushq	$0      // dummy error code
         pushq	$0	// division error
