@@ -1,6 +1,6 @@
 use core::fmt::{Error, Result, Write};
 
-const BUFSIZE: usize = 80;
+const BUFSIZE: usize = 256;
 
 pub struct LineBuf {
     buf: [u8; BUFSIZE],

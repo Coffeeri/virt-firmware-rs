@@ -1,5 +1,7 @@
 # -*- Makefile -*-
 
+HOST_KERNEL := /boot/vmlinuz-$(shell uname -r)
+
 run-bios32-hello:
 	qemu-system-x86_64 -nographic -net none \
 		-bios bios-32/hello.bin
@@ -7,3 +9,9 @@ run-bios32-hello:
 run-bios64-hello:
 	qemu-system-x86_64 -nographic -net none \
 		-bios target/x86_64-unknown-none/debug/hello.bin
+
+run-bios64-mefisto:
+	qemu-system-x86_64 -nographic -net none \
+		-enable-kvm -no-reboot \
+		-bios target/x86_64-unknown-none/debug/mefisto.bin \
+		-kernel $(HOST_KERNEL)

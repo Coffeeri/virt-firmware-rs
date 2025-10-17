@@ -2,7 +2,6 @@
 #![no_std]
 #![no_main]
 
-use virtfw_bios_64::exception::exception_init;
 use virtfw_bios_64::println;
 use virtfw_bios_64::sercon::sercon_init;
 use virtfw_libhw::qemuacpi::QemuAcpi;
@@ -10,7 +9,6 @@ use virtfw_libhw::qemuacpi::QemuAcpi;
 #[no_mangle]
 fn main() {
     sercon_init();
-    exception_init();
 
     println!("");
     println!("Hello world!");

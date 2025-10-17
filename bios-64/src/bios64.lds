@@ -1,4 +1,4 @@
-ROM_SIZE = 128k;
+ROM_SIZE = 1M;
 
 MEMORY
 {
@@ -25,6 +25,7 @@ SECTIONS
 
     /* r/o data */
     .rodata : ALIGN(4096) {
+        data_start = .;
         *(.rodata)
         *(.rodata.*)
     } > highram AT > flash
@@ -48,8 +49,16 @@ SECTIONS
     .bss : ALIGN(4096) {
         *(.bss)
         *(.bss.*)
+        . = ALIGN(4096);
         copy_end = .;
     } > highram AT > flash
+
+    /* heap */
+    .heap (NOLOAD) : ALIGN(2M) {
+        heap_start = .;
+        . += 2M;
+        heap_end = .;
+    } > highram
 
     /* stack */
     .stack (NOLOAD) : ALIGN(2M) {
@@ -58,11 +67,17 @@ SECTIONS
         stack_end = .;
     } > highram
 
-    /* heap */
-    .heap (NOLOAD) : ALIGN(2M) {
-        heap_start = .;
-        . += 2M;
-        heap_end = .;
+    /* efi memory pools */
+    .pool.rt (NOLOAD) : ALIGN(2M) {
+        pool_rt_start = .;
+        *(.pool.rt)
+        pool_rt_end = .;
+    } > highram
+
+    .pool.bs (NOLOAD) : ALIGN(2M) {
+        pool_bs_start = .;
+        *(.pool.bs)
+        pool_bs_end = .;
     } > highram
 
     /* 32-bit code */
@@ -87,7 +102,8 @@ SECTIONS
 
     /* 16-bit cpu reset entry point */
     .entry16 0xfffffff0 : {
-        KEEP(*(.entry))
+        KEEP(*(.entry16))
+        flash_end = .;
     } > flash
 
     /* Discard unnecessary sections */

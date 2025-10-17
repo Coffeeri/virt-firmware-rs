@@ -17,7 +17,7 @@ PKGS	+= efi-apps
 endif
 
 # target specific variables
-doc-bios-64 build-bios-64 clippy-bios-64 clippy-fix-bios-64 release-bios-64 package-bios-64 : TARGET := --target $(ARCH)-unknown-none
+doc-bios-64 build-bios-64 clippy-bios-64 clippy-fix-bios-64 release-bios-64 package-bios-64 : TARGET := --target $(ARCH)-unknown-none --features efiloader
 doc-efi-apps build-efi-apps clippy-efi-apps clippy-fix-efi-apps release-efi-apps package-efi-apps : TARGET := --target $(ARCH)-unknown-uefi --features fdt
 doc-efi-tools build-efi-tools clippy-efi-tools clippy-fix-efi-tools release-efi-tools package-efi-tools : TARGET := --features udev
 doc-varstore build-varstore clippy-varstore clippy-fix-varstore release-varstore package-varstore : TARGET := --features std,json,pem
@@ -51,7 +51,7 @@ realclean: clean
 	rm -f Cargo.lock
 
 # cargo post-processing
-BIOS64	:= hello
+BIOS64	:= hello mefisto
 BIOSELF	:= $(patsubst %,target/x86_64-unknown-none/debug/%,$(BIOS64))
 BIOSBIN	:= $(patsubst %,target/x86_64-unknown-none/debug/%.bin,$(BIOS64))
 IGVM	:= $(patsubst %,target/x86_64-unknown-none/debug/%.16.igvm,$(BIOS64))
