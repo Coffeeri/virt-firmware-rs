@@ -12,6 +12,7 @@ fn main() -> ExitCode {
     }
 
     cc::Build::new().file("src/entry64.S").compile("entry64");
+    cc::Build::new().file("src/idt.S").compile("idt");
 
     println!("cargo::rustc-link-arg-bins=-no-pie");
     println!("cargo::rustc-link-arg-bins=-T{srcdir}/src/bios64.lds");

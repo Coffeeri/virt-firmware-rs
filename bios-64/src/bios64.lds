@@ -51,6 +51,20 @@ SECTIONS
     . = ALIGN(4096);
     section_end = .;
 
+    /* exception handler stubs */
+    . = 0xffffe000;
+    section_stub = .;
+    .stub : {
+        KEEP(*(.stub))
+    }
+
+    /* IDT */
+    . = 0xfffffc00;
+    section_idt = .;
+    .idt : {
+        KEEP(*(.idt))
+    }
+
     /* GDT */
     . = 0xffffff00;
     section_gdt = .;
