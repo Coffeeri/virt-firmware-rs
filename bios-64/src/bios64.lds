@@ -10,7 +10,7 @@ MEMORY
 SECTIONS
 {
     /* 64-bit code */
-    .text : ALIGN(4096) {
+    .text 2M : ALIGN(4096) {
         copy_start = .;
         *(.text)
         *(.text.*)
@@ -50,6 +50,20 @@ SECTIONS
         *(.bss.*)
         copy_end = .;
     } > highram AT > flash
+
+    /* stack */
+    .stack (NOLOAD) : ALIGN(2M) {
+        stack_start = .;
+        . += 2M;
+        stack_end = .;
+    } > highram
+
+    /* heap */
+    .heap (NOLOAD) : ALIGN(2M) {
+        heap_start = .;
+        . += 2M;
+        heap_end = .;
+    } > highram
 
     /* 32-bit code */
     .text32 : ALIGN(4096) {

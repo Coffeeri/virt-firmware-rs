@@ -2,8 +2,8 @@
         .section .text
 
 start64:
-        // setup stack @ 640k
-        mov	$0xa0000, %rsp
+        // setup stack
+        mov	$stack_end, %rsp
 
         // jump to C code
         call	main
