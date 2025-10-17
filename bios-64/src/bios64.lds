@@ -51,11 +51,6 @@ SECTIONS
         KEEP(*(.stub))
     } > flash
 
-    /* IDT */
-    .idt 0xfffffc00 : {
-        KEEP(*(.idt))
-    } > flash
-
     /* GDT */
     .gdt 0xffffff00 : {
         KEEP(*(.gdt))

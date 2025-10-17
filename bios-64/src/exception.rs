@@ -44,11 +44,6 @@ pub unsafe extern "C" fn exception_handler(regs: *mut StackFrame) {
     panic!("unhandled exception #{nr} at 0x{rip:x}")
 }
 
-extern "C" {
-    fn idt_load();
-}
-
 pub fn exception_init() {
-    unsafe { idt_load() }
-    println!("exception handlers installed");
+    println!("TODO: install exception handlers");
 }
