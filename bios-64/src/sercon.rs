@@ -1,5 +1,7 @@
 #![cfg(target_arch = "x86_64")]
 
+use log::info;
+
 use virtfw_libhw::serial::{SerialWriter, SERIAL0_BASE};
 
 pub static SERCON: SerialWriter = SerialWriter::new(SERIAL0_BASE);
@@ -16,5 +18,7 @@ macro_rules! println {
 
 pub fn sercon_init() {
     SERCON.init();
-    println!("serial console at 0x{:x}", SERCON.iobase);
+    log::set_logger(&SERCON).unwrap();
+    log::set_max_level(log::LevelFilter::Info);
+    info!("serial console at 0x{:x}", SERCON.iobase);
 }

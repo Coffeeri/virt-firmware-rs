@@ -1,7 +1,6 @@
+use log::info;
 use x86_64::structures::idt::InterruptDescriptorTable;
 use x86_64::VirtAddr;
-
-use crate::println;
 
 #[repr(C)]
 pub struct StackFrame {
@@ -115,5 +114,5 @@ pub fn exception_init() {
             .set_handler_addr(VirtAddr::new(stub_sx as usize as u64));
         IDT.load();
     }
-    println!("exception handlers installed");
+    info!("exception handlers installed");
 }
