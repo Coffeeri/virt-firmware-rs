@@ -58,15 +58,11 @@ start32:
         ljmpl	$0x18, $start64
 
         .section .pgtable, "aw"
-        .align  4096
-pg2:
-        // level 2 page tables, using 2M pages
-        .set    addr, 0
-        .rept   512 * 4
-        .long   addr + 0xe7 // present, rw, user, accessed, dirty, largepage
+        .align 4096
+pg4:
+        // level 4 page directory
+        .long   pg3 + 0x23 // present, rw, accessed
         .long   0
-        .set    addr, addr + (1 << 21)
-        .endr
 
         .align 4096
 pg3:
@@ -78,11 +74,15 @@ pg3:
         .set    pgt, pgt + (1 << 12)
         .endr
 
-        .align 4096
-pg4:
-        // level 4 page directory
-        .long   pg3 + 0x23 // present, rw, accessed
+        .align  4096
+pg2:
+        // level 2 page tables, using 2M pages
+        .set    addr, 0
+        .rept   512 * 4
+        .long   addr + 0xe7 // present, rw, user, accessed, dirty, largepage
         .long   0
+        .set    addr, addr + (1 << 21)
+        .endr
 
         .align 4096
 pge:
