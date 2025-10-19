@@ -1,5 +1,6 @@
-use log::info;
-use x86_64::structures::idt::InterruptDescriptorTable;
+use log::{error, info};
+use x86_64::registers::control::Cr2;
+use x86_64::structures::idt::{InterruptDescriptorTable, PageFaultErrorCode};
 use x86_64::VirtAddr;
 
 #[repr(C)]
@@ -35,6 +36,13 @@ pub struct StackFrame {
     pub ss: u64,
 }
 
+fn pagefault(ec: u64, rip: u64) {
+    let cr2 = Cr2::read_raw();
+    let pfec = PageFaultErrorCode::from_bits(ec).unwrap();
+    error!("page fault: rip=0x{rip:x} cr2=0x{cr2:x} code=0x{ec:x}");
+    error!("page fault: {pfec:?}");
+}
+
 /// # Safety
 ///
 /// This function is called from exception handler asm stubs which
@@ -42,7 +50,13 @@ pub struct StackFrame {
 #[no_mangle]
 pub unsafe extern "C" fn exception_handler(regs: *mut StackFrame) {
     let nr = unsafe { (*regs).exception_number };
+    let ec = unsafe { (*regs).error_code };
     let rip = unsafe { (*regs).rip };
+
+    if nr == 14 {
+        pagefault(ec, rip);
+    }
+
     panic!("unhandled exception #{nr} at 0x{rip:x}")
 }
 
