@@ -17,6 +17,12 @@ pub const ITEM_SIGNATURE: u16 = 0x00;
 pub const ITEM_VERSION: u16 = 0x01;
 pub const ITEM_FILEDIR: u16 = 0x19;
 
+//const DMA_CTL_ERROR: u32 = 0x01;
+const DMA_CTL_READ: u32 = 0x02;
+const DMA_CTL_SKIP: u32 = 0x04;
+const DMA_CTL_SELECT: u32 = 0x08;
+const DMA_CTL_WRITE: u32 = 0x10;
+
 #[cfg(feature = "alloc")]
 #[derive(Debug)]
 pub struct FwCfgFile {
@@ -147,8 +153,37 @@ pub trait FwCfg {
         list
     }
 
+    fn select_dma(&self, item: Option<u16>) -> u32 {
+        match item {
+            Some(i) => ((i as u32) << 16) | DMA_CTL_SELECT,
+            None => 0,
+        }
+    }
+
     fn write_dma<T>(&self, item: u16, ptr: *const T, bytecount: usize) {
-        let control = ((item as u32) << 16) | 0x18; // select + write
+        let control = self.select_dma(Some(item)) | DMA_CTL_WRITE;
+        let dmactrl = FwCfgDma {
+            control: u32::swap_bytes(control),
+            length: u32::swap_bytes(bytecount as u32),
+            address: u64::swap_bytes(ptr.addr() as u64),
+        };
+        let ptr = ptr::addr_of!(dmactrl);
+        self.trigger_dma(ptr.addr());
+    }
+
+    fn skip_dma(&self, item: Option<u16>, bytecount: usize) {
+        let control = self.select_dma(item) | DMA_CTL_SKIP;
+        let dmactrl = FwCfgDma {
+            control: u32::swap_bytes(control),
+            length: u32::swap_bytes(bytecount as u32),
+            address: 0,
+        };
+        let ptr = ptr::addr_of!(dmactrl);
+        self.trigger_dma(ptr.addr());
+    }
+
+    fn read_dma(&self, item: Option<u16>, ptr: *mut (), bytecount: usize) {
+        let control = self.select_dma(item) | DMA_CTL_READ;
         let dmactrl = FwCfgDma {
             control: u32::swap_bytes(control),
             length: u32::swap_bytes(bytecount as u32),
