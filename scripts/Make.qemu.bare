@@ -12,6 +12,6 @@ run-bios64-hello:
 
 run-bios64-mefisto:
 	qemu-system-x86_64 -nographic -net none \
-		-enable-kvm -no-reboot \
+		-enable-kvm -no-reboot -m 4G \
 		-bios target/x86_64-unknown-none/debug/mefisto.bin \
 		-kernel $(HOST_KERNEL)

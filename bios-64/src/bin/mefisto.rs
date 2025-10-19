@@ -12,6 +12,7 @@ use log::info;
 use efiloader::memmap::MemoryMap;
 use efiloader::memorytype::EfiMemoryType::*;
 use efiloader::memorytype::{EFI_MEMORY_RO, EFI_MEMORY_XP};
+use efiloader::MemoryMapper;
 
 use virtfw_bios_64::alloc::alloc_init;
 use virtfw_bios_64::efi::console::Console;
@@ -61,7 +62,7 @@ fn print_range(prefix: &str, range: &Range<usize>) {
     );
 }
 
-fn memory_detect(memmap: &MemoryMap, fwcfg: &FwCfgX86) {
+fn memory_detect(memmap: &MemoryMap, mapper: &mapper::MemoryMapper, fwcfg: &FwCfgX86) {
     // read e820 memory map
     let (item, size) = fwcfg.findfile("etc/e820").expect("find e820");
     info!("fwcfg: etc/e820 is item {item}, size {size}");
@@ -82,6 +83,9 @@ fn memory_detect(memmap: &MemoryMap, fwcfg: &FwCfgX86) {
             1 => {
                 print_range("e820/memory", &r);
                 memmap.declare_memory_region(&r).expect("add memory");
+                if r.start >= 4 * GIB {
+                    mapper.map_range(&r);
+                }
             }
             2 => {
                 print_range("e820/reserved", &r);
@@ -93,7 +97,7 @@ fn memory_detect(memmap: &MemoryMap, fwcfg: &FwCfgX86) {
     }
 }
 
-fn memory_init(memmap: &MemoryMap) {
+fn memory_init(memmap: &MemoryMap, mapper: &mapper::MemoryMapper) {
     let rom = symrange!(copy_from, flash_end);
     let code = symrange!(copy_start, data_start);
     let data = symrange!(data_start, copy_end);
@@ -120,27 +124,20 @@ fn memory_init(memmap: &MemoryMap) {
             .expect("add reserved");
     }
 
-    // reserve my own memory
-    memmap
-        .allocate_region(&code, EfiRuntimeServicesCode, EFI_MEMORY_RO)
-        .expect("add code");
-    memmap
-        .allocate_region(&data, EfiRuntimeServicesData, EFI_MEMORY_XP)
-        .expect("add data");
-    memmap
-        .allocate_region(&stack, EfiRuntimeServicesData, EFI_MEMORY_XP)
-        .expect("add stack");
-    memmap
-        .allocate_region(&heap, EfiRuntimeServicesData, EFI_MEMORY_XP)
-        .expect("add heap");
+    // reserve and remap my own memory
+    for (r, t, a) in [
+        (&code, EfiRuntimeServicesCode, EFI_MEMORY_RO),
+        (&data, EfiRuntimeServicesData, EFI_MEMORY_XP),
+        (&stack, EfiRuntimeServicesData, EFI_MEMORY_XP),
+        (&heap, EfiRuntimeServicesData, EFI_MEMORY_XP),
+        (&pool_rt, EfiRuntimeServicesData, EFI_MEMORY_XP),
+        (&pool_bs, EfiBootServicesData, EFI_MEMORY_XP),
+    ] {
+        memmap.allocate_region(r, t, a).expect("alloc region");
+        mapper.remap_range(r, a, 0).expect("remap region");
+    }
 
     // setup memory pools
-    memmap
-        .allocate_region(&pool_rt, EfiRuntimeServicesData, EFI_MEMORY_XP)
-        .expect("add rt pool");
-    memmap
-        .allocate_region(&pool_bs, EfiBootServicesData, EFI_MEMORY_XP)
-        .expect("add bs pool");
     unsafe {
         memmap
             .declare_pool(EfiRuntimeServicesData, &mut *addr_of_mut!(RT_POOL))
@@ -163,14 +160,14 @@ fn main() {
     let mapper = mapper::MemoryMapper::new();
     let memmap = MemoryMap::new();
 
-    memory_detect(&memmap, &fwcfg);
-    memory_init(&memmap);
+    memory_detect(&memmap, &mapper, &fwcfg);
+    memory_init(&memmap, &mapper);
 
     let rng = rng::Random::new();
     let efi = efiloader::init(Some(&CONSOLE), memmap, mapper, rng).expect("init efi runtime");
     info!("efi loader init complete");
 
-    let cmdline_str = "console=ttyS0 panic=1";
+    let cmdline_str = "console=ttyS0 panic=1 loglevel=6";
     let cmdline_efi = cmdline_str.encode_utf16().collect::<Vec<u16>>();
 
     if let Some(loader) = loader::FwCfgLoader::new(&fwcfg) {
