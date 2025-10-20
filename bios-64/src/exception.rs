@@ -58,7 +58,7 @@ pub unsafe extern "C" fn exception_handler(regs: *mut StackFrame) {
         pagefault(ec, rip);
     }
 
-    panic!("unhanded exception: {exception:?} (#{nr}) at rip=0x{rip:x}")
+    panic!("unhandled exception: {exception:?} (#{nr}) at rip=0x{rip:x}")
 }
 
 static mut IDT: InterruptDescriptorTable = InterruptDescriptorTable::new();
