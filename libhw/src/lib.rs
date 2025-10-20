@@ -6,4 +6,5 @@ pub mod mmio;
 pub mod pci;
 pub mod qemuacpi;
 pub mod serial;
+pub mod x86cpuid;
 pub mod x86msr;
