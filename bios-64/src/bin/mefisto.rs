@@ -2,8 +2,6 @@
 #![no_std]
 #![no_main]
 
-extern crate alloc;
-use alloc::vec::Vec;
 use core::mem::MaybeUninit;
 use core::ops::Range;
 use core::ptr::addr_of_mut;
@@ -167,13 +165,10 @@ fn main() {
     let efi = efiloader::init(Some(&CONSOLE), memmap, mapper, rng).expect("init efi runtime");
     info!("efi loader init complete");
 
-    let cmdline_str = "console=ttyS0 panic=1 loglevel=6";
-    let cmdline_efi = cmdline_str.encode_utf16().collect::<Vec<u16>>();
-
     if let Some(loader) = loader::FwCfgLoader::new(&fwcfg) {
         if let Some(mut li) = efi.load_image(&loader) {
             info!("starting image");
-            li.set_load_options(cmdline_efi);
+            li.set_load_options(loader.cmdline());
             let ret = li.start_image();
             info!("image exited, return code: {ret:?}");
         }
