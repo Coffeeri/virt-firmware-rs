@@ -52,6 +52,7 @@ start32:
 
         // enable paging
         mov	%cr0, %eax
+        bts	$16, %eax // WP
         bts	$31, %eax // PG
         mov	%eax, %cr0
 
