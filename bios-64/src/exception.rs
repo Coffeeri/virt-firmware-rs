@@ -1,6 +1,6 @@
 use log::{error, info};
 use x86_64::registers::control::Cr2;
-use x86_64::structures::idt::{InterruptDescriptorTable, PageFaultErrorCode};
+use x86_64::structures::idt::{ExceptionVector, InterruptDescriptorTable, PageFaultErrorCode};
 use x86_64::VirtAddr;
 
 #[repr(C)]
@@ -52,12 +52,13 @@ pub unsafe extern "C" fn exception_handler(regs: *mut StackFrame) {
     let nr = unsafe { (*regs).exception_number };
     let ec = unsafe { (*regs).error_code };
     let rip = unsafe { (*regs).rip };
+    let exception = ExceptionVector::try_from(nr as u8).unwrap();
 
-    if nr == 14 {
+    if exception == ExceptionVector::Page {
         pagefault(ec, rip);
     }
 
-    panic!("unhandled exception #{nr} at 0x{rip:x}")
+    panic!("unhanded exception: {exception:?} (#{nr}) at rip=0x{rip:x}")
 }
 
 static mut IDT: InterruptDescriptorTable = InterruptDescriptorTable::new();
