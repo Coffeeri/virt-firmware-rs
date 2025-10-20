@@ -46,7 +46,8 @@ start32:
         // enable long mode
         mov     $0xc0000080, %ecx
         rdmsr
-        bts     $8, %eax // LME
+        bts     $8, %eax  // LME
+        bts     $11, %eax // NXE
         wrmsr
 
         // enable paging
