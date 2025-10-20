@@ -1,4 +1,6 @@
 ROM_SIZE = 1M;
+HEAP_SIZE = 1M;
+STACK_SIZE = 1M;
 
 MEMORY
 {
@@ -56,25 +58,25 @@ SECTIONS
     /* heap */
     .heap (NOLOAD) : ALIGN(2M) {
         heap_start = .;
-        . += 2M;
+        . += HEAP_SIZE;
         heap_end = .;
     } > highram
 
     /* stack */
-    .stack (NOLOAD) : ALIGN(2M) {
+    .stack (NOLOAD) : ALIGN(4096) {
         stack_start = .;
-        . += 2M;
+        . += STACK_SIZE;
         stack_end = .;
     } > highram
 
     /* efi memory pools */
-    .pool.rt (NOLOAD) : ALIGN(2M) {
+    .pool.rt (NOLOAD) : ALIGN(4096) {
         pool_rt_start = .;
         *(.pool.rt)
         pool_rt_end = .;
     } > highram
 
-    .pool.bs (NOLOAD) : ALIGN(2M) {
+    .pool.bs (NOLOAD) : ALIGN(4096) {
         pool_bs_start = .;
         *(.pool.bs)
         pool_bs_end = .;
