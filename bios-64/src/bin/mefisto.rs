@@ -28,8 +28,8 @@ const KIB: usize = 1 << 10;
 const MIB: usize = 1 << 20;
 const GIB: usize = 1 << 30;
 
-const BS_POOL_SIZE: usize = 1 * MIB;
-const RT_POOL_SIZE: usize = 1 * MIB;
+const BS_POOL_SIZE: usize = MIB;
+const RT_POOL_SIZE: usize = MIB;
 
 static CONSOLE: Console = Console::new();
 
