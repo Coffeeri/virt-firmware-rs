@@ -12,3 +12,8 @@ to long mode, finally call into rust code.
 ### hello
 
 Print hello world to serial console, poweroff
+
+### mefisto
+
+Minimal efi environment for direct linux kernel boot, using
+[efiloader](https://github.com/ardbiesheuvel/efiloader).
