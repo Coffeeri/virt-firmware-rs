@@ -66,15 +66,9 @@ fn memory_detect(memmap: &MemoryMap, mapper: &mapper::MemoryMapper, fwcfg: &FwCf
     info!("fwcfg: etc/e820 is item {item}, size {size}");
     fwcfg.select(item);
     for _ in 0..size / 20 {
-        let mut base = fwcfg.read64_le() as usize;
-        let mut size = fwcfg.read64_le() as usize;
+        let base = fwcfg.read64_le() as usize;
+        let size = fwcfg.read64_le() as usize;
         let kind = fwcfg.read32_le();
-
-        if base < MIB {
-            // quirk: ignore real mode address space
-            base += MIB;
-            size -= MIB;
-        }
 
         let r = base..base + size;
         match kind {
@@ -107,6 +101,9 @@ fn memory_init(memmap: &MemoryMap, mapper: &mapper::MemoryMapper) {
     let pool_rt = addr_rt..addr_rt + RT_POOL_SIZE;
     let pool_bs = addr_bs..addr_bs + BS_POOL_SIZE;
 
+    // i386 platform range
+    let reserved = 640 * KIB..MIB;
+
     print_range("firmware/flash", &rom);
     print_range("firmware/code", &code);
     print_range("firmware/data", &data);
@@ -116,14 +113,7 @@ fn memory_init(memmap: &MemoryMap, mapper: &mapper::MemoryMapper) {
     print_range("memory/pool/rt", &pool_rt);
     print_range("memory/pool/bs", &pool_bs);
 
-    if false {
-        // reserve i386 platform range
-        let res = 640 * KIB..MIB;
-        print_range("i386/reserved", &res);
-        memmap
-            .allocate_region(&res, EfiUnusableMemory, 0)
-            .expect("add reserved");
-    }
+    print_range("i386/reserved", &reserved);
 
     // reserve and remap my own memory
     for (r, t, a) in [
@@ -133,6 +123,7 @@ fn memory_init(memmap: &MemoryMap, mapper: &mapper::MemoryMapper) {
         (&heap, EfiRuntimeServicesData, EFI_MEMORY_XP),
         (&pool_rt, EfiRuntimeServicesData, EFI_MEMORY_XP),
         (&pool_bs, EfiBootServicesData, EFI_MEMORY_XP),
+        (&reserved, EfiUnusableMemory, 0),
     ] {
         memmap.allocate_region(r, t, a).expect("alloc region");
         mapper.remap_range(r, a, 0).expect("remap region");
