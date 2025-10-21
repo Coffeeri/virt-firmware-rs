@@ -12,7 +12,7 @@ MEMORY
 SECTIONS
 {
     /* 64-bit code */
-    .text 2M : ALIGN(4096) {
+    .text 8M : ALIGN(4096) {
         copy_start = .;
         *(.text)
         *(.text.*)
