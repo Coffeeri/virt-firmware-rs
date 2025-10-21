@@ -71,15 +71,11 @@ SECTIONS
 
     /* efi memory pools */
     .pool.rt (NOLOAD) : ALIGN(4096) {
-        pool_rt_start = .;
         *(.pool.rt)
-        pool_rt_end = .;
     } > highram
 
     .pool.bs (NOLOAD) : ALIGN(4096) {
-        pool_bs_start = .;
         *(.pool.bs)
-        pool_bs_end = .;
     } > highram
 
     /* 32-bit code */

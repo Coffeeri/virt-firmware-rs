@@ -101,8 +101,11 @@ fn memory_init(memmap: &MemoryMap, mapper: &mapper::MemoryMapper) {
     let data = symrange!(data_start, copy_end);
     let stack = symrange!(stack_start, stack_end);
     let heap = symrange!(heap_start, heap_end);
-    let pool_rt = symrange!(pool_rt_start, pool_rt_end);
-    let pool_bs = symrange!(pool_bs_start, pool_bs_end);
+
+    let addr_rt = core::ptr::addr_of!(RT_POOL) as usize;
+    let addr_bs = core::ptr::addr_of!(BS_POOL) as usize;
+    let pool_rt = addr_rt..addr_rt + RT_POOL_SIZE;
+    let pool_bs = addr_bs..addr_bs + BS_POOL_SIZE;
 
     print_range("firmware/flash", &rom);
     print_range("firmware/code", &code);
