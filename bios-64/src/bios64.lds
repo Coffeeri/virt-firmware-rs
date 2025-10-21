@@ -70,11 +70,8 @@ SECTIONS
     } > highram
 
     /* efi memory pools */
-    .pool.rt (NOLOAD) : ALIGN(4096) {
+    .pools (NOLOAD) : ALIGN(4096) {
         *(.pool.rt)
-    } > highram
-
-    .pool.bs (NOLOAD) : ALIGN(4096) {
         *(.pool.bs)
     } > highram
 
