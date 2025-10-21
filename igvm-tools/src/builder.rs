@@ -103,7 +103,8 @@ impl Builder {
         compatibility_mask: u32,
         data_type: IgvmPageDataType,
     ) -> &mut Builder {
-        let pages = size / PAGE_SIZE_4K as usize;
+        let psize = PAGE_SIZE_4K as usize;
+        let pages = size.div_ceil(psize);
         for pg in 0..pages {
             let start = pg * PAGE_SIZE_4K as usize;
             let page = IgvmDirectiveHeader::PageData {
@@ -116,6 +117,15 @@ impl Builder {
             self.directives.push(page);
         }
         self
+    }
+
+    pub fn add_empty_normal_pages(&mut self, base: usize, size: usize) -> &mut Builder {
+        self.add_empty_pages(
+            base,
+            size,
+            self.compatibility_mask_all,
+            IgvmPageDataType::NORMAL,
+        )
     }
 
     pub fn add_ovmf_snp_pages(&mut self, ovmfmeta: &OvmfMeta) -> &mut Builder {
