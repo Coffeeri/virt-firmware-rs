@@ -10,7 +10,7 @@ run-bios64-hello:
 	qemu-system-x86_64 -nographic -net none \
 		-bios target/x86_64-unknown-none/debug/hello.bin
 
-run-bios64-mefisto:
+run-bios64-mefisto run-mefisto:
 	qemu-system-x86_64 -nographic -net none \
 		-enable-kvm -no-reboot -m 4G \
 		-bios target/x86_64-unknown-none/debug/mefisto.bin \
