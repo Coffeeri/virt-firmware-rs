@@ -22,7 +22,7 @@ use virtfw_bios_64::sercon::sercon_init;
 use virtfw_bios_64::{println, symrange};
 use virtfw_libhw::fwcfg::x86::FwCfgX86;
 use virtfw_libhw::fwcfg::FwCfg;
-use virtfw_libhw::qemuacpi::QemuAcpi;
+use virtfw_libhw::qemuboards::qemu_try_poweroff;
 
 const KIB: usize = 1 << 10;
 const MIB: usize = 1 << 20;
@@ -168,7 +168,5 @@ fn main() {
         }
     }
 
-    if let Some(acpi) = QemuAcpi::try_new() {
-        acpi.poweroff();
-    }
+    qemu_try_poweroff();
 }
