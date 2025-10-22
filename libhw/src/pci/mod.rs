@@ -115,7 +115,11 @@ pub struct PciAddrRange {
 
 impl fmt::Display for PciAddrRange {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}: {:x}-{:x}", self.name, self.base, self.limit)
+        if self.base > 0 {
+            write!(f, "{}: {:x}-{:x}", self.name, self.base, self.limit)
+        } else {
+            write!(f, "{}: <size=0x{:x}>", self.name, self.limit + 1)
+        }
     }
 }
 
@@ -421,11 +425,13 @@ pub trait PciHost {
         let limitreg = self.readw(&dev.addr, PCI_CFG_PREFMEM_LIMIT) as u64;
         let basereg_u32 = self.readl(&dev.addr, PCI_CFG_PREFMEM_BASE_U32) as u64;
         let limitreg_u32 = self.readl(&dev.addr, PCI_CFG_PREFMEM_LIMIT_U32) as u64;
-        if limitreg != 0 {
-            let mut base = (basereg & 0xfff0) << 16;
-            let mut limit = (limitreg & 0xfff0) << 16;
-            base |= basereg_u32 << 32;
-            limit |= limitreg_u32 << 32;
+
+        let mut base = (basereg & 0xfff0) << 16;
+        let mut limit = (limitreg & 0xfff0) << 16;
+        base |= basereg_u32 << 32;
+        limit |= limitreg_u32 << 32;
+
+        if limit != 0 {
             limit += 0xfffff;
             Some(PciAddrRange {
                 name: "prefmem64",

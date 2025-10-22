@@ -10,6 +10,14 @@ run-uefi-fwcfg:
 
 run-uefi-pciscan:
 	qemu-efi-$(ARCH) -nographic -net none \
+		-device pcie-root-port,id=port0,addr=8.0,chassis=0,multifunction=on \
+		-device pcie-root-port,id=port1,addr=8.1,chassis=1 \
+		-device pcie-root-port,id=port2,addr=8.2,chassis=2 \
+		-device pcie-root-port,id=port3,addr=8.3,chassis=3 \
+		-device pcie-root-port,id=port4,addr=8.4,chassis=4,io-reserve=1k \
+		-device pcie-root-port,id=port5,addr=8.5,chassis=5,mem-reserve=4M \
+		-device pcie-root-port,id=port6,addr=8.6,chassis=6,pref32-reserve=32M \
+		-device pcie-root-port,id=port7,addr=8.7,chassis=7,pref64-reserve=256M \
 		-kernel target/$(ARCH)-unknown-uefi/debug/pciscan.efi
 
 run-uefi-hoblist:
