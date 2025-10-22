@@ -17,11 +17,11 @@ fdt = [ "dep:fdt" ]
 log.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+uefi-raw.workspace = true
 zerocopy.workspace = true
 
-fdt = { version = "0.1", optional = true }
-uefi = { version = "0.35", features = ["panic_handler", "logger", "log-debugcon", "alloc", "global_allocator" ] }
-uefi-raw = "0.11"
+fdt = { workspace = true, optional = true }
+uefi = { workspace = true, features = ["panic_handler", "logger", "log-debugcon", "alloc", "global_allocator" ] }
 
 virtfw-libhw = { workspace = true, features = ["alloc"] }
 virtfw-libefi = { workspace = true }
