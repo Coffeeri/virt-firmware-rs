@@ -10,6 +10,21 @@ run-bios64-hello:
 	qemu-system-x86_64 -nographic -net none \
 		-bios target/x86_64-unknown-none/debug/hello.bin
 
+run-bios64-pci:
+	qemu-system-x86_64 -nographic -net none -M q35 \
+		-bios target/x86_64-unknown-none/debug/pci.bin \
+		\
+		-device pcie-root-port,id=port0,addr=8.0,chassis=0,multifunction=on \
+		-device pcie-root-port,id=port1,addr=8.1,chassis=1 \
+		-device pcie-root-port,id=port2,addr=8.2,chassis=2 \
+		-device pcie-root-port,id=port3,addr=8.3,chassis=3 \
+		\
+		-device pcie-pci-bridge,bus=port0,id=pci0 \
+		-device virtio-scsi-pci,bus=port2 \
+		-device qemu-xhci,bus=port3 \
+		\
+		-device pci-serial,bus=pci0
+
 run-bios64-mefisto run-mefisto:
 	qemu-system-x86_64 -nographic -net none \
 		-enable-kvm -no-reboot -m 4G \
