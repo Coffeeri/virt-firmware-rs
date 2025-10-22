@@ -1,46 +1,70 @@
 extern crate alloc;
+use alloc::boxed::Box;
 use alloc::vec::Vec;
 use core::mem::MaybeUninit;
 use log::{debug, info, trace};
 
 use virtfw_libhw::fwcfg::x86::FwCfgX86;
-use virtfw_libhw::fwcfg::{FwCfg, ITEM_CMDLINE_DATA, ITEM_CMDLINE_SIZE};
+use virtfw_libhw::fwcfg::{
+    FwCfg, ITEM_CMDLINE_DATA, ITEM_CMDLINE_SIZE, ITEM_INITRD_DATA, ITEM_INITRD_SIZE,
+};
 
 pub struct FwCfgLoader<'f> {
     fwcfg: &'f FwCfgX86,
     kernel_size: u32,
     kernel_item: u16,
+    initrd_size: u32,
     cmdline_size: u32,
 }
 
 impl<'f> FwCfgLoader<'f> {
-    pub fn new(fwcfg: &'f FwCfgX86) -> Option<Self> {
-        let Some((item, size)) = fwcfg.findfile("etc/boot/kernel") else {
-            info!("fwcfg: etc/boot/kernel not found");
-            return None;
-        };
-        info!("fwcfg: etc/boot/kernel is item {item}, size {size}");
+    pub fn new(fwcfg: &'f FwCfgX86) -> &'f Self {
+        let (kernel_item, kernel_size) = fwcfg.findfile("etc/boot/kernel").unwrap_or((0, 0));
+        if kernel_size != 0 {
+            info!("fwcfg: etc/boot/kernel is item {kernel_item}, size {kernel_size} bytes");
+        }
+
+        fwcfg.select(ITEM_INITRD_SIZE);
+        let initrd_size = fwcfg.read32_le();
+        if initrd_size != 0 {
+            info!("fwcfg: initrd size {initrd_size} bytes");
+        }
 
         fwcfg.select(ITEM_CMDLINE_SIZE);
         let cmdline_size = fwcfg.read32_le();
-        info!("fwcfg: cmdline size {cmdline_size} bytes");
+        if cmdline_size != 0 {
+            info!("fwcfg: cmdline size {cmdline_size} bytes");
+        }
 
-        Some(Self {
+        Box::leak(Box::new(Self {
             fwcfg,
-            kernel_item: item,
-            kernel_size: size,
+            kernel_item,
+            kernel_size,
+            initrd_size,
             cmdline_size,
-        })
+        }))
     }
 
-    fn load_dma(&self, loadbuffer: *mut (), offset: usize, size: usize) {
-        if offset > 0 {
-            self.fwcfg.skip_dma(Some(self.kernel_item), offset);
-            self.fwcfg.read_dma(None, loadbuffer, size);
-        } else {
-            self.fwcfg
-                .read_dma(Some(self.kernel_item), loadbuffer, size);
+    pub fn kernel_loader(&self) -> Option<&FwCfgFileLoader<'_>> {
+        if self.kernel_size == 0 {
+            return None;
         }
+        Some(FwCfgFileLoader::new(
+            self.fwcfg,
+            self.kernel_size,
+            self.kernel_item,
+        ))
+    }
+
+    pub fn initrd_loader(&self) -> Option<&FwCfgFileLoader<'_>> {
+        if self.initrd_size == 0 {
+            return None;
+        }
+        Some(FwCfgFileLoader::new(
+            self.fwcfg,
+            self.initrd_size,
+            ITEM_INITRD_DATA,
+        ))
     }
 
     pub fn cmdline(&self) -> Vec<u16> {
@@ -57,22 +81,43 @@ impl<'f> FwCfgLoader<'f> {
     }
 }
 
-impl efiloader::FileLoader for FwCfgLoader<'_> {
-    fn get_size(&self) -> usize {
-        self.kernel_size as usize
+pub struct FwCfgFileLoader<'fl> {
+    fwcfg: &'fl FwCfgX86,
+    size: u32,
+    item: u16,
+}
+
+impl<'fl> FwCfgFileLoader<'fl> {
+    pub fn new(fwcfg: &'fl FwCfgX86, size: u32, item: u16) -> &'fl Self {
+        Box::leak(Box::new(Self { fwcfg, size, item }))
     }
 
-    fn load_file<'a>(&self, loadbuffer: &'a mut [MaybeUninit<u8>]) -> Result<&'a [u8], &str> {
+    fn load_dma(&self, loadbuffer: *mut (), offset: usize, size: usize) {
+        if offset > 0 {
+            self.fwcfg.skip_dma(Some(self.item), offset);
+            self.fwcfg.read_dma(None, loadbuffer, size);
+        } else {
+            self.fwcfg.read_dma(Some(self.item), loadbuffer, size);
+        }
+    }
+}
+
+impl efiloader::FileLoader for &FwCfgFileLoader<'_> {
+    fn get_size(&self) -> usize {
+        self.size as usize
+    }
+
+    fn load_file<'fl>(&self, loadbuffer: &'fl mut [MaybeUninit<u8>]) -> Result<&'fl [u8], &str> {
         debug!("load file");
         let ptr = loadbuffer.as_mut_ptr() as *mut ();
-        self.load_dma(ptr, 0, self.kernel_size as usize);
+        self.load_dma(ptr, 0, self.size as usize);
         let ret = unsafe {
             core::slice::from_raw_parts(loadbuffer.as_ptr() as *const _, loadbuffer.len())
         };
         Ok(ret)
     }
 
-    unsafe fn load_range<'a>(
+    unsafe fn load_range<'fl>(
         &self,
         loadbuffer: *mut (),
         offset: usize,

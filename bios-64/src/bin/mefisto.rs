@@ -32,6 +32,7 @@ const BS_POOL_SIZE: usize = MIB;
 const RT_POOL_SIZE: usize = MIB;
 
 static CONSOLE: Console = Console::new();
+static FWCFG: FwCfgX86 = FwCfgX86::new();
 
 #[link_section = ".pool.rt"]
 static mut RT_POOL: [MaybeUninit<u8>; RT_POOL_SIZE] = [MaybeUninit::uninit(); RT_POOL_SIZE];
@@ -151,21 +152,30 @@ fn main() {
     exception_init();
     alloc_init();
 
-    let fwcfg = FwCfgX86::new();
     let mapper = mapper::MemoryMapper::new();
     let memmap = MemoryMap::new();
 
-    memory_detect(&memmap, &mapper, &fwcfg);
+    memory_detect(&memmap, &mapper, &FWCFG);
     memory_init(&memmap, &mapper);
 
     let rng = rng::Random::new();
     let efi = efiloader::init(Some(&CONSOLE), memmap, mapper, rng).expect("init efi runtime");
     info!("efi loader init complete");
 
-    if let Some(loader) = loader::FwCfgLoader::new(&fwcfg) {
-        if let Some(mut li) = efi.load_image(&loader) {
-            info!("starting image");
-            li.set_load_options(loader.cmdline());
+    let loader = loader::FwCfgLoader::new(&FWCFG);
+    let kload = loader.kernel_loader();
+    let iload = loader.initrd_loader();
+    let cmdline = loader.cmdline();
+
+    if let Some(i) = iload {
+        info!("setup initrd loader");
+        efi.set_initrd_loader(i);
+    }
+    if let Some(k) = kload {
+        info!("loading kernel image");
+        if let Some(mut li) = efi.load_image(&k) {
+            li.set_load_options(cmdline);
+            info!("starting kernel image");
             let ret = li.start_image();
             info!("image exited, return code: {ret:?}");
         }

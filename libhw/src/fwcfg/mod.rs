@@ -15,6 +15,8 @@ use core::ptr;
 
 pub const ITEM_SIGNATURE: u16 = 0x00;
 pub const ITEM_VERSION: u16 = 0x01;
+pub const ITEM_INITRD_SIZE: u16 = 0xb;
+pub const ITEM_INITRD_DATA: u16 = 0x12;
 pub const ITEM_CMDLINE_SIZE: u16 = 0x14;
 pub const ITEM_CMDLINE_DATA: u16 = 0x15;
 pub const ITEM_FILEDIR: u16 = 0x19;
