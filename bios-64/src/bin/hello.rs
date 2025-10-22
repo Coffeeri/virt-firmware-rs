@@ -4,7 +4,7 @@
 
 use virtfw_bios_64::println;
 use virtfw_bios_64::sercon::sercon_init;
-use virtfw_libhw::qemuacpi::QemuAcpi;
+use virtfw_libhw::qemuboards::qemu_try_poweroff;
 
 #[no_mangle]
 fn main() {
@@ -14,7 +14,5 @@ fn main() {
     println!("Hello world!");
     println!("");
 
-    if let Some(acpi) = QemuAcpi::try_new() {
-        acpi.poweroff();
-    }
+    qemu_try_poweroff();
 }
