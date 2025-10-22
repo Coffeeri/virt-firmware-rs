@@ -14,6 +14,7 @@ extern crate alloc;
 use alloc::format;
 use alloc::string::String;
 use alloc::vec::Vec;
+use core::time::Duration;
 
 use uefi::prelude::*;
 use uefi::println;
@@ -45,7 +46,7 @@ fn init_nic_ip4config2() -> Option<Handle> {
             continue;
         }
 
-        let res = ip4.unwrap().ifup(true);
+        let res = ip4.unwrap().ifup();
         if let Err(e) = res {
             println!("Error: ip4config ifup: {}", e);
             continue;
@@ -187,13 +188,13 @@ fn main() -> Status {
     if runtime::variable_exists(&bootnext, &VariableVendor::GLOBAL_VARIABLE).unwrap() {
         // we land here after reset when loaded via 'qemu -kernel netboot.efi'
         println!("netboot: BootNext exists, nothing to do.");
-        boot::stall(1_000_000);
+        boot::stall(Duration::new(1, 0));
         return Status::SUCCESS;
     };
 
     let Some(cmdline) = misc::cmdline("netboot") else {
         println!("usage: netboot.efi $url");
-        boot::stall(1_000_000);
+        boot::stall(Duration::new(1, 0));
         return Status::SUCCESS;
     };
 
@@ -203,7 +204,7 @@ fn main() -> Status {
             let iso = coreos("stable");
             if iso.is_none() {
                 println!("failed to find latest coreos iso");
-                boot::stall(3_000_000);
+                boot::stall(Duration::new(3, 0));
                 return Status::SUCCESS;
             }
             &iso.unwrap()
@@ -252,6 +253,6 @@ fn main() -> Status {
 
     println!("");
     println!("Ready, rebooting in 3 sec.");
-    boot::stall(3_000_000);
+    boot::stall(Duration::new(3, 0));
     runtime::reset(runtime::ResetType::COLD, Status::SUCCESS, None);
 }

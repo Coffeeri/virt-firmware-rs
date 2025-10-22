@@ -2,6 +2,7 @@
 
 extern crate alloc;
 use alloc::vec::Vec;
+use core::time::Duration;
 
 use log::debug;
 use uefi::guid;
@@ -38,7 +39,7 @@ pub fn shutdown_if_direct_kernel_load(wait: bool) {
     if is_direct_kernel_load() {
         if wait {
             debug!("qemu direct kernel boot detected -> wait & poweroff");
-            boot::stall(3_000_000);
+            boot::stall(Duration::new(3, 0));
         } else {
             debug!("qemu direct kernel boot detected -> poweroff");
         }
