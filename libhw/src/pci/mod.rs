@@ -388,6 +388,10 @@ pub trait PciHost {
         self.readb(&dev.addr, PCI_CFG_SECONDARY_BUS)
     }
 
+    fn bridge_subordinate(&self, dev: &PciDevice) -> u8 {
+        self.readb(&dev.addr, PCI_CFG_SUBORDINATE_BUS)
+    }
+
     fn bridge_io(&self, dev: &PciDevice) -> Option<PciAddrRange> {
         let basereg = self.readb(&dev.addr, PCI_CFG_IO_BASE) as u64;
         let limitreg = self.readb(&dev.addr, PCI_CFG_IO_LIMIT) as u64;
@@ -441,5 +445,17 @@ pub trait PciHost {
         } else {
             None
         }
+    }
+
+    fn set_bridge_primary(&self, dev: &PciDevice, nr: u8) {
+        self.writeb(&dev.addr, PCI_CFG_PRIMARY_BUS, nr)
+    }
+
+    fn set_bridge_secondary(&self, dev: &PciDevice, nr: u8) {
+        self.writeb(&dev.addr, PCI_CFG_SECONDARY_BUS, nr)
+    }
+
+    fn set_bridge_subordinate(&self, dev: &PciDevice, nr: u8) {
+        self.writeb(&dev.addr, PCI_CFG_SUBORDINATE_BUS, nr)
     }
 }
