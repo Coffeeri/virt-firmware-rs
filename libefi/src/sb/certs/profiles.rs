@@ -5,7 +5,6 @@ use clap::{builder::PossibleValue, ValueEnum};
 
 use crate::efivar::sigdb::EfiSigDB;
 use crate::guids::MicrosoftVendor;
-#[cfg(feature = "sbtest")]
 use crate::guids::OvmfEnrollDefaultKeys;
 use crate::sb::certs::*;
 
@@ -21,6 +20,8 @@ pub enum SecureBootProfile {
     Uefi11,
     Uefi23,
     UefiRom23,
+    RedHat,
+    RedHatRom,
     All,
 
     // Enroll all certs, including the rh test cert which is used to
@@ -58,6 +59,14 @@ impl SecureBootProfile {
             SecureBootProfile::UefiRom23 => {
                 sigdb.add_x509_from_der(&MicrosoftVendor, MICROSOFT_DB_UEFI_2023);
                 sigdb.add_x509_from_der(&MicrosoftVendor, MICROSOFT_DB_UEFI_ROM_2023);
+            }
+
+            SecureBootProfile::RedHat => {
+                sigdb.add_x509_from_der(&OvmfEnrollDefaultKeys, REDHAT_DB_UEFI_2024);
+            }
+            SecureBootProfile::RedHatRom => {
+                sigdb.add_x509_from_der(&MicrosoftVendor, MICROSOFT_DB_UEFI_ROM_2023);
+                sigdb.add_x509_from_der(&OvmfEnrollDefaultKeys, REDHAT_DB_UEFI_2024);
             }
 
             SecureBootProfile::All => {
@@ -102,31 +111,36 @@ impl ValueEnum for SecureBootProfile {
     }
 
     fn to_possible_value(&self) -> Option<PossibleValue> {
-        let pv = match self {
-            SecureBootProfile::None => PossibleValue::new("none").help("no certificates"),
-            SecureBootProfile::Win11 => {
-                PossibleValue::new("win11").help("Windows CA certificates, 2011 + 2023")
-            }
-            SecureBootProfile::Win23 => {
-                PossibleValue::new("win23").help("Windows CA certificate, 2023 only")
-            }
-            SecureBootProfile::WinRom23 => PossibleValue::new("win+rom23")
-                .help("Windows CA + Option ROM certificates, 2023 only"),
-            SecureBootProfile::Uefi11 => {
-                PossibleValue::new("uefi11").help("UEFI CA certificates, 2011 + 2023")
-            }
-            SecureBootProfile::Uefi23 => {
-                PossibleValue::new("uefi23").help("UEFI CA certificate, 2023")
-            }
-            SecureBootProfile::UefiRom23 => {
-                PossibleValue::new("uefi+rom23").help("UEFI CA + Option ROM certificates, 2023")
-            }
-            SecureBootProfile::All => {
-                PossibleValue::new("all").help("Both Windows and UEFI CA certificates, 2011 + 2023")
-            }
-            #[cfg(feature = "sbtest")]
-            SecureBootProfile::RedHatTest => PossibleValue::new("rh-test"),
-        };
+        let pv =
+            match self {
+                SecureBootProfile::None => PossibleValue::new("none").help("no certificates"),
+                SecureBootProfile::Win11 => {
+                    PossibleValue::new("win11").help("Windows CA certificates, 2011 + 2023")
+                }
+                SecureBootProfile::Win23 => {
+                    PossibleValue::new("win23").help("Windows CA certificate, 2023 only")
+                }
+                SecureBootProfile::WinRom23 => PossibleValue::new("win+rom23")
+                    .help("Windows CA + Option ROM certificates, 2023 only"),
+                SecureBootProfile::Uefi11 => {
+                    PossibleValue::new("uefi11").help("UEFI CA certificates, 2011 + 2023")
+                }
+                SecureBootProfile::Uefi23 => {
+                    PossibleValue::new("uefi23").help("UEFI CA certificate, 2023")
+                }
+                SecureBootProfile::UefiRom23 => {
+                    PossibleValue::new("uefi+rom23").help("UEFI CA + Option ROM certificates, 2023")
+                }
+                SecureBootProfile::RedHat => {
+                    PossibleValue::new("redhat").help("Red Hat UEFI CA certificate")
+                }
+                SecureBootProfile::RedHatRom => PossibleValue::new("redhat+rom")
+                    .help("Red Hat UEFI CA + Option ROM certificates"),
+                SecureBootProfile::All => PossibleValue::new("all")
+                    .help("Both Windows and UEFI CA certificates, 2011 + 2023"),
+                #[cfg(feature = "sbtest")]
+                SecureBootProfile::RedHatTest => PossibleValue::new("rh-test"),
+            };
         Some(pv)
     }
 }
