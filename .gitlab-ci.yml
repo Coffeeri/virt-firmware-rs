@@ -23,6 +23,7 @@ compile:
     paths:
       - bios-32/*.bin
       - target/x86_64-unknown-none/debug/*.bin
+      - target/x86_64-unknown-none/debug/*.igvm
       - target/x86_64-unknown-uefi/debug/*.efi
       - target/doc
       - target/x86_64-unknown-none/doc
