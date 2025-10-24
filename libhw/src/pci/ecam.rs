@@ -19,7 +19,7 @@ pub struct PciOffset {
 }
 
 pub struct PciHostEcam {
-    ecam: u64,
+    pub ecam: u64,
 }
 
 impl PciHostEcam {
