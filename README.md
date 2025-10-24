@@ -28,3 +28,15 @@ Related python project: https://gitlab.com/kraxel/virt-firmware
 ### compiling the project
 
 Just use `make`.
+
+### contributing
+
+I take MRs.
+
+There is an AI review bot active on the repo which will comment on
+MRs.  It is good at spell checking.  Sometimes it offers useful
+suggestions or catches inconsistencies in the patches.  Sometimes it
+asks for stupid stuff like careful error checking in test cases.
+Sometimes it suggests to check for error conditions which can not
+happen, but the bot is apparently not clever enough to see that.  So,
+don't take it too serious.
