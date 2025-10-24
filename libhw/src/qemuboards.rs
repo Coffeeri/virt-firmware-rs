@@ -1,4 +1,5 @@
 #![cfg(target_arch = "x86_64")]
+use core::ops::Range;
 use log::debug;
 
 use crate::ioport::outw;
@@ -25,6 +26,23 @@ impl QemuBoard {
         match self {
             QemuBoard::I440fx(board) => &board.pcihost,
             QemuBoard::Q35(board) => &board.pciehost,
+        }
+    }
+
+    pub fn name(&self) -> &'static str {
+        match self {
+            QemuBoard::I440fx(_) => "qemu pc machine",
+            QemuBoard::Q35(_) => "qemu q35 machine",
+        }
+    }
+
+    pub fn ecam(&self) -> Option<Range<usize>> {
+        match self {
+            QemuBoard::I440fx(_) => None,
+            QemuBoard::Q35(b) => {
+                let base = b.pciehost.ecam as usize;
+                Some(base..base + 0x1000_0000)
+            }
         }
     }
 
