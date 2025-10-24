@@ -80,7 +80,15 @@ fn scan_pci_bus_x86(pager: &mut Pager) -> bool {
         return false;
     };
 
-    println!("scan x86 pci bus");
+    println!("detected {}", board.name());
+    pager.lines(1);
+    if let Some(addr) = board.ecam() {
+        println!("pcie ecam at 0x{:x}", addr.start);
+        pager.lines(1);
+    }
+
+    println!("scanning pci bus");
+    pager.lines(1);
     let pcihost = board.pcihost();
     scan_one_pci_bus(pager, pcihost, 0, 2);
     true
