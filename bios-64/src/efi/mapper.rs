@@ -1,7 +1,7 @@
 extern crate alloc;
 use alloc::alloc::{alloc_zeroed, Layout};
 use core::ops::Range;
-use log::{debug, error, trace, warn};
+use log::{error, trace, warn};
 use x86_64::instructions::tlb;
 use x86_64::registers::control::Cr3;
 use x86_64::structures::paging::frame::PhysFrame;
@@ -108,7 +108,7 @@ impl MemoryMapper {
             &mut *(page as *mut PageTable)
         };
         let taddr = PhysAddr::new(table as *const _ as u64);
-        debug!("pgtable: new at {taddr:?} for {start:?}");
+        trace!("pgtable: new at {taddr:?} for {start:?}");
 
         for (i, e) in table.iter_mut().enumerate() {
             let addr = start + step * i as u64;
@@ -133,9 +133,10 @@ impl MemoryMapper {
         set: PageTableFlags,
         clr: PageTableFlags,
     ) -> Result<(), &str> {
-        debug!(
+        trace!(
             "update: range=0x{:x}-0x{:x} set={set:?} clr={clr:?}",
-            range.start, range.end
+            range.start,
+            range.end
         );
         let mut addr = range.start as u64;
         loop {
@@ -195,10 +196,10 @@ impl MemoryMapper {
             } else {
                 let phys = PhysAddr::new(virt.as_u64());
                 if self.have_1g {
-                    debug!("mapping {phys:?} [1G entry]");
+                    trace!("mapping {phys:?} [1G entry]");
                     e3.set_addr(phys, HUGE_PAGE_FLAGS);
                 } else {
-                    debug!("mapping {phys:?} [pgtable with 2M entries]");
+                    trace!("mapping {phys:?} [pgtable with 2M entries]");
                     self.fill_pgtable(e3, HUGE_PAGE_FLAGS, phys, PGSIZE_2M);
                 }
             }
@@ -253,7 +254,7 @@ impl efiloader::MemoryMapper for MemoryMapper {
     }
 
     fn query_range(&self, range: &Range<usize>) -> Option<u64> {
-        debug!("query: range=0x{:x}-0x{:x} [TODO]", range.start, range.end);
+        warn!("query: range=0x{:x}-0x{:x} [TODO]", range.start, range.end);
         None
     }
 }
