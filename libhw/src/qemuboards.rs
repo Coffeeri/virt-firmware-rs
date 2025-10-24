@@ -2,7 +2,7 @@
 use core::ops::Range;
 use log::debug;
 
-use crate::ioport::outw;
+use crate::ioport::{outb, outw};
 use crate::pci::ecam::PciHostEcam;
 use crate::pci::x86::PciHostX86;
 use crate::pci::{PciDevice, PciHost};
@@ -48,6 +48,10 @@ impl QemuBoard {
 
     pub fn poweroff(&self) {
         outw(PM_BASE + 4, 0x2000);
+    }
+
+    pub fn reset(&self) {
+        outb(0xCF9, 0x0f);
     }
 }
 
