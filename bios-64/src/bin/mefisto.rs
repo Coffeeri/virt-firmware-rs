@@ -19,14 +19,11 @@ use virtfw_bios_64::efi::mapper;
 use virtfw_bios_64::efi::rng;
 use virtfw_bios_64::exception::exception_init;
 use virtfw_bios_64::sercon::sercon_init;
+use virtfw_bios_64::size::*;
 use virtfw_bios_64::{println, symrange};
 use virtfw_libhw::fwcfg::x86::FwCfgX86;
 use virtfw_libhw::fwcfg::FwCfg;
 use virtfw_libhw::qemuboards::qemu_try_poweroff;
-
-const KIB: usize = 1 << 10;
-const MIB: usize = 1 << 20;
-const GIB: usize = 1 << 30;
 
 const BS_POOL_SIZE: usize = MIB;
 const RT_POOL_SIZE: usize = MIB;
@@ -40,21 +37,8 @@ static mut RT_POOL: [MaybeUninit<u8>; RT_POOL_SIZE] = [MaybeUninit::uninit(); RT
 #[link_section = ".pool.bs"]
 static mut BS_POOL: [MaybeUninit<u8>; BS_POOL_SIZE] = [MaybeUninit::uninit(); BS_POOL_SIZE];
 
-fn pretty_size(range: &Range<usize>) -> (usize, &'static str) {
-    let size = range.end - range.start;
-    if size > 10 * GIB {
-        (size / GIB, "G")
-    } else if size > 10 * MIB {
-        (size / MIB, "M")
-    } else if size > 10 * KIB {
-        (size / KIB, "k")
-    } else {
-        (size, "")
-    }
-}
-
 fn print_range(prefix: &str, range: &Range<usize>) {
-    let (value, unit) = pretty_size(range);
+    let (value, unit) = pretty_range(range);
     println!(
         "  {prefix:16} :  0x{:08x} - 0x{:08x}  [{value}{unit}]",
         range.start, range.end,
