@@ -27,7 +27,7 @@ run-pci-bios64:
 
 run-mefisto-bios64:
 	qemu-system-x86_64 -nographic -net none \
-		-enable-kvm -no-reboot -m 4G \
+		-enable-kvm -no-reboot -M q35 -m 4G -cpu host \
 		-bios target/x86_64-unknown-none/debug/mefisto.bin \
 		-kernel $(HOST_KERNEL) \
 		-append "console=ttyS0 panic=1 loglevel=6"
