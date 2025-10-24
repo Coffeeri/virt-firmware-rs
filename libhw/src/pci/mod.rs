@@ -107,18 +107,42 @@ impl fmt::Display for PciBridgeCtrl {
 }
 
 #[derive(Debug)]
+pub enum PciAddrKind {
+    Io,
+    Mem32,
+    Mem64,
+}
+
+#[derive(Debug)]
 pub struct PciAddrRange {
-    pub name: &'static str,
+    pub kind: PciAddrKind,
+    pub prefetchable: bool,
     pub base: u64,
-    pub limit: u64,
+    pub size: u64,
+}
+
+impl PciAddrRange {
+    pub fn name(&self) -> &'static str {
+        match (&self.kind, &self.prefetchable) {
+            (PciAddrKind::Io, _) => "io",
+            (PciAddrKind::Mem32, false) => "mem32",
+            (PciAddrKind::Mem32, true) => "prefmem32",
+            (PciAddrKind::Mem64, false) => "mem64",
+            (PciAddrKind::Mem64, true) => "prefmem64",
+        }
+    }
+
+    pub fn limit(&self) -> u64 {
+        self.base + self.size - 1
+    }
 }
 
 impl fmt::Display for PciAddrRange {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.base > 0 {
-            write!(f, "{}: {:x}-{:x}", self.name, self.base, self.limit)
+            write!(f, "{}: {:x}-{:x}", self.name(), self.base, self.limit())
         } else {
-            write!(f, "{}: <size=0x{:x}>", self.name, self.limit + 1)
+            write!(f, "{}: <size=0x{:x}>", self.name(), self.size)
         }
     }
 }
@@ -326,24 +350,26 @@ pub trait PciHost {
             size &= !0x03;
             size = !size & 0xffffffff;
             Some(PciAddrRange {
-                name: "io",
+                kind: PciAddrKind::Io,
+                prefetchable: false,
                 base,
-                limit: base + size,
+                size: size + 1,
             })
         } else if (base & 6) == 0 {
             // 32 bit mem
-            let prefmem = (base & 0x08) != 0;
+            let prefetchable = (base & 0x08) != 0;
             base &= !0x0f;
             size &= !0x0f;
             size = !size & 0xffffffff;
             Some(PciAddrRange {
-                name: if prefmem { "prefmem32" } else { "mem32" },
+                kind: PciAddrKind::Mem32,
+                prefetchable,
                 base,
-                limit: base + size,
+                size: size + 1,
             })
         } else if (base & 6) == 4 {
             // 64 bit mem
-            let prefmem = (base & 0x08) != 0;
+            let prefetchable = (base & 0x08) != 0;
             base &= !0x0f;
             size &= !0x0f;
 
@@ -357,16 +383,13 @@ pub trait PciHost {
             size = !size;
 
             Some(PciAddrRange {
-                name: if prefmem { "prefmem64" } else { "mem64" },
+                kind: PciAddrKind::Mem64,
+                prefetchable,
                 base,
-                limit: base + size,
+                size: size + 1,
             })
         } else {
-            Some(PciAddrRange {
-                name: "FIXME",
-                base,
-                limit: 0,
-            })
+            None
         }
     }
 
@@ -399,9 +422,10 @@ pub trait PciHost {
             let base = (basereg & 0xf0) << 8;
             let limit = ((limitreg & 0xf0) << 8) + 0xfff;
             Some(PciAddrRange {
-                name: "io",
+                kind: PciAddrKind::Io,
+                prefetchable: false,
                 base,
-                limit,
+                size: limit - base + 1,
             })
         } else {
             None
@@ -415,9 +439,10 @@ pub trait PciHost {
             let base = (basereg & 0xfff0) << 16;
             let limit = ((limitreg & 0xfff0) << 16) + 0xfffff;
             Some(PciAddrRange {
-                name: "mem",
+                kind: PciAddrKind::Mem32,
+                prefetchable: false,
                 base,
-                limit,
+                size: limit - base + 1,
             })
         } else {
             None
@@ -438,9 +463,10 @@ pub trait PciHost {
         if limit != 0 {
             limit += 0xfffff;
             Some(PciAddrRange {
-                name: "prefmem64",
+                kind: PciAddrKind::Mem64,
+                prefetchable: true,
                 base,
-                limit,
+                size: limit - base + 1,
             })
         } else {
             None
