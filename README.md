@@ -38,5 +38,9 @@ MRs.  It is good at spell checking.  Sometimes it offers useful
 suggestions or catches inconsistencies in the patches.  Sometimes it
 asks for stupid stuff like careful error checking in test cases.
 Sometimes it suggests to check for error conditions which can not
-happen, but the bot is apparently not clever enough to see that.  So,
-don't take it too serious.
+happen, but the bot is apparently not clever enough to see that.
+Sometimes it suggests code reorganizations where it is more a matter
+of taste or personal preference whenever you take the one or the other
+way.
+
+So, don't take the bot too serious.
