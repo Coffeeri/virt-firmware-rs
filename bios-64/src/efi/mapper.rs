@@ -168,6 +168,12 @@ impl MemoryMapper {
         Ok(())
     }
 
+    // for guard pages
+    pub fn unmap_page(&self, addr: usize) {
+        let end = addr + PGSIZE_4K as usize;
+        let _ = self.update_range(&(addr..end), PageTableFlags::empty(), PageTableFlags::all());
+    }
+
     pub fn map_range(&self, range: &Range<usize>) {
         let mut virt = VirtAddr::new(range.start as u64);
         if !virt.is_aligned(PGSIZE_1G) {

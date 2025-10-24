@@ -139,6 +139,9 @@ fn memory_init(memmap: &MemoryMap, mapper: &mapper::MemoryMapper) {
             .expect("add bs pool");
     };
 
+    // stack guard page (make overflows pagefault)
+    mapper.unmap_page(stack.start);
+
     info!("efi memory map complete");
 }
 
