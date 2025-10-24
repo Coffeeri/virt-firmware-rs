@@ -5,7 +5,7 @@
 use core::mem::MaybeUninit;
 use core::ops::Range;
 use core::ptr::addr_of_mut;
-use log::info;
+use log::{error, info};
 
 use efiloader::memmap::MemoryMap;
 use efiloader::memorytype::EfiMemoryType::*;
@@ -163,6 +163,8 @@ fn main() {
             let ret = li.start_image();
             info!("image exited, return code: {ret:?}");
         }
+    } else {
+        error!("no kernel found in fwcfg");
     }
 
     qemu_try_poweroff();
