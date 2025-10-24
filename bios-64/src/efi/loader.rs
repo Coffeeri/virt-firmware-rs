@@ -9,6 +9,8 @@ use virtfw_libhw::fwcfg::{
     FwCfg, ITEM_CMDLINE_DATA, ITEM_CMDLINE_SIZE, ITEM_INITRD_DATA, ITEM_INITRD_SIZE,
 };
 
+use crate::size::*;
+
 pub struct FwCfgLoader<'f> {
     fwcfg: &'f FwCfgX86,
     kernel_size: u32,
@@ -21,19 +23,22 @@ impl<'f> FwCfgLoader<'f> {
     pub fn new(fwcfg: &'f FwCfgX86) -> &'f Self {
         let (kernel_item, kernel_size) = fwcfg.findfile("etc/boot/kernel").unwrap_or((0, 0));
         if kernel_size != 0 {
-            info!("fwcfg: etc/boot/kernel is item {kernel_item}, size {kernel_size} bytes");
+            let (value, unit) = pretty_usize(kernel_size as usize);
+            info!("fwcfg: etc/boot/kernel is item {kernel_item}, size {value}{unit}");
         }
 
         fwcfg.select(ITEM_INITRD_SIZE);
         let initrd_size = fwcfg.read32_le();
         if initrd_size != 0 {
-            info!("fwcfg: initrd size {initrd_size} bytes");
+            let (value, unit) = pretty_usize(initrd_size as usize);
+            info!("fwcfg: initrd size {value}{unit}");
         }
 
         fwcfg.select(ITEM_CMDLINE_SIZE);
         let cmdline_size = fwcfg.read32_le();
         if cmdline_size != 0 {
-            info!("fwcfg: cmdline size {cmdline_size} bytes");
+            let (value, unit) = pretty_usize(cmdline_size as usize);
+            info!("fwcfg: cmdline size {value}{unit}");
         }
 
         Box::leak(Box::new(Self {
