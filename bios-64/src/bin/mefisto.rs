@@ -23,7 +23,7 @@ use virtfw_bios_64::size::*;
 use virtfw_bios_64::{println, symrange};
 use virtfw_libhw::fwcfg::x86::FwCfgX86;
 use virtfw_libhw::fwcfg::FwCfg;
-use virtfw_libhw::qemuboards::qemu_try_poweroff;
+use virtfw_libhw::qemuboards::{qemu_probe, QemuBoard};
 
 const BS_POOL_SIZE: usize = MIB;
 const RT_POOL_SIZE: usize = MIB;
@@ -108,7 +108,7 @@ fn memory_init(memmap: &MemoryMap, mapper: &mapper::MemoryMapper) {
         (&heap, EfiRuntimeServicesData, EFI_MEMORY_XP),
         (&pool_rt, EfiRuntimeServicesData, EFI_MEMORY_XP),
         (&pool_bs, EfiBootServicesData, EFI_MEMORY_XP),
-        (&reserved, EfiUnusableMemory, 0),
+        (&reserved, EfiReservedEfiMemoryType, 0),
     ] {
         memmap.allocate_region(r, t, a).expect("alloc region");
         mapper.remap_range(r, a, 0).expect("remap region");
@@ -130,6 +130,19 @@ fn memory_init(memmap: &MemoryMap, mapper: &mapper::MemoryMapper) {
     info!("efi memory map complete");
 }
 
+fn qemu_init(memmap: &MemoryMap) -> Option<QemuBoard> {
+    let board = qemu_probe()?;
+    info!("running on: {}", board.name());
+    board.init_acpi();
+    if let Some(ecam) = board.ecam() {
+        print_range("q35/mmconfig", &ecam);
+        memmap
+            .declare_runtime_region(&ecam, EfiReservedEfiMemoryType, 0, 0)
+            .expect("reserve mmconfig");
+    }
+    Some(board)
+}
+
 #[no_mangle]
 fn main() {
     sercon_init();
@@ -141,6 +154,7 @@ fn main() {
 
     memory_detect(&memmap, &mapper, &FWCFG);
     memory_init(&memmap, &mapper);
+    let board = qemu_init(&memmap);
 
     let rng = rng::Random::new();
     let efi = efiloader::init(Some(&CONSOLE), memmap, mapper, rng).expect("init efi runtime");
@@ -167,5 +181,7 @@ fn main() {
         error!("no kernel found in fwcfg");
     }
 
-    qemu_try_poweroff();
+    if let Some(b) = board {
+        b.poweroff();
+    }
 }
