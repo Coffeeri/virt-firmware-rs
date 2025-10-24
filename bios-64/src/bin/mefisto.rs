@@ -126,8 +126,6 @@ fn memory_init(memmap: &MemoryMap, mapper: &mapper::MemoryMapper) {
 
     // stack guard page (make overflows pagefault)
     mapper.unmap_page(stack.start);
-
-    info!("efi memory map complete");
 }
 
 fn qemu_init(memmap: &MemoryMap) -> Option<QemuBoard> {
@@ -155,6 +153,7 @@ fn main() {
     memory_detect(&memmap, &mapper, &FWCFG);
     memory_init(&memmap, &mapper);
     let board = qemu_init(&memmap);
+    info!("efi memory map complete");
 
     let rng = rng::Random::new();
     let efi = efiloader::init(Some(&CONSOLE), memmap, mapper, rng).expect("init efi runtime");
