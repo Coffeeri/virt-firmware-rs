@@ -1,5 +1,5 @@
 #![cfg(target_arch = "x86_64")]
-use log::info;
+use log::debug;
 
 use crate::ioport::outw;
 use crate::pci::ecam::PciHostEcam;
@@ -78,7 +78,7 @@ impl QemuQ35 {
         let addr = if (lower & 1) == 1 {
             // already enabled
             let addr = (upper << 32) | (lower & !1);
-            info!("found q35 ecam at 0x{:x}", addr);
+            debug!("found q35 ecam at 0x{:x}", addr);
             addr
         } else {
             let upper = 0_u64;
@@ -86,7 +86,7 @@ impl QemuQ35 {
             let addr = (upper << 32) | (lower & !1);
             pcihost.writel(&hostbr.addr, 0x64, upper as u32);
             pcihost.writel(&hostbr.addr, 0x60, lower as u32);
-            info!("mapped q35 ecam to 0x{:x}", addr);
+            debug!("mapped q35 ecam to 0x{:x}", addr);
             addr
         };
         PciHostEcam::new(addr)
