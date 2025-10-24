@@ -6,13 +6,13 @@ pub const GIB: usize = 1 << 30;
 
 pub fn pretty_usize(size: usize) -> (usize, &'static str) {
     if size > 10 * GIB {
-        (size / GIB, "GB")
+        (size / GIB, " GB")
     } else if size > 10 * MIB {
-        (size / MIB, "MB")
+        (size / MIB, " MB")
     } else if size > 10 * KIB {
-        (size / KIB, "kB")
+        (size / KIB, " kB")
     } else {
-        (size, "b")
+        (size, " byte(s)")
     }
 }
 
