@@ -37,3 +37,19 @@ pub fn has_gb_pages() -> bool {
     let (_, _, _, edx) = cpuid(0x80000001, 0);
     edx & (1 << 26) != 0
 }
+
+pub fn has_rdrand() -> bool {
+    let (_, _, ecx, _) = cpuid(0x1, 0);
+    ecx & (1 << 30) != 0
+}
+
+// not really a good fit, but hey, you need the cpuid check anyway ...
+pub fn rdrand() -> u64 {
+    let rax: u64;
+    unsafe {
+        asm!("rdrand %rax",
+             out("rax") rax,
+             options(att_syntax));
+    }
+    rax
+}
