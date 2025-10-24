@@ -81,6 +81,7 @@ pages:
       done
     - mv -v bios-32/*.bin public/bios-32
     - mv -v target/x86_64-unknown-none/debug/*.bin public/bios-64
+    - mv -v target/x86_64-unknown-none/debug/*.igvm public/bios-64
     - tree -T "$CI_PROJECT_NAME" --charset utf8 -H . public > index.html
     - mv index.html public
   only:
