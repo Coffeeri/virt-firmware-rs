@@ -11,10 +11,10 @@ pub fn pretty_usize(size: usize) -> (usize, &'static str) {
         (size / MIB, " MB")
     } else if size > 10 * KIB {
         (size / KIB, " kB")
-    } else if size > 1 {
-        (size, " bytes")
-    } else {
+    } else if size == 1 {
         (size, " byte")
+    } else {
+        (size, " bytes")
     }
 }
 
