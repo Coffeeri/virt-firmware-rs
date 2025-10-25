@@ -6,6 +6,8 @@ use bitfield_struct::bitfield;
 use core::fmt;
 use core::ops::Deref;
 
+use crate::size::*;
+
 pub const PCI_CFG_VENDOR: u8 = 0x00;
 pub const PCI_CFG_DEVICE: u8 = 0x02;
 pub const PCI_CFG_COMMAND: u8 = 0x04;
@@ -140,10 +142,17 @@ impl PciAddrRange {
 
 impl fmt::Display for PciAddrRange {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let (v, u) = pretty_usize(self.size as usize);
         if self.base > 0 {
-            write!(f, "{}: {:x}-{:x}", self.name(), self.base, self.limit())
+            write!(
+                f,
+                "{}: {:x}-{:x} [size {v}{u}]",
+                self.name(),
+                self.base,
+                self.limit()
+            )
         } else {
-            write!(f, "{}: <size=0x{:x}>", self.name(), self.size)
+            write!(f, "{}: <unmapped> [size {v}{u}]", self.name())
         }
     }
 }
