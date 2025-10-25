@@ -19,11 +19,11 @@ use virtfw_bios_64::efi::mapper;
 use virtfw_bios_64::efi::rng;
 use virtfw_bios_64::exception::exception_init;
 use virtfw_bios_64::sercon::sercon_init;
-use virtfw_bios_64::size::*;
 use virtfw_bios_64::{println, symrange};
 use virtfw_libhw::fwcfg::x86::FwCfgX86;
 use virtfw_libhw::fwcfg::FwCfg;
 use virtfw_libhw::qemuboards::{qemu_probe, QemuBoard};
+use virtfw_libhw::size::*;
 
 const BS_POOL_SIZE: usize = MIB;
 const RT_POOL_SIZE: usize = MIB;

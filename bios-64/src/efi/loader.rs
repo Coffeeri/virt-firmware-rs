@@ -8,8 +8,7 @@ use virtfw_libhw::fwcfg::x86::FwCfgX86;
 use virtfw_libhw::fwcfg::{
     FwCfg, ITEM_CMDLINE_DATA, ITEM_CMDLINE_SIZE, ITEM_INITRD_DATA, ITEM_INITRD_SIZE,
 };
-
-use crate::size::*;
+use virtfw_libhw::size::*;
 
 pub struct FwCfgLoader<'f> {
     fwcfg: &'f FwCfgX86,
