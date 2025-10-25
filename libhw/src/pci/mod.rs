@@ -109,14 +109,14 @@ impl fmt::Display for PciBridgeCtrl {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum PciAddrKind {
     Io,
     Mem32,
     Mem64,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PciAddrRange {
     pub kind: PciAddrKind,
     pub prefetchable: bool,
@@ -157,7 +157,7 @@ impl fmt::Display for PciAddrRange {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PciDevAddr {
     pub bus: u8,
     pub slot: u8,
