@@ -109,7 +109,7 @@ impl fmt::Display for PciBridgeCtrl {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PciAddrKind {
     Io,
     Mem32,
