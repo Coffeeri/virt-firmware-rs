@@ -4,6 +4,7 @@ pub mod x86;
 
 use bitfield_struct::bitfield;
 use core::fmt;
+use core::ops::Deref;
 
 pub const PCI_CFG_VENDOR: u8 = 0x00;
 pub const PCI_CFG_DEVICE: u8 = 0x02;
@@ -167,6 +168,14 @@ pub struct PciDevice {
     pub class: u16,
 }
 
+impl Deref for PciDevice {
+    type Target = PciDevAddr;
+
+    fn deref(&self) -> &Self::Target {
+        &self.addr
+    }
+}
+
 impl fmt::Display for PciDevice {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
@@ -297,16 +306,16 @@ pub trait PciHost {
         Some(pcidev)
     }
 
-    fn command(&self, dev: &PciDevice) -> PciCommand {
-        PciCommand::from(self.readw(&dev.addr, PCI_CFG_COMMAND))
+    fn command(&self, addr: &PciDevAddr) -> PciCommand {
+        PciCommand::from(self.readw(addr, PCI_CFG_COMMAND))
     }
 
-    fn revision(&self, dev: &PciDevice) -> u8 {
-        self.readb(&dev.addr, PCI_CFG_DEVICE)
+    fn revision(&self, addr: &PciDevAddr) -> u8 {
+        self.readb(addr, PCI_CFG_DEVICE)
     }
 
-    fn header_type(&self, dev: &PciDevice) -> PciHeaderType {
-        PciHeaderType::from(self.readb(&dev.addr, PCI_CFG_HEADER_TYPE))
+    fn header_type(&self, addr: &PciDevAddr) -> PciHeaderType {
+        PciHeaderType::from(self.readb(addr, PCI_CFG_HEADER_TYPE))
     }
 
     fn is_vga(&self, dev: &PciDevice) -> bool {
@@ -325,22 +334,22 @@ pub trait PciHost {
         true
     }
 
-    fn bar(&self, dev: &PciDevice, nr: u8) -> Option<PciAddrRange> {
+    fn bar(&self, addr: &PciDevAddr, nr: u8) -> Option<PciAddrRange> {
         if nr > 5 {
             return None;
         }
-        let mut base = self.readl(&dev.addr, 0x10 + nr * 4) as u64;
+        let mut base = self.readl(addr, 0x10 + nr * 4) as u64;
         if nr > 0 {
-            let prevbase = self.readl(&dev.addr, 0x10 + (nr - 1) * 4);
+            let prevbase = self.readl(addr, 0x10 + (nr - 1) * 4);
             if (prevbase & 6) == 4 {
                 // previous bar is 64-bit
                 return None;
             }
         }
 
-        self.writel(&dev.addr, 0x10 + nr * 4, !0);
-        let mut size = self.readl(&dev.addr, 0x10 + nr * 4) as u64;
-        self.writel(&dev.addr, 0x10 + nr * 4, base as u32);
+        self.writel(addr, 0x10 + nr * 4, !0);
+        let mut size = self.readl(addr, 0x10 + nr * 4) as u64;
+        self.writel(addr, 0x10 + nr * 4, base as u32);
 
         if base == 0 {
             None
@@ -373,10 +382,10 @@ pub trait PciHost {
             base &= !0x0f;
             size &= !0x0f;
 
-            let nextbase = self.readl(&dev.addr, 0x10 + (nr + 1) * 4) as u64;
-            self.writel(&dev.addr, 0x10 + (nr + 1) * 4, !0);
-            let nextsize = self.readl(&dev.addr, 0x10 + (nr + 1) * 4) as u64;
-            self.writel(&dev.addr, 0x10 + (nr + 1) * 4, nextbase as u32);
+            let nextbase = self.readl(addr, 0x10 + (nr + 1) * 4) as u64;
+            self.writel(addr, 0x10 + (nr + 1) * 4, !0);
+            let nextsize = self.readl(addr, 0x10 + (nr + 1) * 4) as u64;
+            self.writel(addr, 0x10 + (nr + 1) * 4, nextbase as u32);
 
             base += nextbase << 32;
             size += nextsize << 32;
@@ -403,21 +412,25 @@ pub trait PciHost {
         true
     }
 
-    fn bridge_ctl(&self, dev: &PciDevice) -> PciBridgeCtrl {
-        PciBridgeCtrl::from(self.readb(&dev.addr, PCI_CFG_BRIDGE_CTRL))
+    fn bridge_ctl(&self, addr: &PciDevAddr) -> PciBridgeCtrl {
+        PciBridgeCtrl::from(self.readb(addr, PCI_CFG_BRIDGE_CTRL))
     }
 
-    fn bridge_secondary(&self, dev: &PciDevice) -> u8 {
-        self.readb(&dev.addr, PCI_CFG_SECONDARY_BUS)
+    fn bridge_primary(&self, addr: &PciDevAddr) -> u8 {
+        self.readb(addr, PCI_CFG_PRIMARY_BUS)
     }
 
-    fn bridge_subordinate(&self, dev: &PciDevice) -> u8 {
-        self.readb(&dev.addr, PCI_CFG_SUBORDINATE_BUS)
+    fn bridge_secondary(&self, addr: &PciDevAddr) -> u8 {
+        self.readb(addr, PCI_CFG_SECONDARY_BUS)
     }
 
-    fn bridge_io(&self, dev: &PciDevice) -> Option<PciAddrRange> {
-        let basereg = self.readb(&dev.addr, PCI_CFG_IO_BASE) as u64;
-        let limitreg = self.readb(&dev.addr, PCI_CFG_IO_LIMIT) as u64;
+    fn bridge_subordinate(&self, addr: &PciDevAddr) -> u8 {
+        self.readb(addr, PCI_CFG_SUBORDINATE_BUS)
+    }
+
+    fn bridge_io(&self, addr: &PciDevAddr) -> Option<PciAddrRange> {
+        let basereg = self.readb(addr, PCI_CFG_IO_BASE) as u64;
+        let limitreg = self.readb(addr, PCI_CFG_IO_LIMIT) as u64;
         if limitreg != 0 {
             let base = (basereg & 0xf0) << 8;
             let limit = ((limitreg & 0xf0) << 8) + 0xfff;
@@ -432,9 +445,9 @@ pub trait PciHost {
         }
     }
 
-    fn bridge_mem(&self, dev: &PciDevice) -> Option<PciAddrRange> {
-        let basereg = self.readw(&dev.addr, PCI_CFG_MEM_BASE) as u64;
-        let limitreg = self.readw(&dev.addr, PCI_CFG_MEM_LIMIT) as u64;
+    fn bridge_mem(&self, addr: &PciDevAddr) -> Option<PciAddrRange> {
+        let basereg = self.readw(addr, PCI_CFG_MEM_BASE) as u64;
+        let limitreg = self.readw(addr, PCI_CFG_MEM_LIMIT) as u64;
         if limitreg != 0 {
             let base = (basereg & 0xfff0) << 16;
             let limit = ((limitreg & 0xfff0) << 16) + 0xfffff;
@@ -449,11 +462,11 @@ pub trait PciHost {
         }
     }
 
-    fn bridge_prefmem(&self, dev: &PciDevice) -> Option<PciAddrRange> {
-        let basereg = self.readw(&dev.addr, PCI_CFG_PREFMEM_BASE) as u64;
-        let limitreg = self.readw(&dev.addr, PCI_CFG_PREFMEM_LIMIT) as u64;
-        let basereg_u32 = self.readl(&dev.addr, PCI_CFG_PREFMEM_BASE_U32) as u64;
-        let limitreg_u32 = self.readl(&dev.addr, PCI_CFG_PREFMEM_LIMIT_U32) as u64;
+    fn bridge_prefmem(&self, addr: &PciDevAddr) -> Option<PciAddrRange> {
+        let basereg = self.readw(addr, PCI_CFG_PREFMEM_BASE) as u64;
+        let limitreg = self.readw(addr, PCI_CFG_PREFMEM_LIMIT) as u64;
+        let basereg_u32 = self.readl(addr, PCI_CFG_PREFMEM_BASE_U32) as u64;
+        let limitreg_u32 = self.readl(addr, PCI_CFG_PREFMEM_LIMIT_U32) as u64;
 
         let mut base = (basereg & 0xfff0) << 16;
         let mut limit = (limitreg & 0xfff0) << 16;
@@ -473,15 +486,15 @@ pub trait PciHost {
         }
     }
 
-    fn set_bridge_primary(&self, dev: &PciDevice, nr: u8) {
-        self.writeb(&dev.addr, PCI_CFG_PRIMARY_BUS, nr)
+    fn set_bridge_primary(&self, addr: &PciDevAddr, nr: u8) {
+        self.writeb(addr, PCI_CFG_PRIMARY_BUS, nr)
     }
 
-    fn set_bridge_secondary(&self, dev: &PciDevice, nr: u8) {
-        self.writeb(&dev.addr, PCI_CFG_SECONDARY_BUS, nr)
+    fn set_bridge_secondary(&self, addr: &PciDevAddr, nr: u8) {
+        self.writeb(addr, PCI_CFG_SECONDARY_BUS, nr)
     }
 
-    fn set_bridge_subordinate(&self, dev: &PciDevice, nr: u8) {
-        self.writeb(&dev.addr, PCI_CFG_SUBORDINATE_BUS, nr)
+    fn set_bridge_subordinate(&self, addr: &PciDevAddr, nr: u8) {
+        self.writeb(addr, PCI_CFG_SUBORDINATE_BUS, nr)
     }
 }
