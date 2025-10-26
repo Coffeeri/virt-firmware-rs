@@ -343,22 +343,32 @@ pub trait PciHost {
         true
     }
 
+    fn read_bar(&self, addr: &PciDevAddr, nr: u8) -> u32 {
+        let offset = 0x10 + nr * 4;
+        self.readl(addr, offset)
+    }
+
+    fn write_bar(&self, addr: &PciDevAddr, nr: u8, value: u32) {
+        let offset = 0x10 + nr * 4;
+        self.writel(addr, offset, value);
+    }
+
     fn bar(&self, addr: &PciDevAddr, nr: u8) -> Option<PciAddrRange> {
         if nr > 5 {
             return None;
         }
-        let mut base = self.readl(addr, 0x10 + nr * 4) as u64;
+        let mut base = self.read_bar(addr, nr) as u64;
         if nr > 0 {
-            let prevbase = self.readl(addr, 0x10 + (nr - 1) * 4);
+            let prevbase = self.read_bar(addr, nr - 1);
             if (prevbase & 6) == 4 {
                 // previous bar is 64-bit
                 return None;
             }
         }
 
-        self.writel(addr, 0x10 + nr * 4, !0);
-        let mut size = self.readl(addr, 0x10 + nr * 4) as u64;
-        self.writel(addr, 0x10 + nr * 4, base as u32);
+        self.write_bar(addr, nr, !0);
+        let mut size = self.read_bar(addr, nr) as u64;
+        self.write_bar(addr, nr, base as u32);
 
         if base == 0 {
             None
@@ -391,10 +401,10 @@ pub trait PciHost {
             base &= !0x0f;
             size &= !0x0f;
 
-            let nextbase = self.readl(addr, 0x10 + (nr + 1) * 4) as u64;
-            self.writel(addr, 0x10 + (nr + 1) * 4, !0);
-            let nextsize = self.readl(addr, 0x10 + (nr + 1) * 4) as u64;
-            self.writel(addr, 0x10 + (nr + 1) * 4, nextbase as u32);
+            let nextbase = self.read_bar(addr, nr + 1) as u64;
+            self.write_bar(addr, nr + 1, !0);
+            let nextsize = self.read_bar(addr, nr + 1) as u64;
+            self.write_bar(addr, nr + 1, nextbase as u32);
 
             base += nextbase << 32;
             size += nextsize << 32;
@@ -505,5 +515,47 @@ pub trait PciHost {
 
     fn set_bridge_subordinate(&self, addr: &PciDevAddr, nr: u8) {
         self.writeb(addr, PCI_CFG_SUBORDINATE_BUS, nr)
+    }
+
+    fn set_bridge_io(&self, addr: &PciDevAddr, range: &PciAddrRange) {
+        let basereg = (range.base >> 8) & 0xf0;
+        let limitreg = (range.limit() >> 8) & 0xf0;
+        self.writeb(addr, PCI_CFG_IO_BASE, basereg as u8);
+        self.writeb(addr, PCI_CFG_IO_LIMIT, limitreg as u8);
+    }
+
+    fn set_bridge_mem(&self, addr: &PciDevAddr, range: &PciAddrRange) {
+        let basereg = (range.base >> 16) & 0xfff0;
+        let limitreg = (range.limit() >> 16) & 0xfff0;
+        self.writew(addr, PCI_CFG_MEM_BASE, basereg as u16);
+        self.writew(addr, PCI_CFG_MEM_LIMIT, limitreg as u16);
+    }
+
+    fn set_bridge_prefmem(&self, addr: &PciDevAddr, range: &PciAddrRange) {
+        let base = range.base >> 16;
+        let limit = range.limit() >> 16;
+        self.writew(addr, PCI_CFG_PREFMEM_BASE, (base & 0xffff) as u16);
+        self.writew(addr, PCI_CFG_PREFMEM_LIMIT, (limit & 0xffff) as u16);
+        self.writel(addr, PCI_CFG_PREFMEM_BASE_U32, (base >> 16) as u32);
+        self.writel(addr, PCI_CFG_PREFMEM_LIMIT_U32, (limit >> 16) as u32);
+    }
+
+    fn set_bar(&self, addr: &PciDevAddr, nr: u8, range: &PciAddrRange) {
+        match range.kind {
+            PciAddrKind::Io => {
+                let value = (range.base & 0xfffc) | 1;
+                self.write_bar(addr, nr, value as u32);
+            }
+            PciAddrKind::Mem32 => {
+                let value = range.base & 0xffff_fff0;
+                self.write_bar(addr, nr, value as u32);
+            }
+            PciAddrKind::Mem64 => {
+                let value_lo = (range.base & 0xffff_fff0) | 4;
+                let value_hi = range.base >> 32;
+                self.write_bar(addr, nr, value_lo as u32);
+                self.write_bar(addr, nr + 1, value_hi as u32);
+            }
+        }
     }
 }
