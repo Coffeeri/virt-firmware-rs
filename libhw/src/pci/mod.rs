@@ -559,3 +559,19 @@ pub trait PciHost {
         }
     }
 }
+
+pub fn pci_foreach_device<F>(pcihost: &dyn PciHost, bus: u8, mut function: F)
+where
+    F: FnMut(&PciDevice),
+{
+    for slot in 0..32 {
+        for func in 0..8 {
+            if let Some(dev) = pcihost.try_device(bus, slot, func) {
+                function(&dev);
+                if func == 0 && !pcihost.is_mfd(&dev) {
+                    break;
+                }
+            }
+        }
+    }
+}
