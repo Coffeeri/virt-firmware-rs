@@ -8,6 +8,8 @@ use log::info;
 use virtfw_bios_64::alloc::alloc_init;
 use virtfw_bios_64::println;
 use virtfw_bios_64::sercon::sercon_init;
+use virtfw_libhw::fwcfg::x86::FwCfgX86;
+use virtfw_libhw::fwcfg::{acpi, smbios};
 use virtfw_libhw::pci::setup::PciSetup;
 use virtfw_libhw::pci::{pci_foreach_device, PciHost};
 use virtfw_libhw::qemuboards::qemu_probe;
@@ -61,17 +63,27 @@ fn scan_pci_bus(pcihost: &dyn PciHost) {
 
 #[no_mangle]
 fn main() {
-    sercon_init(log::LevelFilter::Info);
+    sercon_init(log::LevelFilter::Debug);
     alloc_init();
 
     let Some(board) = qemu_probe() else {
         info!("could not identify qemu hardware");
         return;
     };
+    board.init_acpi();
 
     let pcihost = board.pcihost();
     scan_pci_bus(pcihost);
 
-    board.init_acpi();
+    let fwcfg = FwCfgX86::new();
+    if let Some(smbios) = smbios::SmbiosLoader::new(&fwcfg) {
+        let (major, minor) = smbios.version();
+        info!("smbios: version {major}.{minor}");
+    }
+
+    if let Some(mut acpi) = acpi::AcpiLoader::new(&fwcfg) {
+        acpi.load_tables();
+    }
+
     board.poweroff();
 }
