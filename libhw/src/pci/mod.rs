@@ -2,6 +2,9 @@
 pub mod ecam;
 pub mod x86;
 
+#[cfg(feature = "alloc")]
+pub mod setup;
+
 use bitfield_struct::bitfield;
 use core::fmt;
 use core::ops::Deref;
@@ -125,6 +128,19 @@ pub struct PciAddrRange {
 }
 
 impl PciAddrRange {
+    pub fn new_sized(kind: PciAddrKind, size: u64) -> Self {
+        Self {
+            kind,
+            prefetchable: (kind == PciAddrKind::Mem64),
+            base: 0,
+            size,
+        }
+    }
+
+    pub fn new_empty(kind: PciAddrKind) -> Self {
+        Self::new_sized(kind, 0)
+    }
+
     pub fn name(&self) -> &'static str {
         match (&self.kind, &self.prefetchable) {
             (PciAddrKind::Io, _) => "io",
