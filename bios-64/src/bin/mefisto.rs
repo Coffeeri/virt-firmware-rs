@@ -22,6 +22,8 @@ use virtfw_bios_64::sercon::sercon_init;
 use virtfw_bios_64::{println, symrange};
 use virtfw_libhw::fwcfg::x86::FwCfgX86;
 use virtfw_libhw::fwcfg::FwCfg;
+use virtfw_libhw::pci::setup::PciSetup;
+use virtfw_libhw::pci::PciHost;
 use virtfw_libhw::qemuboards::{qemu_probe, QemuBoard};
 use virtfw_libhw::size::*;
 
@@ -128,6 +130,23 @@ fn memory_init(memmap: &MemoryMap, mapper: &mapper::MemoryMapper) {
     mapper.unmap_page(stack.start);
 }
 
+fn pci_init(pcihost: &dyn PciHost) {
+    let mut pcisetup = PciSetup::new(pcihost);
+
+    // FIXME: static config works for:
+    //  * small/medium guests (up to ~44 GB)
+    //  * without huge PCI bars (up to 4 GB should be ok), and
+    //  * no odd memory sizes (multiple of 1 GB).
+    pcisetup.configure_mem32(0xc000_0000..0xe000_0000);
+    pcisetup.configure_mem64(0xc_0000_0000..0x10_0000_0000);
+
+    info!("setting up pci bus");
+    pcisetup.enumerate_all();
+    pcisetup.resources_all();
+    pcisetup.assign_all();
+    pcisetup.apply_all();
+}
+
 fn qemu_init(memmap: &MemoryMap) -> Option<QemuBoard> {
     let board = qemu_probe()?;
     info!("running on: {}", board.name());
@@ -138,6 +157,7 @@ fn qemu_init(memmap: &MemoryMap) -> Option<QemuBoard> {
             .declare_runtime_region(&ecam, EfiReservedEfiMemoryType, 0, 0)
             .expect("reserve mmconfig");
     }
+    pci_init(board.pcihost());
     Some(board)
 }
 
