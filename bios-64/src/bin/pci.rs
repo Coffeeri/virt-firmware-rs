@@ -57,7 +57,7 @@ fn scan_pci_bus(pcihost: &dyn PciHost) {
 
 #[no_mangle]
 fn main() {
-    sercon_init();
+    sercon_init(log::LevelFilter::Info);
     alloc_init();
 
     let Some(board) = qemu_probe() else {

@@ -26,9 +26,9 @@ macro_rules! println {
     }};
 }
 
-pub fn sercon_init() {
+pub fn sercon_init(loglevel: log::LevelFilter) {
     SERCON.init();
     log::set_logger(&SERCON).unwrap();
-    log::set_max_level(log::LevelFilter::Debug);
+    log::set_max_level(loglevel);
     info!("serial console at 0x{:x}", SERCON.iobase);
 }

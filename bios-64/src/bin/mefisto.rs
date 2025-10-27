@@ -143,7 +143,7 @@ fn qemu_init(memmap: &MemoryMap) -> Option<QemuBoard> {
 
 #[no_mangle]
 fn main() {
-    sercon_init();
+    sercon_init(log::LevelFilter::Debug);
     exception_init();
     alloc_init();
 

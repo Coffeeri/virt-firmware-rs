@@ -8,7 +8,7 @@ use virtfw_libhw::qemuboards::qemu_try_poweroff;
 
 #[no_mangle]
 fn main() {
-    sercon_init();
+    sercon_init(log::LevelFilter::Info);
 
     println!("");
     println!("Hello world!");
