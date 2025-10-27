@@ -41,17 +41,21 @@ fn scan_one_pci_bus(pcihost: &dyn PciHost, bus: u8, indent: usize) {
 }
 
 fn scan_pci_bus(pcihost: &dyn PciHost) {
+    info!("enumerate pci bus");
     let mut setup = PciSetup::new(pcihost);
+    setup.enumerate_all();
+
+    info!("scanning pci bus [before]");
+    scan_one_pci_bus(pcihost, 0, 2);
 
     info!("setting up pci bus");
     setup.configure_mem32(0xc000_0000..0xe000_0000);
     setup.configure_mem64(0xc_0000_0000..0x10_0000_0000);
-    setup.enumerate_all();
     setup.resources_all();
     setup.assign_all();
     setup.apply_all();
 
-    info!("scanning pci bus");
+    info!("scanning pci bus [after]");
     scan_one_pci_bus(pcihost, 0, 2);
 }
 
