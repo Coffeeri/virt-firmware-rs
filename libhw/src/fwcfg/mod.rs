@@ -7,11 +7,15 @@ extern crate alloc;
 #[cfg(feature = "alloc")]
 use alloc::string::String;
 #[cfg(feature = "alloc")]
+use alloc::vec;
+#[cfg(feature = "alloc")]
 use alloc::vec::Vec;
 #[cfg(feature = "alloc")]
 use log::debug;
 
 use core::ptr;
+
+use crate::size::*;
 
 pub const ITEM_SIGNATURE: u16 = 0x00;
 pub const ITEM_VERSION: u16 = 0x01;
@@ -195,6 +199,19 @@ pub trait FwCfg {
         };
         let ptr = ptr::addr_of!(dmactrl);
         self.trigger_dma(ptr.addr());
+    }
+
+    #[cfg(feature = "alloc")]
+    fn load_file(&self, name: &str) -> Option<Vec<u8>> {
+        let (item, size) = self.findfile(name)?;
+
+        let (value, unit) = pretty_usize(size as usize);
+        debug!("fwcfg: {name} is item {item}, size {value}{unit}");
+
+        let mut data = vec![0; size as usize];
+        self.read_dma(Some(item), data.as_mut_ptr() as *mut (), size as usize);
+
+        Some(data)
     }
 }
 
