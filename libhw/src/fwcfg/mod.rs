@@ -1,8 +1,11 @@
 //! qemu fw_cfg access
-#[cfg(feature = "alloc")]
-pub mod acpi;
 pub mod mmio;
 pub mod x86;
+
+#[cfg(feature = "alloc")]
+pub mod acpi;
+#[cfg(feature = "alloc")]
+pub mod smbios;
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
