@@ -386,7 +386,7 @@ pub trait PciHost {
         let mut size = self.read_bar(addr, nr) as u64;
         self.write_bar(addr, nr, base as u32);
 
-        if base == 0 {
+        if base == 0 && size == 0 {
             None
         } else if (base & 1) == 1 {
             // io
