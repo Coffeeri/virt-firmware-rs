@@ -1,4 +1,6 @@
 //! qemu fw_cfg access
+#[cfg(feature = "alloc")]
+pub mod acpi;
 pub mod mmio;
 pub mod x86;
 

@@ -16,3 +16,4 @@ alloc = [ ]
 [dependencies]
 bitfield-struct.workspace = true
 log.workspace = true
+zerocopy.workspace = true
