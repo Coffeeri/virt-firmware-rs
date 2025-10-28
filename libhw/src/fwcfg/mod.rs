@@ -25,6 +25,8 @@ pub const ITEM_CMDLINE_SIZE: u16 = 0x14;
 pub const ITEM_CMDLINE_DATA: u16 = 0x15;
 pub const ITEM_FILEDIR: u16 = 0x19;
 
+pub const FILENAME_LEN: usize = 56;
+
 //const DMA_CTL_ERROR: u32 = 0x01;
 const DMA_CTL_READ: u32 = 0x02;
 const DMA_CTL_SKIP: u32 = 0x04;
@@ -127,7 +129,7 @@ pub trait FwCfg {
             let size = self.read32_be();
             let item = self.read16_be();
             let _ = self.read16_be();
-            let mut name: [u8; 56] = [0; 56];
+            let mut name: [u8; FILENAME_LEN] = [0; FILENAME_LEN];
             self.read_bytes_slice(&mut name);
             if find.as_bytes() == &name[..find.len()] {
                 return Some((item, size));
@@ -148,7 +150,7 @@ pub trait FwCfg {
             let size = self.read32_be();
             let item = self.read16_be();
             let _ = self.read16_be();
-            let name = self.read_bytes(56);
+            let name = self.read_bytes(FILENAME_LEN);
             let entry = FwCfgFile {
                 size,
                 item,
