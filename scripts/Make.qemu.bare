@@ -30,4 +30,4 @@ run-mefisto-bios64:
 		-enable-kvm -no-reboot -M q35 -m 4G -cpu host \
 		-bios target/x86_64-unknown-none/debug/mefisto.bin \
 		-kernel $(HOST_KERNEL) \
-		-append "console=ttyS0 panic=1 loglevel=6"
+		-append "console=ttyS0 panic=1 loglevel=7"
