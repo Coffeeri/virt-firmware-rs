@@ -4,7 +4,6 @@ use core::mem::size_of;
 use log::debug;
 use zerocopy::FromBytes;
 
-use crate::fwcfg::x86::FwCfgX86;
 use crate::fwcfg::FwCfg;
 
 /*
@@ -72,13 +71,13 @@ struct SmbiosV3 {
 }
 
 pub struct SmbiosLoader<'f> {
-    fwcfg: &'f FwCfgX86,
+    fwcfg: &'f dyn FwCfg,
     major: u8,
     minor: u8,
 }
 
 impl<'f> SmbiosLoader<'f> {
-    pub fn new(fwcfg: &'f FwCfgX86) -> Option<Self> {
+    pub fn new(fwcfg: &'f dyn FwCfg) -> Option<Self> {
         let anchor = fwcfg.load_file("etc/smbios/smbios-anchor")?;
         let major;
         let minor;
