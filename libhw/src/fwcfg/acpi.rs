@@ -2,7 +2,8 @@
 extern crate alloc;
 use alloc::string::String;
 use alloc::vec::Vec;
-use log::{debug, warn};
+use core::ptr::addr_of;
+use log::{trace, warn};
 use zerocopy::FromBytes;
 
 use crate::fwcfg::{bytes_to_string, FwCfg, FILENAME_LEN};
@@ -22,7 +23,7 @@ struct LoaderCmdType {
 #[repr(C)]
 struct LoaderAlloc {
     filename: [u8; FILENAME_LEN],
-    alignment: u32,
+    align: u32,
     zone: u8,
 }
 
@@ -48,7 +49,7 @@ struct LoaderChecksum {
 pub enum LoaderCommand {
     Alloc {
         filename: String,
-        alignment: u32,
+        align: u32,
         zone: u8,
     },
     AddPtr {
@@ -70,6 +71,8 @@ pub struct LoaderMemory {
     filename: String,
     item: u16,
     size: u32,
+    data: &'static mut [u8],
+    addr: usize,
 }
 
 pub struct AcpiLoader<'f> {
@@ -101,30 +104,25 @@ impl<'f> AcpiLoader<'f> {
                 }
                 CMD_ALLOCATE => {
                     let (a, _) = LoaderAlloc::read_from_prefix(r).unwrap();
-                    let filename = bytes_to_string(&a.filename);
-
                     LoaderCommand::Alloc {
-                        filename,
-                        alignment: a.alignment,
+                        filename: bytes_to_string(&a.filename),
+                        align: a.align,
                         zone: a.zone,
                     }
                 }
                 CMD_ADD_POINTER => {
                     let (p, _) = LoaderAddPtr::read_from_prefix(r).unwrap();
-                    let ptr = bytes_to_string(&p.pointer);
-                    let ptee = bytes_to_string(&p.pointee);
                     LoaderCommand::AddPtr {
-                        pointer: ptr,
-                        pointee: ptee,
+                        pointer: bytes_to_string(&p.pointer),
+                        pointee: bytes_to_string(&p.pointee),
                         offset: p.offset,
                         size: p.size,
                     }
                 }
                 CMD_ADD_CHECKSUM => {
                     let (c, _) = LoaderChecksum::read_from_prefix(r).unwrap();
-                    let filename = bytes_to_string(&c.filename);
                     LoaderCommand::Checksum {
-                        filename,
+                        filename: bytes_to_string(&c.filename),
                         offset: c.offset,
                         start: c.start,
                         length: c.length,
@@ -136,31 +134,120 @@ impl<'f> AcpiLoader<'f> {
                 }
             };
 
-            debug!("{:?}", &command);
+            trace!("{:?}", &command);
             self.commands.push(command);
         }
         Some(())
     }
 
-    pub fn load_tables(&mut self) {
+    pub fn load_tables<A>(&mut self, alloc_func: A) -> Result<(), &str>
+    where
+        A: Fn(usize, usize) -> Option<&'static mut [u8]>,
+    {
         for c in &self.commands {
-            if let LoaderCommand::Alloc { filename, .. } = c {
-                let Some((item, size)) = self.fwcfg.findfile(filename) else {
-                    warn!("fwcfg file not found: {}", filename);
-                    break;
-                };
+            if let LoaderCommand::Alloc {
+                filename, align, ..
+            } = c
+            {
+                let (item, size) = self
+                    .fwcfg
+                    .findfile(filename)
+                    .ok_or("fwcfg file not found: {filename}")?;
 
+                let data_opt = alloc_func(size as usize, *align as usize);
+                let data = data_opt.ok_or("allocation failed (size={size})")?;
+                self.fwcfg
+                    .read_dma(Some(item), data.as_mut_ptr().cast(), size as usize);
+
+                let addr = addr_of!(*data).addr();
                 let mem = LoaderMemory {
                     filename: filename.clone(),
                     item,
                     size,
+                    data,
+                    addr,
                 };
-                debug!(
-                    "LoaderMemory: {}, item {}, size {}",
-                    &mem.filename, mem.item, mem.size
+
+                trace!(
+                    "LoaderMemory: {}, item {}, size {}, addr {:x}",
+                    &mem.filename,
+                    mem.item,
+                    mem.size,
+                    mem.addr
                 );
                 self.memories.push(mem);
             }
         }
+        Ok(())
+    }
+
+    pub fn run_commands(&mut self) -> Result<(), &str> {
+        for c in &self.commands {
+            match c {
+                LoaderCommand::AddPtr {
+                    pointer,
+                    pointee,
+                    offset,
+                    size,
+                } => {
+                    let addr = self
+                        .memories
+                        .iter()
+                        .find(|m| &m.filename == pointee)
+                        .ok_or("not found: {pointee}")?
+                        .addr;
+                    let src: &mut LoaderMemory = self
+                        .memories
+                        .iter_mut()
+                        .find(|m| &m.filename == pointer)
+                        .ok_or("not found: {pointer}")?;
+                    let data =
+                        &mut src.data[(*offset as usize)..(*offset as usize + *size as usize)];
+                    match size {
+                        4 => {
+                            let array: [u8; 4] = data.try_into().unwrap();
+                            let mut value = <u32>::from_le_bytes(array);
+                            value += addr as u32;
+                            data.copy_from_slice(&value.to_le_bytes());
+                        }
+                        8 => {
+                            let array: [u8; 8] = data.try_into().unwrap();
+                            let mut value = <u64>::from_le_bytes(array);
+                            value += addr as u64;
+                            data.copy_from_slice(&value.to_le_bytes());
+                        }
+                        _ => {
+                            return Err("unhandled ptr size {size}");
+                        }
+                    }
+                }
+                LoaderCommand::Checksum {
+                    filename,
+                    offset,
+                    start,
+                    length,
+                } => {
+                    let mem: &mut LoaderMemory = self
+                        .memories
+                        .iter_mut()
+                        .find(|m| &m.filename == filename)
+                        .ok_or("not found: {filename}")?;
+                    let data = &mem.data[(*start as usize)..((start + length) as usize)];
+                    let sum: u32 = data.iter().map(|b| *b as u32).sum();
+                    let fixup = (0u32.wrapping_sub(sum) & 0xff) as u8;
+                    mem.data[*offset as usize] = fixup;
+                }
+                _ => {}
+            }
+        }
+        Ok(())
+    }
+
+    pub fn rsdp(&self) -> Option<*const ()> {
+        let mem = self
+            .memories
+            .iter()
+            .find(|m| &m.filename == "etc/acpi/rsdp")?;
+        Some(mem.data.as_ptr().cast())
     }
 }
