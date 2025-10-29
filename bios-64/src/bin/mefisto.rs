@@ -22,13 +22,27 @@ use virtfw_bios_64::efi::rng;
 use virtfw_bios_64::exception::exception_init;
 use virtfw_bios_64::sercon::sercon_init;
 use virtfw_bios_64::{println, symrange};
-use virtfw_libhw::fwcfg::acpi;
 use virtfw_libhw::fwcfg::x86::FwCfgX86;
 use virtfw_libhw::fwcfg::FwCfg;
+use virtfw_libhw::fwcfg::{acpi, smbios};
 use virtfw_libhw::pci::setup::PciSetup;
 use virtfw_libhw::pci::PciHost;
 use virtfw_libhw::qemuboards::{qemu_probe, QemuBoard};
 use virtfw_libhw::size::*;
+
+const SMBIOS_GUID: Guid = guid!(
+    0xeb9d2d31,
+    0x2d88,
+    0x11d3,
+    [0x9a, 0x16, 0x0, 0x90, 0x27, 0x3f, 0xc1, 0x4d]
+);
+
+const SMBIOS3_GUID: Guid = guid!(
+    0xf2fd1544,
+    0x9794,
+    0x4a2c,
+    [0x99, 0x2e, 0xe5, 0xbb, 0xcf, 0x20, 0xe3, 0x94]
+);
 
 const RSDP_GUID: Guid = guid!(
     0x8868e871,
@@ -196,6 +210,20 @@ fn main() {
     let rng = rng::Random::new();
     let efi = efiloader::init(Some(&CONSOLE), memmap, mapper, rng).expect("init efi runtime");
     info!("efi loader init complete");
+
+    if let Some(mut smbios) = smbios::SmbiosLoader::new(&FWCFG) {
+        smbios
+            .load_tables(|s, _a| efi_acpi_alloc(efi, s))
+            .expect("load tables");
+        let (major, minor) = smbios.version().expect("get anchor");
+        let anchor = smbios.anchor().expect("get anchor");
+        info!("smbios: version {major}.{minor} anchor at {anchor:?}");
+        match major {
+            2 => efi.install_configtable(&SMBIOS_GUID, anchor),
+            3 => efi.install_configtable(&SMBIOS3_GUID, anchor),
+            _ => {}
+        }
+    }
 
     if let Some(mut acpi) = acpi::AcpiLoader::new(&FWCFG) {
         acpi.load_tables(|s, _a| efi_acpi_alloc(efi, s))
