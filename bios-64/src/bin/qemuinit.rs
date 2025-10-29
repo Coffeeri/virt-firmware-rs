@@ -9,7 +9,7 @@ use virtfw_bios_64::alloc::alloc_init;
 use virtfw_bios_64::println;
 use virtfw_bios_64::sercon::sercon_init;
 use virtfw_libhw::fwcfg::x86::FwCfgX86;
-use virtfw_libhw::fwcfg::{acpi, smbios};
+use virtfw_libhw::fwcfg::{acpi, default_static_alloc, smbios};
 use virtfw_libhw::pci::setup::PciSetup;
 use virtfw_libhw::pci::{pci_foreach_device, PciHost};
 use virtfw_libhw::qemuboards::qemu_probe;
@@ -82,7 +82,10 @@ fn main() {
     }
 
     if let Some(mut acpi) = acpi::AcpiLoader::new(&fwcfg) {
-        acpi.load_tables();
+        acpi.load_tables(default_static_alloc).expect("load tables");
+        acpi.run_commands().expect("relocate tables");
+        let rsdp = acpi.rsdp().expect("get rsdp");
+        info!("acpi: rsdp at {rsdp:?}");
     }
 
     board.poweroff();
