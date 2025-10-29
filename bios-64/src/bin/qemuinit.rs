@@ -76,9 +76,12 @@ fn main() {
     scan_pci_bus(pcihost);
 
     let fwcfg = FwCfgX86::new();
-    if let Some(smbios) = smbios::SmbiosLoader::new(&fwcfg) {
-        let (major, minor) = smbios.version();
-        info!("smbios: version {major}.{minor}");
+    if let Some(mut smbios) = smbios::SmbiosLoader::new(&fwcfg) {
+        smbios
+            .load_tables(default_static_alloc)
+            .expect("load tables");
+        let anchor = smbios.anchor().expect("get anchor");
+        info!("smbios: anchor at {anchor:?}");
     }
 
     if let Some(mut acpi) = acpi::AcpiLoader::new(&fwcfg) {
