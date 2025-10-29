@@ -7,10 +7,12 @@ use core::ops::Range;
 use core::ptr::addr_of_mut;
 use log::{error, info};
 
-use efiloader::memmap::MemoryMap;
+use efiloader::memmap::{MemoryMap, Placement};
 use efiloader::memorytype::EfiMemoryType::*;
 use efiloader::memorytype::{EFI_MEMORY_RO, EFI_MEMORY_XP};
+use efiloader::EfiContext;
 use efiloader::MemoryMapper;
+use efiloader::{guid, Guid};
 
 use virtfw_bios_64::alloc::alloc_init;
 use virtfw_bios_64::efi::console::Console;
@@ -20,12 +22,20 @@ use virtfw_bios_64::efi::rng;
 use virtfw_bios_64::exception::exception_init;
 use virtfw_bios_64::sercon::sercon_init;
 use virtfw_bios_64::{println, symrange};
+use virtfw_libhw::fwcfg::acpi;
 use virtfw_libhw::fwcfg::x86::FwCfgX86;
 use virtfw_libhw::fwcfg::FwCfg;
 use virtfw_libhw::pci::setup::PciSetup;
 use virtfw_libhw::pci::PciHost;
 use virtfw_libhw::qemuboards::{qemu_probe, QemuBoard};
 use virtfw_libhw::size::*;
+
+const RSDP_GUID: Guid = guid!(
+    0x8868e871,
+    0xe4f1,
+    0x11d3,
+    [0xbc, 0x22, 0x00, 0x80, 0xc7, 0x3c, 0x88, 0x81]
+);
 
 const BS_POOL_SIZE: usize = MIB;
 const RT_POOL_SIZE: usize = MIB;
@@ -161,6 +171,14 @@ fn qemu_init(memmap: &MemoryMap) -> Option<QemuBoard> {
     Some(board)
 }
 
+fn efi_acpi_alloc(efi: &EfiContext, size: usize) -> Option<&'static mut [u8]> {
+    let limit = Placement::Max(4 * GIB as u64);
+    let pages = size.div_ceil(4096);
+    let uninit = efi.allocate_pages(pages, EfiACPIReclaimMemory, limit)?;
+    let slice = unsafe { core::slice::from_raw_parts_mut(uninit.as_ptr() as *mut _, uninit.len()) };
+    Some(slice)
+}
+
 #[no_mangle]
 fn main() {
     sercon_init(log::LevelFilter::Debug);
@@ -178,6 +196,15 @@ fn main() {
     let rng = rng::Random::new();
     let efi = efiloader::init(Some(&CONSOLE), memmap, mapper, rng).expect("init efi runtime");
     info!("efi loader init complete");
+
+    if let Some(mut acpi) = acpi::AcpiLoader::new(&FWCFG) {
+        acpi.load_tables(|s, _a| efi_acpi_alloc(efi, s))
+            .expect("load tables");
+        acpi.run_commands().expect("relocate tables");
+        let rsdp = acpi.rsdp().expect("get rsdp");
+        info!("acpi: rsdp at {rsdp:?}");
+        efi.install_configtable(&RSDP_GUID, rsdp);
+    }
 
     let loader = loader::FwCfgLoader::new(&FWCFG);
     let kload = loader.kernel_loader();
