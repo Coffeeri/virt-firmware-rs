@@ -5,7 +5,6 @@ use alloc::vec::Vec;
 use log::{debug, warn};
 use zerocopy::FromBytes;
 
-use crate::fwcfg::x86::FwCfgX86;
 use crate::fwcfg::{bytes_to_string, FwCfg, FILENAME_LEN};
 
 const CMD_ALLOCATE: u32 = 1;
@@ -74,13 +73,13 @@ pub struct LoaderMemory {
 }
 
 pub struct AcpiLoader<'f> {
-    fwcfg: &'f FwCfgX86,
+    fwcfg: &'f dyn FwCfg,
     commands: Vec<LoaderCommand>,
     memories: Vec<LoaderMemory>,
 }
 
 impl<'f> AcpiLoader<'f> {
-    pub fn new(fwcfg: &'f FwCfgX86) -> Option<Self> {
+    pub fn new(fwcfg: &'f dyn FwCfg) -> Option<Self> {
         let mut loader = Self {
             fwcfg,
             commands: Vec::new(),
