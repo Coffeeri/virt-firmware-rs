@@ -14,7 +14,7 @@ edition.workspace = true
 name = "hello"
 
 [[bin]]
-name = "pci"
+name = "qemuinit"
 required-features = [ "alloc" ]
 
 [[bin]]

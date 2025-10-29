@@ -10,9 +10,9 @@ run-hello-bios64:
 	qemu-system-x86_64 -nographic -net none \
 		-bios target/x86_64-unknown-none/debug/hello.bin
 
-run-pci-bios64:
+run-qemuinit-bios64:
 	qemu-system-x86_64 -nographic -net none -M q35 \
-		-bios target/x86_64-unknown-none/debug/pci.bin \
+		-bios target/x86_64-unknown-none/debug/qemuinit.bin \
 		\
 		-device pcie-root-port,id=port0,addr=8.0,chassis=0,multifunction=on \
 		-device pcie-root-port,id=port1,addr=8.1,chassis=1 \
