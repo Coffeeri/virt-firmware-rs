@@ -10,6 +10,8 @@ pub mod smbios;
 #[cfg(feature = "alloc")]
 extern crate alloc;
 #[cfg(feature = "alloc")]
+use alloc::alloc::{alloc, Layout};
+#[cfg(feature = "alloc")]
 use alloc::string::String;
 #[cfg(feature = "alloc")]
 use alloc::vec;
@@ -232,4 +234,14 @@ fn bytes_to_string(data: &[u8]) -> String {
         s.push(*b as char);
     }
     s
+}
+
+#[cfg(feature = "alloc")]
+pub fn default_static_alloc(size: usize, align: usize) -> Option<&'static mut [u8]> {
+    let layout = Layout::from_size_align(size, align).ok()?;
+    let slice = unsafe {
+        let ptr = alloc(layout);
+        core::slice::from_raw_parts_mut(ptr, size)
+    };
+    Some(slice)
 }
