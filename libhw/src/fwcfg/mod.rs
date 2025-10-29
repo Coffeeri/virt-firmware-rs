@@ -175,7 +175,7 @@ pub trait FwCfg {
         }
     }
 
-    fn write_dma<T>(&self, item: u16, ptr: *const T, bytecount: usize) {
+    fn write_dma(&self, item: u16, ptr: *const (), bytecount: usize) {
         let control = self.select_dma(Some(item)) | DMA_CTL_WRITE;
         let dmactrl = FwCfgDma {
             control: u32::swap_bytes(control),
