@@ -193,7 +193,7 @@ impl Builder {
                     self.add_igvm_param_memmap(0, r.memory.0 as u32);
                 }
                 OvmfRegionType::IgvmParamVpCount => {
-                    self.add_igvm_param_memmap(0, r.memory.0 as u32);
+                    self.add_igvm_param_vpcount(0, r.memory.0 as u32);
                 }
                 _ => {}
             }
