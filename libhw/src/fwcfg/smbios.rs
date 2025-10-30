@@ -95,7 +95,7 @@ struct SmbiosV3 {
 struct SmbiosType0 {
     // header
     table_type: u8,
-    lenght: u8,
+    length: u8,
     handle: u16,
     // type 0
     vendor: u8,       // string
@@ -176,7 +176,7 @@ impl<'f> SmbiosLoader<'f> {
             | (1 << 4); // virtuaL machine
         let type0 = SmbiosType0 {
             table_type: 0,
-            lenght: size_of::<SmbiosType0>() as u8,
+            length: size_of::<SmbiosType0>() as u8,
             handle: 0,
             vendor: 1,
             bios_version: 2,
