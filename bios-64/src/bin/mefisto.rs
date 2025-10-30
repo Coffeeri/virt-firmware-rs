@@ -26,7 +26,6 @@ use virtfw_libhw::fwcfg::x86::FwCfgX86;
 use virtfw_libhw::fwcfg::FwCfg;
 use virtfw_libhw::fwcfg::{acpi, smbios};
 use virtfw_libhw::pci::setup::PciSetup;
-use virtfw_libhw::pci::PciHost;
 use virtfw_libhw::qemuboards::{qemu_probe, QemuBoard};
 use virtfw_libhw::size::*;
 
@@ -71,8 +70,14 @@ fn print_range(prefix: &str, range: &Range<usize>) {
     );
 }
 
-fn memory_detect(memmap: &MemoryMap, mapper: &mapper::MemoryMapper, fwcfg: &FwCfgX86) {
+fn memory_detect(
+    memmap: &MemoryMap,
+    mapper: &mapper::MemoryMapper,
+    fwcfg: &FwCfgX86,
+) -> (usize, usize) {
     // read e820 memory map
+    let mut below_4g_max = 0;
+    let mut above_4g_max = 4 * GIB;
     let (item, size) = fwcfg.findfile("etc/e820").expect("find e820");
     info!("fwcfg: etc/e820 is item {item}, size {size}");
     fwcfg.select(item);
@@ -87,17 +92,30 @@ fn memory_detect(memmap: &MemoryMap, mapper: &mapper::MemoryMapper, fwcfg: &FwCf
                 print_range("e820/memory", &r);
                 memmap.declare_memory_region(&r).expect("add memory");
                 if r.start >= 4 * GIB {
+                    // we boot with the first 4GB already identity
+                    // mapped, so only memory above that must be
+                    // mapped.
                     mapper.map_range(&r);
+                }
+                if r.end < 4 * GIB && below_4g_max < r.end {
+                    below_4g_max = r.end;
+                }
+                if r.end > 4 * GIB && above_4g_max < r.end {
+                    above_4g_max = r.end;
                 }
             }
             2 => {
                 print_range("e820/reserved", &r);
+                memmap
+                    .declare_runtime_region(&r, EfiReservedEfiMemoryType, 0, 0)
+                    .expect("reserve range");
             }
             _ => {
                 print_range("e820/*UNKNOWN*", &r);
             }
         }
     }
+    (below_4g_max, above_4g_max)
 }
 
 fn memory_init(memmap: &MemoryMap, mapper: &mapper::MemoryMapper) {
@@ -154,15 +172,28 @@ fn memory_init(memmap: &MemoryMap, mapper: &mapper::MemoryMapper) {
     mapper.unmap_page(stack.start);
 }
 
-fn pci_init(pcihost: &dyn PciHost) {
-    let mut pcisetup = PciSetup::new(pcihost);
+fn pci_init(board: &QemuBoard, lowmem: usize, _highmem: usize) {
+    let mut pcisetup = PciSetup::new(board.pcihost());
 
+    // 32-bit PCI MMIO window
+    let pci32 = if let Some(ecam) = board.ecam() {
+        // q35 - max lowmem addr is 0xb000_0000
+        lowmem.next_multiple_of(GIB)..ecam.start
+    } else {
+        // pc - max lowmem addr is 0xe000_0000
+        lowmem.next_multiple_of(256 * MIB)..0xfc00_0000
+    };
+    print_range("pci/mmio32", &pci32);
+
+    // 64-bit PCI MMIO window
     // FIXME: static config works for:
     //  * small/medium guests (up to ~44 GB)
     //  * without huge PCI bars (up to 4 GB should be ok), and
-    //  * no odd memory sizes (multiple of 1 GB).
-    pcisetup.configure_mem32(0xc000_0000..0xe000_0000);
-    pcisetup.configure_mem64(0xc_0000_0000..0x10_0000_0000);
+    let pci64 = 0xc_0000_0000..0x10_0000_0000;
+    print_range("pci/mmio64", &pci64);
+
+    pcisetup.configure_mem32(pci32);
+    pcisetup.configure_mem64(pci64);
 
     info!("setting up pci bus");
     pcisetup.enumerate_all();
@@ -171,7 +202,7 @@ fn pci_init(pcihost: &dyn PciHost) {
     pcisetup.apply_all();
 }
 
-fn qemu_init(memmap: &MemoryMap) -> Option<QemuBoard> {
+fn qemu_init(memmap: &MemoryMap, lowmem: usize, highmem: usize) -> Option<QemuBoard> {
     let board = qemu_probe()?;
     info!("running on: {}", board.name());
     board.init_acpi();
@@ -181,7 +212,7 @@ fn qemu_init(memmap: &MemoryMap) -> Option<QemuBoard> {
             .declare_runtime_region(&ecam, EfiReservedEfiMemoryType, 0, 0)
             .expect("reserve mmconfig");
     }
-    pci_init(board.pcihost());
+    pci_init(&board, lowmem, highmem);
     Some(board)
 }
 
@@ -202,9 +233,9 @@ fn main() {
     let mapper = mapper::MemoryMapper::new();
     let memmap = MemoryMap::new();
 
-    memory_detect(&memmap, &mapper, &FWCFG);
+    let (lowmem, highmem) = memory_detect(&memmap, &mapper, &FWCFG);
     memory_init(&memmap, &mapper);
-    let board = qemu_init(&memmap);
+    let board = qemu_init(&memmap, lowmem, highmem);
     info!("efi memory map complete");
 
     let rng = rng::Random::new();
