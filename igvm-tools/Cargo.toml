@@ -13,13 +13,12 @@ edition.workspace = true
 [dependencies]
 bitfield-struct.workspace = true
 clap.workspace = true
+igvm.workspace = true
+igvm_defs.workspace = true
 log.workspace = true
 stderrlog.workspace = true
 uguid.workspace = true
 zerocopy.workspace = true
-
-igvm = "0.4"
-igvm_defs = "0.4"
 
 sha2 = "0.10.9"
 object = "0.37"
