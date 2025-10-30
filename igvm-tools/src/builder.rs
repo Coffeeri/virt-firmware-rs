@@ -167,6 +167,16 @@ impl Builder {
         self.directives.push(IgvmDirectiveHeader::VpCount(param));
     }
 
+    pub fn add_igvm_param_insert(&mut self, index: u32, gpa: u64) {
+        self.directives.push(IgvmDirectiveHeader::ParameterInsert(
+            IGVM_VHS_PARAMETER_INSERT {
+                parameter_area_index: index,
+                gpa,
+                compatibility_mask: self.compatibility_mask_all,
+            },
+        ));
+    }
+
     pub fn add_ovmf_igvm_params(&mut self, ovmfmeta: &OvmfMeta) -> &mut Builder {
         let Some(area) = &ovmfmeta
             .regions
@@ -177,7 +187,6 @@ impl Builder {
         };
 
         self.add_igvm_param_area(0, area.memory.1 as u64);
-
         for r in &ovmfmeta.regions {
             match r.etype {
                 OvmfRegionType::IgvmParamMemoryMap => {
@@ -189,14 +198,7 @@ impl Builder {
                 _ => {}
             }
         }
-
-        self.directives.push(IgvmDirectiveHeader::ParameterInsert(
-            IGVM_VHS_PARAMETER_INSERT {
-                parameter_area_index: 0,
-                gpa: area.memory.0 as u64,
-                compatibility_mask: self.compatibility_mask_all,
-            },
-        ));
+        self.add_igvm_param_insert(0, area.memory.0 as u64);
 
         self
     }
