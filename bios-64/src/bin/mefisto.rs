@@ -2,13 +2,16 @@
 #![no_std]
 #![no_main]
 
+extern crate alloc;
+use alloc::vec::Vec;
+
 use core::mem::MaybeUninit;
 use core::ops::Range;
 use core::ptr::addr_of_mut;
 use log::{debug, error, info};
 
 use efiloader::memmap::{MemoryMap, Placement};
-use efiloader::memorytype::EfiMemoryType::*;
+use efiloader::memorytype::EfiMemoryType::{self, *};
 use efiloader::memorytype::{EFI_MEMORY_RO, EFI_MEMORY_XP};
 use efiloader::EfiContext;
 use efiloader::MemoryMapper;
@@ -71,14 +74,9 @@ fn print_range(prefix: &str, range: &Range<usize>) {
     );
 }
 
-fn memory_detect(
-    memmap: &MemoryMap,
-    mapper: &mapper::MemoryMapper,
-    fwcfg: &FwCfgX86,
-) -> (usize, usize) {
-    // read e820 memory map
-    let mut below_4g_max = 0;
-    let mut above_4g_max = 4 * GIB;
+fn memory_detect_fwcfg(fwcfg: &FwCfgX86) -> Vec<(Range<usize>, EfiMemoryType)> {
+    // read e820 memory map from fwcfg
+    let mut memory = Vec::new();
     let (item, size) = fwcfg.findfile("etc/e820").expect("find e820");
     debug!("fwcfg: etc/e820 is item {item}, size {size}");
     fwcfg.select(item);
@@ -86,40 +84,72 @@ fn memory_detect(
         let base = fwcfg.read64_le() as usize;
         let size = fwcfg.read64_le() as usize;
         let kind = fwcfg.read32_le();
-
-        let r = base..base + size;
+        let range = base..base + size;
         match kind {
             1 => {
-                print_range("e820/memory", &r);
-                memmap.declare_memory_region(&r).expect("add memory");
-                if r.start >= 4 * GIB {
-                    // we boot with the first 4GB already identity
-                    // mapped, so only memory above that must be
-                    // mapped.
-                    mapper.map_range(&r);
-                }
-                if r.end < 4 * GIB && below_4g_max < r.end {
-                    below_4g_max = r.end;
-                }
-                if r.end > 4 * GIB && above_4g_max < r.end {
-                    above_4g_max = r.end;
-                }
+                print_range("e820/memory", &range);
+                memory.push((range, EfiConventionalMemory));
             }
             2 => {
-                print_range("e820/reserved", &r);
-                memmap
-                    .declare_runtime_region(&r, EfiReservedEfiMemoryType, 0, 0)
-                    .expect("reserve range");
+                print_range("e820/reserved", &range);
+                memory.push((range, EfiReservedEfiMemoryType));
             }
             _ => {
-                print_range("e820/*UNKNOWN*", &r);
+                print_range("e820/*UNKNOWN*", &range);
             }
         }
     }
-    (below_4g_max, above_4g_max)
+    memory
 }
 
-fn memory_init(memmap: &MemoryMap, mapper: &mapper::MemoryMapper) {
+fn memory_phys_init(
+    memmap: &MemoryMap,
+    mapper: &mapper::MemoryMapper,
+    memory: &[(Range<usize>, EfiMemoryType)],
+) {
+    // process memory map
+    for (range, kind) in memory {
+        match kind {
+            EfiConventionalMemory => {
+                memmap.declare_memory_region(range).expect("add memory");
+                if range.start >= 4 * GIB {
+                    // we boot with the first 4GB already identity
+                    // mapped, so only memory above that must be
+                    // mapped.
+                    mapper.map_range(range);
+                }
+            }
+            EfiReservedEfiMemoryType => {
+                memmap
+                    .declare_runtime_region(range, EfiReservedEfiMemoryType, 0, 0)
+                    .expect("reserve range");
+            }
+            _ => {}
+        }
+    }
+}
+
+fn memory_below_4g_max(memory: &[(Range<usize>, EfiMemoryType)]) -> usize {
+    memory
+        .iter()
+        .filter(|m| m.0.end < 4 * GIB)
+        .filter(|m| m.1 == EfiConventionalMemory)
+        .map(|m| m.0.end)
+        .max()
+        .unwrap()
+}
+
+fn memory_above_4g_max(memory: &[(Range<usize>, EfiMemoryType)]) -> usize {
+    memory
+        .iter()
+        .filter(|m| m.0.end > 4 * GIB)
+        .filter(|m| m.1 == EfiConventionalMemory)
+        .map(|m| m.0.end)
+        .max()
+        .unwrap_or(4 * GIB)
+}
+
+fn memory_virt_init(memmap: &MemoryMap, mapper: &mapper::MemoryMapper) {
     let rom = symrange!(copy_from, flash_end);
     let code = symrange!(copy_start, data_start);
     let data = symrange!(data_start, copy_end);
@@ -235,8 +265,11 @@ fn main() {
     let mapper = mapper::MemoryMapper::new();
     let memmap = MemoryMap::new();
 
-    let (lowmem, highmem) = memory_detect(&memmap, &mapper, &FWCFG);
-    memory_init(&memmap, &mapper);
+    let memory = memory_detect_fwcfg(&FWCFG);
+    memory_phys_init(&memmap, &mapper, &memory);
+    memory_virt_init(&memmap, &mapper);
+    let lowmem = memory_below_4g_max(&memory);
+    let highmem = memory_above_4g_max(&memory);
     let board = qemu_init(&memmap, lowmem, highmem);
     info!("efi memory map complete");
 
