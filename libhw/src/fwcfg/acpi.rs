@@ -152,10 +152,10 @@ impl<'f> AcpiLoader<'f> {
                 let (item, size) = self
                     .fwcfg
                     .findfile(filename)
-                    .ok_or("fwcfg file not found: {filename}")?;
+                    .ok_or("fwcfg file not found")?;
 
                 let data_opt = alloc_func(size as usize, *align as usize);
-                let data = data_opt.ok_or("allocation failed (size={size})")?;
+                let data = data_opt.ok_or("allocation failed")?;
                 self.fwcfg
                     .read_dma(Some(item), data.as_mut_ptr().cast(), size as usize);
 
@@ -194,13 +194,13 @@ impl<'f> AcpiLoader<'f> {
                         .memories
                         .iter()
                         .find(|m| &m.filename == pointee)
-                        .ok_or("not found: {pointee}")?
+                        .ok_or("allocation not found")?
                         .addr;
                     let src: &mut LoaderMemory = self
                         .memories
                         .iter_mut()
                         .find(|m| &m.filename == pointer)
-                        .ok_or("not found: {pointer}")?;
+                        .ok_or("allocation not found")?;
                     let data =
                         &mut src.data[(*offset as usize)..(*offset as usize + *size as usize)];
                     match size {
@@ -217,7 +217,7 @@ impl<'f> AcpiLoader<'f> {
                             data.copy_from_slice(&value.to_le_bytes());
                         }
                         _ => {
-                            return Err("unhandled ptr size {size}");
+                            return Err("unhandled ptr size");
                         }
                     }
                 }
@@ -231,7 +231,7 @@ impl<'f> AcpiLoader<'f> {
                         .memories
                         .iter_mut()
                         .find(|m| &m.filename == filename)
-                        .ok_or("not found: {filename}")?;
+                        .ok_or("allocation not found")?;
                     let data = &mem.data[(*start as usize)..((start + length) as usize)];
                     let sum: u32 = data.iter().map(|b| *b as u32).sum();
                     let fixup = (0u32.wrapping_sub(sum) & 0xff) as u8;
