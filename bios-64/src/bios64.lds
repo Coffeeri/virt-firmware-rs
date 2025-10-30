@@ -60,6 +60,11 @@ SECTIONS
         *(.igvm.memmap)
     } > highram
 
+    /* igvm data hobs */
+    .igvm.datahobs (NOLOAD) : ALIGN(4096) {
+        *(.igvm.datahobs)
+    } > highram
+
     /* heap */
     .heap (NOLOAD) : ALIGN(2M) {
         heap_start = .;
