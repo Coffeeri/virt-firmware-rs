@@ -23,16 +23,19 @@ fn print_memory_map() {
         if m.number_of_pages == 0 || m.reserved != 0 {
             break;
         }
-        println!("  {m:?}");
+        println!(
+            "  first page {:x}, page count {:x}, type {:?}, flags {}",
+            m.starting_gpa_page_number, m.number_of_pages, m.entry_type, m.flags
+        );
     }
 }
 
 #[no_mangle]
 fn main() {
-    sercon_init(log::LevelFilter::Debug);
+    sercon_init(log::LevelFilter::Info);
 
     println!("");
-    println!("IGVM testing firmware");
+    println!("IGVM test firmware image");
     println!("");
 
     print_memory_map();
