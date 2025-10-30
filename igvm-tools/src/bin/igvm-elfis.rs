@@ -241,6 +241,7 @@ fn main() -> ExitCode {
         builder.add_empty_normal_pages(r.vma.unwrap() as usize, r.size as usize);
     }
 
+    // IGVM parameters
     let params: Vec<_> = regions.iter().filter(|r| r.is_igvm_param()).collect();
     if !params.is_empty() {
         let s = params
@@ -265,6 +266,7 @@ fn main() -> ExitCode {
         builder.add_igvm_param_insert(0, s);
     };
 
+    // constructing igvm is complete
     let igvm_res = builder.finalize();
     if let Err(e) = igvm_res {
         error!("build igvm: {e}");
