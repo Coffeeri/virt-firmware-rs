@@ -5,7 +5,7 @@
 use core::mem::MaybeUninit;
 use core::ops::Range;
 use core::ptr::addr_of_mut;
-use log::{error, info};
+use log::{debug, error, info};
 
 use efiloader::memmap::{MemoryMap, Placement};
 use efiloader::memorytype::EfiMemoryType::*;
@@ -80,7 +80,7 @@ fn memory_detect(
     let mut below_4g_max = 0;
     let mut above_4g_max = 4 * GIB;
     let (item, size) = fwcfg.findfile("etc/e820").expect("find e820");
-    info!("fwcfg: etc/e820 is item {item}, size {size}");
+    debug!("fwcfg: etc/e820 is item {item}, size {size}");
     fwcfg.select(item);
     for _ in 0..size / 20 {
         let base = fwcfg.read64_le() as usize;
@@ -228,7 +228,7 @@ fn efi_acpi_alloc(efi: &EfiContext, size: usize) -> Option<&'static mut [u8]> {
 
 #[no_mangle]
 fn main() {
-    sercon_init(log::LevelFilter::Debug);
+    sercon_init(log::LevelFilter::Info);
     exception_init();
     alloc_init();
 
