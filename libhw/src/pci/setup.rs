@@ -4,7 +4,7 @@ use alloc::vec::Vec;
 use core::cmp::Reverse;
 use core::fmt;
 use core::ops::Range;
-use log::{debug, trace};
+use log::{debug, trace, warn};
 
 use crate::pci::{pci_foreach_device, PciAddrKind, PciAddrRange, PciDevAddr, PciDevice, PciHost};
 use crate::size::*;
@@ -40,8 +40,8 @@ pub struct PciSetup<'p> {
     bridge_min_io: u64,
     bridge_min_mem32: u64,
     bridge_min_mem64: u64,
-    window_mem32: Range<u64>,
-    window_mem64: Range<u64>,
+    window_mem32: Range<usize>,
+    window_mem64: Range<usize>,
 }
 
 impl<'p> PciSetup<'p> {
@@ -61,12 +61,12 @@ impl<'p> PciSetup<'p> {
         }
     }
 
-    pub fn configure_mem32(&mut self, range: Range<u64>) {
+    pub fn configure_mem32(&mut self, range: Range<usize>) {
         self.window_mem32 = range;
     }
 
-    pub fn configure_mem64(&mut self, range: Range<u64>) {
-        self.bridge_min_mem64 = (range.end - range.start) / 256;
+    pub fn configure_mem64(&mut self, range: Range<usize>) {
+        self.bridge_min_mem64 = ((range.end - range.start) / 256) as u64;
         self.window_mem64 = range;
     }
 
@@ -216,13 +216,29 @@ impl<'p> PciSetup<'p> {
         self.mem64.size = self.bus_resource_sum(0, PciAddrKind::Mem64).unwrap_or(0);
 
         if self.io.base == 0 && self.io.size > 0 {
-            self.io.base = 0x10000 - self.io.size;
+            if self.io.size < 0xf000 {
+                self.io.base = 0x10000 - self.io.size;
+            } else {
+                warn!("pci: out of io address space");
+            }
         }
         if self.mem32.base == 0 && self.mem32.size > 0 {
-            self.mem32.base = self.window_mem32.end - self.mem32.size;
+            let start = (self.window_mem32.start as u64).next_multiple_of(self.mem32.size);
+            let end = start + self.mem32.size;
+            if end < self.window_mem32.end as u64 {
+                self.mem32.base = start;
+            } else {
+                warn!("pci: out of mmio32 address space");
+            }
         }
         if self.mem64.base == 0 && self.mem64.size > 0 {
-            self.mem64.base = self.window_mem64.start;
+            let start = (self.window_mem64.start as u64).next_multiple_of(self.mem64.size);
+            let end = start + self.mem64.size;
+            if end < self.window_mem64.end as u64 {
+                self.mem64.base = start;
+            } else {
+                warn!("pci: out of mmio64 address space");
+            }
         }
 
         debug!("  {}", &self.io);
