@@ -11,12 +11,14 @@ use std::fs;
 use std::process::ExitCode;
 
 use virtfw_igvm_tools::builder::Builder;
+use virtfw_igvm_tools::efidata::{EfiIgvmDataList, EfiIgvmDataType};
 use virtfw_igvm_tools::inspect::inspect_igvm;
 use virtfw_igvm_tools::x86regs::flat32_mode_regs;
 
 const USE_FLAT32: bool = false;
 
 const IGVM_PARAM_MEMMAP: &str = ".igvm.memmap";
+const IGVM_DATA_HOB: &str = ".igvm.datahobs";
 
 #[derive(Parser, Debug)]
 #[command(version, name = "igvm-elfis", about = "convert elf images into igvm", long_about = None)]
@@ -32,6 +34,10 @@ struct Args {
     /// input elf image
     #[arg(short, long, value_name = "ELF")]
     input: String,
+
+    /// input efi binary (usually linux kernel)
+    #[arg(short, long, value_name = "EFI")]
+    kernel: Option<String>,
 
     /// output igvm image
     #[arg(short, long, value_name = "IGVM")]
@@ -74,6 +80,10 @@ impl Region<'_> {
 
     fn is_igvm_param(&self) -> bool {
         self.name == IGVM_PARAM_MEMMAP
+    }
+
+    fn is_igvm_data_hobs(&self) -> bool {
+        self.name == IGVM_DATA_HOB
     }
 }
 
@@ -162,6 +172,32 @@ fn parse_elf(elf: ElfFile<FileHeader64<Endianness>>) -> Option<Vec<Region>> {
         }
     }
     Some(regions)
+}
+
+fn igvm_add_kernel(builder: &mut Builder, hobs_region: &Region, kernel_blob: Option<&[u8]>) {
+    let mut hoblist = EfiIgvmDataList::new(0x20000000); // start at 512 MB
+
+    if let Some(b) = kernel_blob {
+        info!("add efi data: kernel");
+        hoblist.add(b, EfiIgvmDataType::Kernel, false);
+    }
+
+    if hoblist.is_empty() {
+        return;
+    }
+
+    let addr = hobs_region.vma.unwrap() as usize;
+    info!("add efi data: hoblist at 0x{addr:x}");
+    let hobs_blob = hoblist.hobs();
+    builder.add_data_pages(addr, &hobs_blob);
+
+    // add data pages
+    for (addr, blob) in hoblist.blobs(true) {
+        builder.add_data_pages(addr, blob);
+    }
+    for (addr, blob) in hoblist.blobs(false) {
+        builder.add_data_pages_unmeasured(addr, blob);
+    }
 }
 
 fn main() -> ExitCode {
@@ -265,6 +301,20 @@ fn main() -> ExitCode {
         }
         builder.add_igvm_param_insert(0, s);
     };
+
+    // additional data: kernel
+    let kernel_blob = if let Some(kernel_name) = &cfg.kernel {
+        info!("reading {}", &kernel_name);
+        let data = std::fs::read(kernel_name).expect("kernel: file read error");
+        Some(data)
+    } else {
+        None
+    };
+
+    // additional data: HOBs
+    if let Some(region) = regions.iter().find(|r| r.is_igvm_data_hobs()) {
+        igvm_add_kernel(&mut builder, region, kernel_blob.as_deref());
+    }
 
     // constructing igvm is complete
     let igvm_res = builder.finalize();
