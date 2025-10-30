@@ -178,7 +178,7 @@ fn pci_init(board: &QemuBoard, lowmem: usize, _highmem: usize) {
     let phys_bits = cpu_phys_bits();
     let phys_max = 1usize << phys_bits;
 
-    print_range("cpu/physmem", &(0..phys_max));
+    print_range("cpu/physaddrs", &(0..phys_max));
 
     // 32-bit PCI MMIO window
     let pci32 = if let Some(ecam) = board.ecam() {
