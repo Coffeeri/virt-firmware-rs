@@ -29,5 +29,14 @@ run-mefisto-bios64:
 	qemu-system-x86_64 -nographic -net none \
 		-enable-kvm -no-reboot -M q35 -m 4G -cpu host \
 		-bios target/x86_64-unknown-none/debug/mefisto.bin \
+		\
+		-device pcie-root-port,id=port0,addr=8.0,chassis=0,multifunction=on \
+		-device pcie-root-port,id=port1,addr=8.1,chassis=1 \
+		-device pcie-root-port,id=port2,addr=8.2,chassis=2 \
+		-device pcie-root-port,id=port3,addr=8.3,chassis=3 \
+		\
+		-device virtio-scsi-pci,bus=port2 \
+		-device qemu-xhci,bus=port3 \
+		\
 		-kernel $(HOST_KERNEL) \
 		-append "console=ttyS0 panic=1 loglevel=7"
