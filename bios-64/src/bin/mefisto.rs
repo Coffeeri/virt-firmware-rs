@@ -262,6 +262,10 @@ fn main() {
     exception_init();
     alloc_init();
 
+    if !FWCFG.detect() {
+        panic!("fwcfg: not present");
+    }
+
     let mapper = mapper::MemoryMapper::new();
     let memmap = MemoryMap::new();
 
