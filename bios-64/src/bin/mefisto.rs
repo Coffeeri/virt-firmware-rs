@@ -212,10 +212,17 @@ fn main() {
     info!("efi loader init complete");
 
     if let Some(mut smbios) = smbios::SmbiosLoader::new(&FWCFG) {
+        smbios.set_bios(
+            25,
+            10,
+            "mefisto/efiloader",
+            env!("CARGO_PKG_VERSION"),
+            "5/5/2025",
+        );
         smbios
             .load_tables(|s, _a| efi_acpi_alloc(efi, s))
             .expect("load tables");
-        let (major, minor) = smbios.version().expect("get anchor");
+        let (major, minor) = smbios.version().expect("get version");
         let anchor = smbios.anchor().expect("get anchor");
         info!("smbios: version {major}.{minor} anchor at {anchor:?}");
         match major {
