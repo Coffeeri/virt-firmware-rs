@@ -28,6 +28,24 @@ pub fn cpuid(func: u32, subfn: u32) -> (u32, u32, u32, u32) {
     (eax, ebx, ecx, edx)
 }
 
+/// return physical address space bits
+pub fn cpu_phys_bits() -> u32 {
+    let (max, _, _, _) = cpuid(0x80000000, 0);
+    if max < 0x80000008 {
+        return 36;
+    }
+
+    let (eax, _, _, _) = cpuid(0x80000008, 0);
+    let phys_bits = eax & 0xff;
+    let guest_phys_bits = (eax >> 16) & 0xff;
+
+    if guest_phys_bits != 0 {
+        guest_phys_bits
+    } else {
+        phys_bits
+    }
+}
+
 /// returns true if the CPU supports gigabyte pages.
 pub fn has_gb_pages() -> bool {
     let (max, _, _, _) = cpuid(0x80000000, 0);
@@ -38,6 +56,7 @@ pub fn has_gb_pages() -> bool {
     edx & (1 << 26) != 0
 }
 
+/// returns true if the CPU supports rdrand instruction
 pub fn has_rdrand() -> bool {
     let (_, _, ecx, _) = cpuid(0x1, 0);
     ecx & (1 << 30) != 0
