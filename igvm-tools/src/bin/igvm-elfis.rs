@@ -16,6 +16,8 @@ use virtfw_igvm_tools::x86regs::flat32_mode_regs;
 
 const USE_FLAT32: bool = false;
 
+const IGVM_PARAM_MEMMAP: &str = ".igvm.memmap";
+
 #[derive(Parser, Debug)]
 #[command(version, name = "igvm-elfis", about = "convert elf images into igvm", long_about = None)]
 struct Args {
@@ -68,6 +70,10 @@ impl Region<'_> {
 
     fn lma(&self) -> String {
         Self::fmtaddr(self.lma)
+    }
+
+    fn is_igvm_param(&self) -> bool {
+        self.name == IGVM_PARAM_MEMMAP
     }
 }
 
@@ -180,10 +186,10 @@ fn main() -> ExitCode {
 
     if cfg.regions {
         info!("regions found");
-        println!("{:<10}  {:>8}  {:>8}  {:>6}", "Name", "VMA", "LMA", "Size");
+        println!("{:<12}  {:>8}  {:>8}  {:>6}", "Name", "VMA", "LMA", "Size");
         println!("-----------------------------------------");
         for r in &regions {
-            println!("{:<10}  {}  {}  {:6x}", r.name, r.vma(), r.lma(), r.size);
+            println!("{:<12}  {}  {}  {:6x}", r.name, r.vma(), r.lma(), r.size);
         }
     }
 
@@ -227,11 +233,37 @@ fn main() -> ExitCode {
     // will be pre-accepted pages, also special pages such as cpuid,
     // secrets and igvm parameters will be sections in the elf binary.
     //
-    for r in &regions {
-        if let Some(a) = r.vma {
-            builder.add_empty_normal_pages(a as usize, r.size as usize);
-        }
+    for r in regions
+        .iter()
+        .filter(|r| r.vma.is_some())
+        .filter(|r| !r.is_igvm_param())
+    {
+        builder.add_empty_normal_pages(r.vma.unwrap() as usize, r.size as usize);
     }
+
+    let params: Vec<_> = regions.iter().filter(|r| r.is_igvm_param()).collect();
+    if !params.is_empty() {
+        let s = params
+            .iter()
+            .map(|r| r.vma.unwrap())
+            .min()
+            .expect("params start");
+        let e = params
+            .iter()
+            .map(|r| r.vma.unwrap() + r.size)
+            .max()
+            .expect("params end")
+            .next_multiple_of(4096);
+        info!("igvm params: 0x{s:x} -> 0x{e:x}");
+
+        builder.add_igvm_param_area(0, e - s);
+        for p in params {
+            if p.name == IGVM_PARAM_MEMMAP {
+                builder.add_igvm_param_memmap(0, (p.vma.unwrap() - s) as u32);
+            }
+        }
+        builder.add_igvm_param_insert(0, s);
+    };
 
     let igvm_res = builder.finalize();
     if let Err(e) = igvm_res {
