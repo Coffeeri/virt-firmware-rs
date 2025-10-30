@@ -143,6 +143,14 @@ impl Builder {
         self
     }
 
+    pub fn add_igvm_param_area(&mut self, index: u32, bytes: u64) {
+        self.directives.push(IgvmDirectiveHeader::ParameterArea {
+            parameter_area_index: index,
+            number_of_bytes: bytes,
+            initial_data: Vec::new(),
+        });
+    }
+
     pub fn add_ovmf_igvm_params(&mut self, ovmfmeta: &OvmfMeta) -> &mut Builder {
         let Some(area) = &ovmfmeta
             .regions
@@ -152,11 +160,7 @@ impl Builder {
             return self;
         };
 
-        self.directives.push(IgvmDirectiveHeader::ParameterArea {
-            parameter_area_index: 0,
-            number_of_bytes: area.memory.1 as u64,
-            initial_data: Vec::new(),
-        });
+        self.add_igvm_param_area(0, area.memory.1 as u64);
 
         for r in &ovmfmeta.regions {
             match r.etype {
