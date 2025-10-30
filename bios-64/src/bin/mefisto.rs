@@ -28,6 +28,7 @@ use virtfw_libhw::fwcfg::{acpi, smbios};
 use virtfw_libhw::pci::setup::PciSetup;
 use virtfw_libhw::qemuboards::{qemu_probe, QemuBoard};
 use virtfw_libhw::size::*;
+use virtfw_libhw::x86cpuid::cpu_phys_bits;
 
 const SMBIOS_GUID: Guid = guid!(
     0xeb9d2d31,
@@ -174,6 +175,10 @@ fn memory_init(memmap: &MemoryMap, mapper: &mapper::MemoryMapper) {
 
 fn pci_init(board: &QemuBoard, lowmem: usize, _highmem: usize) {
     let mut pcisetup = PciSetup::new(board.pcihost());
+    let phys_bits = cpu_phys_bits();
+    let phys_max = 1usize << phys_bits;
+
+    print_range("cpu/physmem", &(0..phys_max));
 
     // 32-bit PCI MMIO window
     let pci32 = if let Some(ecam) = board.ecam() {
@@ -185,11 +190,8 @@ fn pci_init(board: &QemuBoard, lowmem: usize, _highmem: usize) {
     };
     print_range("pci/mmio32", &pci32);
 
-    // 64-bit PCI MMIO window
-    // FIXME: static config works for:
-    //  * small/medium guests (up to ~44 GB)
-    //  * without huge PCI bars (up to 4 GB should be ok), and
-    let pci64 = 0xc_0000_0000..0x10_0000_0000;
+    // 64-bit PCI MMIO window (last 1/4 of address space)
+    let pci64 = (phys_max - phys_max / 4)..phys_max;
     print_range("pci/mmio64", &pci64);
 
     pcisetup.configure_mem32(pci32);
