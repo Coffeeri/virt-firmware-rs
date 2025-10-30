@@ -18,6 +18,9 @@ name = "qemuinit"
 required-features = [ "alloc" ]
 
 [[bin]]
+name = "igvmtest"
+
+[[bin]]
 name = "mefisto"
 required-features = [ "efiloader" ]
 
@@ -26,6 +29,7 @@ alloc = [ "dep:linked_list_allocator", "virtfw-libhw/alloc" ]
 efiloader = [ "alloc", "dep:efiloader" ]
 
 [dependencies]
+igvm_defs.workspace = true
 log.workspace = true
 
 efiloader = { version = "0.0.1", optional = true, git = "https://github.com/ardbiesheuvel/efiloader.git", rev = "f53e958" }

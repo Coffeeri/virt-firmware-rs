@@ -55,6 +55,11 @@ SECTIONS
         copy_end = .;
     } > highram AT > flash
 
+    /* igvm parameters */
+    .igvm.memmap (NOLOAD) : ALIGN(4096) {
+        *(.igvm.memmap)
+    } > highram
+
     /* heap */
     .heap (NOLOAD) : ALIGN(2M) {
         heap_start = .;
