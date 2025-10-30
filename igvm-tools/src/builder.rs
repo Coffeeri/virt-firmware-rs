@@ -151,20 +151,23 @@ impl Builder {
         });
     }
 
-    pub fn add_igvm_param_memmap(&mut self, index: u32, offset: u32) {
+    fn add_igvm_param<P>(&mut self, mkdirective: P, index: u32, offset: u32)
+    where
+        P: FnOnce(IGVM_VHS_PARAMETER) -> IgvmDirectiveHeader,
+    {
         let param = IGVM_VHS_PARAMETER {
             parameter_area_index: index,
             byte_offset: offset,
         };
-        self.directives.push(IgvmDirectiveHeader::MemoryMap(param));
+        self.directives.push(mkdirective(param));
+    }
+
+    pub fn add_igvm_param_memmap(&mut self, index: u32, offset: u32) {
+        self.add_igvm_param(IgvmDirectiveHeader::MemoryMap, index, offset);
     }
 
     pub fn add_igvm_param_vpcount(&mut self, index: u32, offset: u32) {
-        let param = IGVM_VHS_PARAMETER {
-            parameter_area_index: index,
-            byte_offset: offset,
-        };
-        self.directives.push(IgvmDirectiveHeader::VpCount(param));
+        self.add_igvm_param(IgvmDirectiveHeader::VpCount, index, offset);
     }
 
     pub fn add_igvm_param_insert(&mut self, index: u32, gpa: u64) {
