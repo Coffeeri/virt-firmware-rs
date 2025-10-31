@@ -33,6 +33,12 @@ use virtfw_libhw::qemuboards::{qemu_probe, QemuBoard};
 use virtfw_libhw::size::*;
 use virtfw_libhw::x86cpuid::cpu_phys_bits;
 
+const META_BIOS_MAJOR: u8 = 25;
+const META_BIOS_MINOR: u8 = 10;
+const META_BIOS_DATE: &str = "10/22/2025";
+const META_BIOS_NAME: &str = "mefisto/efiloader";
+const META_CRATE_VER: &str = env!("CARGO_PKG_VERSION");
+
 const SMBIOS_GUID: Guid = guid!(
     0xeb9d2d31,
     0x2d88,
@@ -68,7 +74,7 @@ static mut BS_POOL: [MaybeUninit<u8>; BS_POOL_SIZE] = [MaybeUninit::uninit(); BS
 
 fn print_range(prefix: &str, range: &Range<usize>) {
     let (value, unit) = pretty_range(range);
-    println!(
+    info!(
         "  {prefix:16} :  0x{:08x} - 0x{:08x}  [{value}{unit}]",
         range.start, range.end,
     );
@@ -259,6 +265,10 @@ fn efi_acpi_alloc(efi: &EfiContext, size: usize) -> Option<&'static mut [u8]> {
 #[no_mangle]
 fn main() {
     sercon_init(log::LevelFilter::Info);
+    println!("");
+    println!("This is {META_BIOS_NAME}, v{META_CRATE_VER}");
+    println!("");
+
     exception_init();
     alloc_init();
 
@@ -283,11 +293,11 @@ fn main() {
 
     if let Some(mut smbios) = smbios::SmbiosLoader::new(&FWCFG) {
         smbios.set_bios(
-            25,
-            10,
-            "mefisto/efiloader",
-            env!("CARGO_PKG_VERSION"),
-            "5/5/2025",
+            META_BIOS_MAJOR,
+            META_BIOS_MINOR,
+            META_BIOS_NAME,
+            META_CRATE_VER,
+            META_BIOS_DATE,
         );
         smbios
             .load_tables(|s, _a| efi_acpi_alloc(efi, s))
