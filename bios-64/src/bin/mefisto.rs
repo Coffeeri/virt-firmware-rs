@@ -209,11 +209,16 @@ fn memory_virt_init(memmap: &MemoryMap, mapper: &mapper::MemoryMapper) {
     mapper.unmap_page(stack.start);
 }
 
-fn pci_init(board: &QemuBoard, lowmem: usize, _highmem: usize) {
+fn pci_init(board: &QemuBoard, lowmem: usize, highmem: usize) {
     let mut pcisetup = PciSetup::new(board.pcihost());
-    let phys_bits = cpu_phys_bits();
-    let phys_max = 1usize << phys_bits;
 
+    let mut phys_bits = cpu_phys_bits();
+    if phys_bits > 47 {
+        // with 4-level paging we can not identity-map more than that
+        phys_bits = 47;
+    }
+
+    let phys_max = 1usize << phys_bits;
     print_range("cpu/physaddrs", &(0..phys_max));
 
     // 32-bit PCI MMIO window
@@ -225,13 +230,16 @@ fn pci_init(board: &QemuBoard, lowmem: usize, _highmem: usize) {
         lowmem.next_multiple_of(256 * MIB)..0xfc00_0000
     };
     print_range("pci/mmio32", &pci32);
-
-    // 64-bit PCI MMIO window (last 1/4 of address space)
-    let pci64 = (phys_max - phys_max / 4)..phys_max;
-    print_range("pci/mmio64", &pci64);
-
     pcisetup.configure_mem32(pci32);
-    pcisetup.configure_mem64(pci64);
+
+    // 64-bit PCI MMIO window (1/8 of physical address space)
+    let size64 = phys_max / 8;
+    let start64 = highmem.next_power_of_two().next_multiple_of(size64);
+    if start64 + size64 < phys_max {
+        let pci64 = start64..start64 + size64;
+        print_range("pci/mmio64", &pci64);
+        pcisetup.configure_mem64(pci64);
+    }
 
     info!("setting up pci bus");
     pcisetup.enumerate_all();
