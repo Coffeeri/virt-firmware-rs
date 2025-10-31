@@ -3,9 +3,12 @@ use core::ops::Range;
 pub const KIB: usize = 1 << 10;
 pub const MIB: usize = 1 << 20;
 pub const GIB: usize = 1 << 30;
+pub const TIB: usize = 1 << 40;
 
 pub fn pretty_usize(size: usize) -> (usize, &'static str) {
-    if size > 10 * GIB {
+    if size > 10 * TIB {
+        (size / TIB, " TB")
+    } else if size > 10 * GIB {
         (size / GIB, " GB")
     } else if size > 10 * MIB {
         (size / MIB, " MB")
