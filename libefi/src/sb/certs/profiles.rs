@@ -92,9 +92,9 @@ impl SecureBootProfile {
 impl ValueEnum for SecureBootProfile {
     fn value_variants<'a>() -> &'a [Self] {
         #[cfg(feature = "sbtest")]
-        const SIZE: usize = 9;
+        const SIZE: usize = 11;
         #[cfg(not(feature = "sbtest"))]
-        const SIZE: usize = 8;
+        const SIZE: usize = 10;
         static VARIANTS: [SecureBootProfile; SIZE] = [
             SecureBootProfile::None,
             SecureBootProfile::Win11,
@@ -103,6 +103,8 @@ impl ValueEnum for SecureBootProfile {
             SecureBootProfile::Uefi11,
             SecureBootProfile::Uefi23,
             SecureBootProfile::UefiRom23,
+            SecureBootProfile::RedHat,
+            SecureBootProfile::RedHatRom,
             SecureBootProfile::All,
             #[cfg(feature = "sbtest")]
             SecureBootProfile::RedHatTest,
