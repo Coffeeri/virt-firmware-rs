@@ -13,8 +13,8 @@ fn verify_req(req: &MmVariableParsedRequest) {
 #[test]
 fn req_get_variable() {
     let id = EfiVarId::new("SecureBoot".into(), guids::EfiGlobalVariable);
-    let _req = MmVariableParsedRequest::GetVariable(id);
-    //verify_req(&req);
+    let req = MmVariableParsedRequest::GetVariable(id);
+    verify_req(&req);
 }
 
 #[test]
