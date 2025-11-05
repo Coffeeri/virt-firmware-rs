@@ -33,6 +33,13 @@ fn req_set_variable() {
 }
 
 #[test]
+fn req_lock_variable() {
+    let id = EfiVarId::new("SecureBoot".into(), guids::EfiGlobalVariable);
+    let req = MmVariableParsedRequest::LockVariable(id);
+    verify_req(&req);
+}
+
+#[test]
 fn req_query_variable_info() {
     let req = MmVariableParsedRequest::QueryVariableInfo;
     verify_req(&req);
