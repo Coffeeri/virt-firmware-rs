@@ -38,6 +38,12 @@ impl MmVariableHeader {
             "read MmVariableHeader",
         )))
     }
+    pub fn new_from_nr(nr: u64) -> Self {
+        Self {
+            function: nr,
+            status: 0,
+        }
+    }
 }
 
 // SMM_VARIABLE_COMMUNICATE_ACCESS_VARIABLE
@@ -97,7 +103,7 @@ struct MmGetPayloadSize {
 }
 
 // parsed request
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum MmVariableParsedRequest {
     GetVariable(EfiVarId),
     GetNextVariableName(EfiVarId),
@@ -162,6 +168,32 @@ impl MmVariableParsedRequest {
             _ => MmVariableParsedRequest::Unknown { function },
         };
         Ok(req)
+    }
+}
+
+impl From<&MmVariableParsedRequest> for Vec<u8> {
+    fn from(value: &MmVariableParsedRequest) -> Vec<u8> {
+        match value {
+            MmVariableParsedRequest::QueryVariableInfo => {
+                MmVariableHeader::new_from_nr(QUERY_VARIABLE_INFO)
+                    .as_bytes()
+                    .to_vec()
+            }
+            MmVariableParsedRequest::ReadyToBoot => MmVariableHeader::new_from_nr(READY_TO_BOOT)
+                .as_bytes()
+                .to_vec(),
+            MmVariableParsedRequest::ExitBootService => {
+                MmVariableHeader::new_from_nr(EXIT_BOOT_SERVICE)
+                    .as_bytes()
+                    .to_vec()
+            }
+            MmVariableParsedRequest::GetPayloadSize => {
+                MmVariableHeader::new_from_nr(GET_PAYLOAD_SIZE)
+                    .as_bytes()
+                    .to_vec()
+            }
+            _ => Vec::new(),
+        }
     }
 }
 
