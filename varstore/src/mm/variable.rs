@@ -5,11 +5,11 @@ use alloc::string::String;
 use alloc::vec::Vec;
 use core::fmt::Display;
 use log::{debug, error};
-use uguid::Guid;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use uefi::{CString16, Error, Status};
 use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr, EfiVarId};
+use virtfw_libefi::guids::RawGuid;
 
 use crate::mm::util;
 use crate::store::EfiVarStore;
@@ -50,7 +50,7 @@ impl MmVariableHeader {
 #[repr(C, packed)]
 #[derive(Debug, FromBytes, IntoBytes, Immutable, KnownLayout)]
 struct MmVariableAccess {
-    guid: [u8; 16],
+    guid: RawGuid,
     data_size: u64,
     name_size: u64,
     attributes: EfiVarAttr,
@@ -71,7 +71,7 @@ impl MmVariableAccess {
 #[repr(C, packed)]
 #[derive(Debug, FromBytes, IntoBytes, Immutable, KnownLayout)]
 struct MmNextVariable {
-    guid: [u8; 16],
+    guid: RawGuid,
     name_size: u64,
     // Name
 }
@@ -126,7 +126,7 @@ impl MmVariableParsedRequest {
                     return Err(Error::new(Status::BAD_BUFFER_SIZE, "invalid name size"));
                 };
                 let name = util::cstr16_from_bytes_with_nul(slice)?;
-                let guid = Guid::from_bytes(access.guid);
+                let guid = access.guid.into();
                 let id = EfiVarId::new(String::from(name), guid);
                 MmVariableParsedRequest::GetVariable(id)
             }
@@ -137,7 +137,7 @@ impl MmVariableParsedRequest {
                     return Err(Error::new(Status::BAD_BUFFER_SIZE, "invalid name size"));
                 };
                 let name = util::cstr16_from_bytes_until_nul(slice)?;
-                let guid = Guid::from_bytes(next.guid);
+                let guid = next.guid.into();
                 let id = EfiVarId::new(String::from(name), guid);
                 if function == GET_NEXT_VARIABLE_NAME {
                     MmVariableParsedRequest::GetNextVariableName(id)
@@ -156,7 +156,7 @@ impl MmVariableParsedRequest {
                 let Some(data) = &namedata.get(ns..ns + ds) else {
                     return Err(Error::new(Status::BAD_BUFFER_SIZE, "invalid data size"));
                 };
-                let guid = Guid::from_bytes(access.guid);
+                let guid = access.guid.into();
                 let var =
                     EfiVar::new_from_slice(&guid, &String::from(name), access.attributes, data);
                 MmVariableParsedRequest::SetVariable(var)
@@ -311,7 +311,7 @@ impl<'a> MmVariableRequest<'a> {
 
         let var = res.unwrap();
         let access = MmVariableAccess {
-            guid: id.guid.to_bytes(),
+            guid: id.guid.into(),
             name_size: cstr16.num_bytes() as u64,
             data_size: var.data.len() as u64,
             attributes: var.attr,
@@ -336,7 +336,7 @@ impl<'a> MmVariableRequest<'a> {
         };
 
         let next_var = MmNextVariable {
-            guid: next_guid.to_bytes(),
+            guid: next_guid.into(),
             name_size: cstr16.num_bytes() as u64,
         };
         let mut reply = Vec::new();
