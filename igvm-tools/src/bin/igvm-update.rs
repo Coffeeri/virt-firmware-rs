@@ -5,7 +5,9 @@ use clap::Parser;
 use log::{debug, error, info};
 use std::process::ExitCode;
 
+#[cfg(feature = "authenticode")]
 use authenticode::authenticode_digest;
+#[cfg(feature = "authenticode")]
 use object::read::pe;
 use sha2::{Digest, Sha256};
 
@@ -40,6 +42,7 @@ struct Args {
     kernel: Option<String>,
 
     /// add authenticode sha256 hashes for shim and kernel to 'db'
+    #[cfg(feature = "authenticode")]
     #[arg(long, visible_alias = "add-hash")]
     add_hash_sha256: bool,
 
@@ -64,6 +67,7 @@ struct Args {
     output: Option<String>,
 }
 
+#[cfg(feature = "authenticode")]
 fn get_sha256(binary: &[u8]) -> [u8; 32] {
     let pefile = pe::PeFile64::parse(binary).expect("efi binary parse error");
     let mut hasher = Sha256::new();
@@ -85,9 +89,17 @@ fn igvm_add_kernel(
 ) -> IgvmFile {
     let mut builder = Builder::from(igvm);
     let mut hoblist = EfiIgvmDataList::new(0x20000000); // start at 512 MB
+    #[cfg(feature = "authenticode")]
     let mut shalist = Vec::new();
 
+    #[cfg(feature = "authenticode")]
+    let secureboot = cfg.add_hash_sha256 || cfg.add_cert_ms;
+
+    #[cfg(not(feature = "authenticode"))]
+    let secureboot = cfg.add_cert_ms;
+
     // shim + kernel
+    #[cfg(feature = "authenticode")]
     if cfg.add_hash_sha256 {
         if let Some(b) = shim_blob {
             info!("calc shim authenticode sha256 hash");
@@ -113,7 +125,6 @@ fn igvm_add_kernel(
     let kek_blob = esl_to_auth(&kek_ts, &Vec::<u8>::from(&kek));
 
     // db
-    let secureboot = cfg.add_hash_sha256 || cfg.add_cert_ms;
     let mut db = if cfg.add_cert_ms {
         let profile = cfg.profile.as_ref().unwrap_or(&SecureBootProfile::Uefi11);
         info!("add microsoft uefi certificates to 'db' (profile: {profile:?})");
@@ -121,6 +132,7 @@ fn igvm_add_kernel(
     } else {
         EfiSigDB::new()
     };
+    #[cfg(feature = "authenticode")]
     if cfg.add_hash_sha256 && !shalist.is_empty() {
         info!("add authenticode sha256 hash(es) to 'db'");
         db.add_sha256_from_list(&guids::OvmfEnrollDefaultKeys, shalist);
