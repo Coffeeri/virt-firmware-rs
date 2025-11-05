@@ -169,6 +169,24 @@ impl MmVariableParsedRequest {
         };
         Ok(req)
     }
+
+    fn serialize_simple(nr: u64) -> Vec<u8> {
+        MmVariableHeader::new_from_nr(nr).as_bytes().to_vec()
+    }
+
+    fn serialize_next(id: &EfiVarId, nr: u64) -> Vec<u8> {
+        let hdr = MmVariableHeader::new_from_nr(nr);
+        let name = CString16::try_from(id.name.as_str()).unwrap_or(CString16::new());
+        let next = MmNextVariable {
+            guid: id.guid.into(),
+            name_size: name.num_bytes() as u64,
+        };
+        let mut blob = Vec::new();
+        blob.extend_from_slice(hdr.as_bytes());
+        blob.extend_from_slice(next.as_bytes());
+        blob.extend_from_slice(name.as_bytes());
+        blob
+    }
 }
 
 impl From<&MmVariableParsedRequest> for Vec<u8> {
@@ -189,19 +207,6 @@ impl From<&MmVariableParsedRequest> for Vec<u8> {
                 blob.extend_from_slice(name.as_bytes());
                 blob
             }
-            MmVariableParsedRequest::GetNextVariableName(id) => {
-                let hdr = MmVariableHeader::new_from_nr(GET_NEXT_VARIABLE_NAME);
-                let name = CString16::try_from(id.name.as_str()).unwrap_or(CString16::new());
-                let next = MmNextVariable {
-                    guid: id.guid.into(),
-                    name_size: name.num_bytes() as u64,
-                };
-                let mut blob = Vec::new();
-                blob.extend_from_slice(hdr.as_bytes());
-                blob.extend_from_slice(next.as_bytes());
-                blob.extend_from_slice(name.as_bytes());
-                blob
-            }
             MmVariableParsedRequest::SetVariable(var) => {
                 let hdr = MmVariableHeader::new_from_nr(SET_VARIABLE);
                 let name = CString16::try_from(var.name.as_str()).unwrap_or(CString16::new());
@@ -218,36 +223,23 @@ impl From<&MmVariableParsedRequest> for Vec<u8> {
                 blob.extend_from_slice(var.data.as_bytes());
                 blob
             }
+            MmVariableParsedRequest::GetNextVariableName(id) => {
+                MmVariableParsedRequest::serialize_next(id, GET_NEXT_VARIABLE_NAME)
+            }
             MmVariableParsedRequest::LockVariable(id) => {
-                let hdr = MmVariableHeader::new_from_nr(LOCK_VARIABLE);
-                let name = CString16::try_from(id.name.as_str()).unwrap_or(CString16::new());
-                let next = MmNextVariable {
-                    guid: id.guid.into(),
-                    name_size: name.num_bytes() as u64,
-                };
-                let mut blob = Vec::new();
-                blob.extend_from_slice(hdr.as_bytes());
-                blob.extend_from_slice(next.as_bytes());
-                blob.extend_from_slice(name.as_bytes());
-                blob
+                MmVariableParsedRequest::serialize_next(id, LOCK_VARIABLE)
             }
             MmVariableParsedRequest::QueryVariableInfo => {
-                MmVariableHeader::new_from_nr(QUERY_VARIABLE_INFO)
-                    .as_bytes()
-                    .to_vec()
+                MmVariableParsedRequest::serialize_simple(QUERY_VARIABLE_INFO)
             }
-            MmVariableParsedRequest::ReadyToBoot => MmVariableHeader::new_from_nr(READY_TO_BOOT)
-                .as_bytes()
-                .to_vec(),
+            MmVariableParsedRequest::ReadyToBoot => {
+                MmVariableParsedRequest::serialize_simple(READY_TO_BOOT)
+            }
             MmVariableParsedRequest::ExitBootService => {
-                MmVariableHeader::new_from_nr(EXIT_BOOT_SERVICE)
-                    .as_bytes()
-                    .to_vec()
+                MmVariableParsedRequest::serialize_simple(EXIT_BOOT_SERVICE)
             }
             MmVariableParsedRequest::GetPayloadSize => {
-                MmVariableHeader::new_from_nr(GET_PAYLOAD_SIZE)
-                    .as_bytes()
-                    .to_vec()
+                MmVariableParsedRequest::serialize_simple(GET_PAYLOAD_SIZE)
             }
             _ => Vec::new(),
         }
