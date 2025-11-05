@@ -131,3 +131,11 @@ impl From<Guid> for RawGuid {
         }
     }
 }
+
+impl From<&Guid> for RawGuid {
+    fn from(guid: &Guid) -> Self {
+        Self {
+            bytes: guid.to_bytes(),
+        }
+    }
+}
