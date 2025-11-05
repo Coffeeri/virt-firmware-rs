@@ -34,6 +34,9 @@ release: $(BIOS32) cargo-release
 install: cargo-install
 package: cargo-package
 
+update:
+	cargo update --verbose
+
 cargo-doc: $(patsubst %,doc-%,$(PKGS)) doc-libefi doc-libhw
 cargo-test: test-libefi test-varstore test-igvm-tools
 cargo-build: $(patsubst %,build-%,$(PKGS))
