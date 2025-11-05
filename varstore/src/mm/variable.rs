@@ -241,7 +241,9 @@ impl From<&MmVariableParsedRequest> for Vec<u8> {
             MmVariableParsedRequest::GetPayloadSize => {
                 MmVariableParsedRequest::serialize_simple(GET_PAYLOAD_SIZE)
             }
-            _ => Vec::new(),
+            MmVariableParsedRequest::Unknown { function } => {
+                MmVariableParsedRequest::serialize_simple(*function)
+            }
         }
     }
 }
