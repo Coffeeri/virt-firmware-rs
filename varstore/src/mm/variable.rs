@@ -189,6 +189,19 @@ impl From<&MmVariableParsedRequest> for Vec<u8> {
                 blob.extend_from_slice(name.as_bytes());
                 blob
             }
+            MmVariableParsedRequest::GetNextVariableName(id) => {
+                let hdr = MmVariableHeader::new_from_nr(GET_NEXT_VARIABLE_NAME);
+                let name = CString16::try_from(id.name.as_str()).unwrap_or(CString16::new());
+                let next = MmNextVariable {
+                    guid: id.guid.into(),
+                    name_size: name.num_bytes() as u64,
+                };
+                let mut blob = Vec::new();
+                blob.extend_from_slice(hdr.as_bytes());
+                blob.extend_from_slice(next.as_bytes());
+                blob.extend_from_slice(name.as_bytes());
+                blob
+            }
             MmVariableParsedRequest::QueryVariableInfo => {
                 MmVariableHeader::new_from_nr(QUERY_VARIABLE_INFO)
                     .as_bytes()
