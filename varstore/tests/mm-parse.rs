@@ -1,6 +1,6 @@
 #![cfg(feature = "std")]
 
-use virtfw_libefi::efivar::types::EfiVarId;
+use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr, EfiVarId};
 use virtfw_libefi::guids;
 use virtfw_varstore::mm::variable::{MmVariableParsedRequest, MmVariableRequest};
 
@@ -21,6 +21,14 @@ fn req_get_variable() {
 fn req_get_next_variable() {
     let id = EfiVarId::new("SecureBoot".into(), guids::EfiGlobalVariable);
     let req = MmVariableParsedRequest::GetNextVariableName(id);
+    verify_req(&req);
+}
+
+#[test]
+fn req_set_variable() {
+    let attr = EfiVarAttr::new_bs_rt();
+    let var = EfiVar::new_from_bool(&guids::EfiGlobalVariable, "SecureBoot", attr, true);
+    let req = MmVariableParsedRequest::SetVariable(var);
     verify_req(&req);
 }
 
