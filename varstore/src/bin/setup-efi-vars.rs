@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 
 use der::{DecodePem, Encode};
 use x509_cert::Certificate;
@@ -11,11 +11,23 @@ use virtfw_libefi::sb::certs::profiles::SecureBootProfile;
 use virtfw_libefi::sb::dbx::*;
 use virtfw_varstore::store::EfiVarStore;
 
+#[derive(Debug, Clone, ValueEnum)]
+pub enum PkEnroll {
+    #[value(name = "redhat", help = "Red Hat Secure Boot (PK/KEK key 1)")]
+    RedHat,
+    #[value(name = "mgmt", help = "EFI_CERT_EXTERNAL_MANAGEMENT_GUID")]
+    ExtMgmt,
+}
+
 #[derive(Parser, Debug)]
 #[command(version, name = "setup-efi-vars",
           about = "generate uefi variable store in json format",
           long_about = None)]
 struct Args {
+    /// select platform key mode
+    #[arg(long, value_name = "MODE", value_enum, default_value_t = PkEnroll::RedHat)]
+    enroll: PkEnroll,
+
     /// select 'db' profile
     #[arg(long, value_name = "NAME")]
     profile: SecureBootProfile,
@@ -75,7 +87,10 @@ fn main() {
     store.enroll_db(db.get_x509_mtime(), &db);
     store.enroll_dbx(Some(dbx_ts), &dbx);
     store.enroll_kek_microsoft();
-    store.enroll_pk_mgmt();
+    match cfg.enroll {
+        PkEnroll::RedHat => store.enroll_pk_redhat(),
+        PkEnroll::ExtMgmt => store.enroll_pk_mgmt(),
+    }
 
     let jstore = store.json_export();
     let json = serde_json::to_string(&jstore).expect("serialize to json failed");
