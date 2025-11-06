@@ -20,6 +20,7 @@ pub const SB_DBX: &str = "dbx";
 pub const SB_SETUP_MODE: &str = "SetupMode";
 pub const SB_CUSTOM_MODE: &str = "CustomMode";
 pub const SB_SECURE_BOOT: &str = "SecureBoot";
+pub const SB_SECURE_BOOT_ENABLE: &str = "SecureBootEnable";
 
 impl EfiVarStore {
     fn get_setup_mode(&self) -> bool {
@@ -41,6 +42,20 @@ impl EfiVarStore {
             &guids::EfiGlobalVariable,
             SB_SECURE_BOOT,
             EfiVarAttr::new_bs_rt(),
+            enabled,
+        );
+    }
+
+    fn get_secure_boot_enable(&mut self) -> Option<bool> {
+        let sbe = self.get_unchecked(SB_SECURE_BOOT_ENABLE, &guids::EfiSecureBootEnable)?;
+        Some(sbe.data[0] != 0)
+    }
+
+    pub fn set_secure_boot_enable(&mut self, enabled: bool) {
+        self.set_unchecked_bool(
+            &guids::EfiSecureBootEnable,
+            SB_SECURE_BOOT_ENABLE,
+            EfiVarAttr::new_nv_bs(),
             enabled,
         );
     }
@@ -158,9 +173,13 @@ impl EfiVarStore {
 
         self.set_signature_support();
 
-        // TODO: SecureBootEnable
+        let sb;
+        if let Some(sbe) = self.get_secure_boot_enable() {
+            sb = !setup && sbe;
+        } else {
+            sb = !setup;
+        }
 
-        let sb = !setup;
         self.set_secure_boot(sb);
 
         self.set_custom_mode(false);
