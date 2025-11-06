@@ -175,6 +175,42 @@ impl MmVariableParsedRequest {
         MmVariableHeader::new(nr, None).as_bytes().to_vec()
     }
 
+    // MmVariableAccess (name only)
+    fn serialize_access_id(id: &EfiVarId, nr: u64) -> Vec<u8> {
+        let hdr = MmVariableHeader::new(nr, None);
+        let name = CString16::try_from(id.name.as_str()).unwrap_or(CString16::new());
+        let access = MmVariableAccess {
+            guid: id.guid.into(),
+            attributes: EfiVarAttr::new(),
+            name_size: name.num_bytes() as u64,
+            data_size: 0,
+        };
+        let mut blob = Vec::new();
+        blob.extend_from_slice(hdr.as_bytes());
+        blob.extend_from_slice(access.as_bytes());
+        blob.extend_from_slice(name.as_bytes());
+        blob
+    }
+
+    // MmVariableAccess (name+data)
+    fn serialize_access_var(var: &EfiVar, nr: u64) -> Vec<u8> {
+        let hdr = MmVariableHeader::new(nr, None);
+        let name = CString16::try_from(var.name.as_str()).unwrap_or(CString16::new());
+        let access = MmVariableAccess {
+            guid: var.guid.into(),
+            attributes: var.attr,
+            name_size: name.num_bytes() as u64,
+            data_size: var.data.len() as u64,
+        };
+        let mut blob = Vec::new();
+        blob.extend_from_slice(hdr.as_bytes());
+        blob.extend_from_slice(access.as_bytes());
+        blob.extend_from_slice(name.as_bytes());
+        blob.extend_from_slice(var.data.as_bytes());
+        blob
+    }
+
+    // MmNextVariable
     fn serialize_next(id: &EfiVarId, nr: u64) -> Vec<u8> {
         let hdr = MmVariableHeader::new(nr, None);
         let name = CString16::try_from(id.name.as_str()).unwrap_or(CString16::new());
@@ -194,35 +230,10 @@ impl From<&MmVariableParsedRequest> for Vec<u8> {
     fn from(value: &MmVariableParsedRequest) -> Vec<u8> {
         match value {
             MmVariableParsedRequest::GetVariable(id) => {
-                let hdr = MmVariableHeader::new(GET_VARIABLE, None);
-                let name = CString16::try_from(id.name.as_str()).unwrap_or(CString16::new());
-                let access = MmVariableAccess {
-                    guid: id.guid.into(),
-                    attributes: EfiVarAttr::new(),
-                    name_size: name.num_bytes() as u64,
-                    data_size: 0,
-                };
-                let mut blob = Vec::new();
-                blob.extend_from_slice(hdr.as_bytes());
-                blob.extend_from_slice(access.as_bytes());
-                blob.extend_from_slice(name.as_bytes());
-                blob
+                MmVariableParsedRequest::serialize_access_id(id, GET_VARIABLE)
             }
             MmVariableParsedRequest::SetVariable(var) => {
-                let hdr = MmVariableHeader::new(SET_VARIABLE, None);
-                let name = CString16::try_from(var.name.as_str()).unwrap_or(CString16::new());
-                let access = MmVariableAccess {
-                    guid: var.guid.into(),
-                    attributes: var.attr,
-                    name_size: name.num_bytes() as u64,
-                    data_size: var.data.len() as u64,
-                };
-                let mut blob = Vec::new();
-                blob.extend_from_slice(hdr.as_bytes());
-                blob.extend_from_slice(access.as_bytes());
-                blob.extend_from_slice(name.as_bytes());
-                blob.extend_from_slice(var.data.as_bytes());
-                blob
+                MmVariableParsedRequest::serialize_access_var(var, SET_VARIABLE)
             }
             MmVariableParsedRequest::GetNextVariableName(id) => {
                 MmVariableParsedRequest::serialize_next(id, GET_NEXT_VARIABLE_NAME)
