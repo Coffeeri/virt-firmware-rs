@@ -54,22 +54,35 @@ struct Args {
     ///
     /// This has higher priority than PK mode.
     #[arg(long, value_name = "FILE", help_heading = "Specify details")]
-    pk_cert: Option<String>,
+    set_pk_cert: Option<String>,
 
     /// add certificate to 'KEK'
     ///
     /// Can be specified multiple times.  Default is to enroll the
     /// standard microsoft KEK certificates.
     #[arg(long, value_name = "FILE", help_heading = "Specify details")]
-    kek_cert: Vec<String>,
+    add_kek_cert: Vec<String>,
 
     /// add certificate to 'db'
     ///
-    /// Can be specified multiple times.  Certificates will enrolled
-    /// in addition to the profile certificates.  Use '--profile none'
-    /// if you want specify all certificates explicitly.
+    /// Can be specified multiple times.  Certificates will be
+    /// enrolled in addition to the profile certificates.  Use
+    /// '--profile none' if you want specify all certificates
+    /// explicitly.
     #[arg(long, value_name = "FILE", help_heading = "Specify details")]
-    db_cert: Vec<String>,
+    add_db_cert: Vec<String>,
+
+    /// load 'dbx' update from file
+    ///
+    /// If specified replaces the compiled-in default update.
+    #[arg(long, value_name = "FILE", help_heading = "Specify details")]
+    set_dbx_update: Option<String>,
+
+    /// disable secure boot
+    ///
+    /// Enroll all secure boot variables but disable secure boot.
+    #[arg(long, help_heading = "Specify details")]
+    disable_secure_boot: bool,
 }
 
 fn loginit() {
@@ -106,24 +119,28 @@ fn main() {
 
     // db
     let mut db = cfg.profile.sigdb();
-    for filename in cfg.db_cert {
+    for filename in cfg.add_db_cert {
         let der = cert_load(&filename);
         db.add_x509_from_der(&guids::OvmfEnrollDefaultKeys, &der);
     }
     store.enroll_db(db.get_x509_mtime(), &db);
 
     // dbx
-    let auth = get_dbx_opt(cfg.arch);
-    let (dbx_ts, esl) = auth_to_esl(auth).unwrap();
+    let auth = if let Some(filename) = cfg.set_dbx_update {
+        std::fs::read(filename).expect("read dbx update")
+    } else {
+        get_dbx_opt(cfg.arch).into()
+    };
+    let (dbx_ts, esl) = auth_to_esl(&auth).unwrap();
     let dbx = EfiSigDB::new_from_bytes(esl).unwrap();
     store.enroll_dbx(Some(dbx_ts), &dbx);
 
     // KEK
-    if cfg.kek_cert.is_empty() {
+    if cfg.add_kek_cert.is_empty() {
         store.enroll_kek_microsoft();
     } else {
         let mut kek = EfiSigDB::new();
-        for filename in cfg.kek_cert {
+        for filename in cfg.add_kek_cert {
             let der = cert_load(&filename);
             kek.add_x509_from_der(&guids::OvmfEnrollDefaultKeys, &der);
         }
@@ -131,7 +148,7 @@ fn main() {
     }
 
     // PK
-    if let Some(filename) = cfg.pk_cert {
+    if let Some(filename) = cfg.set_pk_cert {
         let mut pk = EfiSigDB::new();
         let der = cert_load(&filename);
         pk.add_x509_from_der(&guids::OvmfEnrollDefaultKeys, &der);
@@ -142,6 +159,9 @@ fn main() {
             PkEnroll::ExtMgmt => store.enroll_pk_mgmt(),
         }
     }
+
+    // SecureBootEnable
+    store.set_secure_boot_enable(!cfg.disable_secure_boot);
 
     let jstore = store.json_export();
     let json = serde_json::to_string(&jstore).expect("serialize to json failed");
