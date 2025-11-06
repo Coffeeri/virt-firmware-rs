@@ -196,10 +196,10 @@ impl<'a> MmVarPolicyRequest<'a> {
                 let policy = res.unwrap();
                 debug!("policy/req/register: {policy}");
                 let res = store.policy_register(policy);
-                if let Err(e) = res {
-                    return self.response(e.status(), None);
+                match res {
+                    Err(e) => self.response(e.status(), None),
+                    Ok(_) => self.response(Status::SUCCESS, None),
                 }
-                self.response(Status::SUCCESS, None)
             }
             VAR_CHECK_POLICY_COMMAND_LOCK => {
                 debug!("policy/req/lock");
