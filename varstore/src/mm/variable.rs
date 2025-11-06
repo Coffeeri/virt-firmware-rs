@@ -336,10 +336,7 @@ impl<'a> MmVariableRequest<'a> {
             limit,
         );
 
-        let hdr = MmVariableHeader {
-            function: self.function,
-            status: status.0 as u64,
-        };
+        let hdr = MmVariableHeader::new(self.function, Some(status));
         let mut rsp = hdr.as_bytes().to_vec();
         if let Some(r) = reply {
             if limit < r.len() {
@@ -358,23 +355,13 @@ impl<'a> MmVariableRequest<'a> {
             debug!("variable/get/error: {e}");
             return self.response(e.status(), None);
         }
-
-        let Ok(cstr16) = CString16::try_from(id.name.as_str()) else {
-            return self.response(Status::DEVICE_ERROR, None);
-        };
-
         let var = res.unwrap();
-        let access = MmVariableAccess {
-            guid: id.guid.into(),
-            name_size: cstr16.num_bytes() as u64,
-            data_size: var.data.len() as u64,
-            attributes: var.attr,
-        };
-        let mut reply = Vec::new();
-        reply.extend_from_slice(access.as_bytes());
-        reply.extend_from_slice(cstr16.as_bytes());
-        reply.extend_from_slice(&var.data);
-        self.response(Status::SUCCESS, Some(&reply))
+
+        let reply = MmVariableParsedRequest::serialize_access_var(var);
+        match reply {
+            Err(_) => self.response(Status::DEVICE_ERROR, None),
+            Ok(r) => self.response(Status::SUCCESS, Some(&r)),
+        }
     }
 
     fn get_next_variable_name(&self, store: &EfiVarStore, id: &EfiVarId) -> Vec<u8> {
@@ -385,18 +372,12 @@ impl<'a> MmVariableRequest<'a> {
         let (next_name, next_guid) = res.unwrap();
         debug!("variable/next: {} -> {}", id.name, next_name);
 
-        let Ok(cstr16) = CString16::try_from(next_name) else {
-            return self.response(Status::DEVICE_ERROR, None);
-        };
-
-        let next_var = MmNextVariable {
-            guid: next_guid.into(),
-            name_size: cstr16.num_bytes() as u64,
-        };
-        let mut reply = Vec::new();
-        reply.extend_from_slice(next_var.as_bytes());
-        reply.extend_from_slice(cstr16.as_bytes());
-        self.response(Status::SUCCESS, Some(&reply))
+        let next_id = EfiVarId::new(next_name.into(), *next_guid);
+        let reply = MmVariableParsedRequest::serialize_next(&next_id);
+        match reply {
+            Err(_) => self.response(Status::DEVICE_ERROR, None),
+            Ok(r) => self.response(Status::SUCCESS, Some(&r)),
+        }
     }
 
     fn set_variable(&self, store: &mut EfiVarStore, var: &EfiVar) -> Vec<u8> {
