@@ -441,8 +441,7 @@ impl<'a> MmVariableRequest<'a> {
 
     fn process(&self, store: &mut EfiVarStore) -> Vec<u8> {
         if self.parsed.is_none() {
-            error!("variable: req parse error");
-            panic!();
+            return self.response(Status::INVALID_PARAMETER, None);
         }
         let parsed = self.parsed.as_ref().unwrap();
         match parsed {
@@ -456,10 +455,7 @@ impl<'a> MmVariableRequest<'a> {
             MmVariableParsedRequest::ExitBootService => self.exit_boot_service(store),
             MmVariableParsedRequest::LockVariable(id) => self.lock_variable(store, id),
             MmVariableParsedRequest::GetPayloadSize => self.get_payload_size(),
-            _ => {
-                error!("variable/unknown: {parsed}");
-                panic!();
-            }
+            _ => self.response(Status::INVALID_PARAMETER, None),
         }
     }
 }

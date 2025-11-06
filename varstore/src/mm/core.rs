@@ -78,7 +78,7 @@ pub fn core_request_dispatch(
         }
         _ => {
             error!("core/unknown: {}", guids::pretty_name(&guid));
-            panic!()
+            Vec::new()
         }
     }
 }
