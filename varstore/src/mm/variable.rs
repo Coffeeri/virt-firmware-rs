@@ -171,13 +171,8 @@ impl MmVariableParsedRequest {
         Ok(req)
     }
 
-    fn serialize_simple(nr: u64) -> Vec<u8> {
-        MmVariableHeader::new(nr, None).as_bytes().to_vec()
-    }
-
     // MmVariableAccess (name only)
-    fn serialize_access_id(id: &EfiVarId, nr: u64) -> Vec<u8> {
-        let hdr = MmVariableHeader::new(nr, None);
+    fn serialize_access_id(id: &EfiVarId) -> Vec<u8> {
         let name = CString16::try_from(id.name.as_str()).unwrap_or(CString16::new());
         let access = MmVariableAccess {
             guid: id.guid.into(),
@@ -186,15 +181,13 @@ impl MmVariableParsedRequest {
             data_size: 0,
         };
         let mut blob = Vec::new();
-        blob.extend_from_slice(hdr.as_bytes());
         blob.extend_from_slice(access.as_bytes());
         blob.extend_from_slice(name.as_bytes());
         blob
     }
 
     // MmVariableAccess (name+data)
-    fn serialize_access_var(var: &EfiVar, nr: u64) -> Vec<u8> {
-        let hdr = MmVariableHeader::new(nr, None);
+    fn serialize_access_var(var: &EfiVar) -> Vec<u8> {
         let name = CString16::try_from(var.name.as_str()).unwrap_or(CString16::new());
         let access = MmVariableAccess {
             guid: var.guid.into(),
@@ -203,7 +196,6 @@ impl MmVariableParsedRequest {
             data_size: var.data.len() as u64,
         };
         let mut blob = Vec::new();
-        blob.extend_from_slice(hdr.as_bytes());
         blob.extend_from_slice(access.as_bytes());
         blob.extend_from_slice(name.as_bytes());
         blob.extend_from_slice(var.data.as_bytes());
@@ -211,15 +203,13 @@ impl MmVariableParsedRequest {
     }
 
     // MmNextVariable
-    fn serialize_next(id: &EfiVarId, nr: u64) -> Vec<u8> {
-        let hdr = MmVariableHeader::new(nr, None);
+    fn serialize_next(id: &EfiVarId) -> Vec<u8> {
         let name = CString16::try_from(id.name.as_str()).unwrap_or(CString16::new());
         let next = MmNextVariable {
             guid: id.guid.into(),
             name_size: name.num_bytes() as u64,
         };
         let mut blob = Vec::new();
-        blob.extend_from_slice(hdr.as_bytes());
         blob.extend_from_slice(next.as_bytes());
         blob.extend_from_slice(name.as_bytes());
         blob
@@ -228,35 +218,34 @@ impl MmVariableParsedRequest {
 
 impl From<&MmVariableParsedRequest> for Vec<u8> {
     fn from(value: &MmVariableParsedRequest) -> Vec<u8> {
-        match value {
-            MmVariableParsedRequest::GetVariable(id) => {
-                MmVariableParsedRequest::serialize_access_id(id, GET_VARIABLE)
-            }
-            MmVariableParsedRequest::SetVariable(var) => {
-                MmVariableParsedRequest::serialize_access_var(var, SET_VARIABLE)
-            }
-            MmVariableParsedRequest::GetNextVariableName(id) => {
-                MmVariableParsedRequest::serialize_next(id, GET_NEXT_VARIABLE_NAME)
-            }
+        let (function, data) = match value {
+            MmVariableParsedRequest::GetVariable(id) => (
+                GET_VARIABLE,
+                MmVariableParsedRequest::serialize_access_id(id),
+            ),
+            MmVariableParsedRequest::SetVariable(var) => (
+                SET_VARIABLE,
+                MmVariableParsedRequest::serialize_access_var(var),
+            ),
+            MmVariableParsedRequest::GetNextVariableName(id) => (
+                GET_NEXT_VARIABLE_NAME,
+                MmVariableParsedRequest::serialize_next(id),
+            ),
             MmVariableParsedRequest::LockVariable(id) => {
-                MmVariableParsedRequest::serialize_next(id, LOCK_VARIABLE)
+                (LOCK_VARIABLE, MmVariableParsedRequest::serialize_next(id))
             }
-            MmVariableParsedRequest::QueryVariableInfo => {
-                MmVariableParsedRequest::serialize_simple(QUERY_VARIABLE_INFO)
-            }
-            MmVariableParsedRequest::ReadyToBoot => {
-                MmVariableParsedRequest::serialize_simple(READY_TO_BOOT)
-            }
-            MmVariableParsedRequest::ExitBootService => {
-                MmVariableParsedRequest::serialize_simple(EXIT_BOOT_SERVICE)
-            }
-            MmVariableParsedRequest::GetPayloadSize => {
-                MmVariableParsedRequest::serialize_simple(GET_PAYLOAD_SIZE)
-            }
-            MmVariableParsedRequest::Unknown { function } => {
-                MmVariableParsedRequest::serialize_simple(*function)
-            }
-        }
+            MmVariableParsedRequest::QueryVariableInfo => (QUERY_VARIABLE_INFO, Vec::new()),
+            MmVariableParsedRequest::ReadyToBoot => (READY_TO_BOOT, Vec::new()),
+            MmVariableParsedRequest::ExitBootService => (EXIT_BOOT_SERVICE, Vec::new()),
+            MmVariableParsedRequest::GetPayloadSize => (GET_PAYLOAD_SIZE, Vec::new()),
+            MmVariableParsedRequest::Unknown { function } => (*function, Vec::new()),
+        };
+
+        let hdr = MmVariableHeader::new(function, None);
+        let mut blob = Vec::new();
+        blob.extend_from_slice(hdr.as_bytes());
+        blob.extend_from_slice(&data);
+        blob
     }
 }
 
