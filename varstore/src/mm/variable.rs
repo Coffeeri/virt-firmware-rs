@@ -39,10 +39,10 @@ impl MmVariableHeader {
         )))
     }
 
-    pub fn new_from_nr(nr: u64) -> Self {
+    pub fn new(nr: u64, status: Option<Status>) -> Self {
         Self {
             function: nr,
-            status: 0,
+            status: status.unwrap_or(Status::SUCCESS).0 as u64,
         }
     }
 }
@@ -172,11 +172,11 @@ impl MmVariableParsedRequest {
     }
 
     fn serialize_simple(nr: u64) -> Vec<u8> {
-        MmVariableHeader::new_from_nr(nr).as_bytes().to_vec()
+        MmVariableHeader::new(nr, None).as_bytes().to_vec()
     }
 
     fn serialize_next(id: &EfiVarId, nr: u64) -> Vec<u8> {
-        let hdr = MmVariableHeader::new_from_nr(nr);
+        let hdr = MmVariableHeader::new(nr, None);
         let name = CString16::try_from(id.name.as_str()).unwrap_or(CString16::new());
         let next = MmNextVariable {
             guid: id.guid.into(),
@@ -194,7 +194,7 @@ impl From<&MmVariableParsedRequest> for Vec<u8> {
     fn from(value: &MmVariableParsedRequest) -> Vec<u8> {
         match value {
             MmVariableParsedRequest::GetVariable(id) => {
-                let hdr = MmVariableHeader::new_from_nr(GET_VARIABLE);
+                let hdr = MmVariableHeader::new(GET_VARIABLE, None);
                 let name = CString16::try_from(id.name.as_str()).unwrap_or(CString16::new());
                 let access = MmVariableAccess {
                     guid: id.guid.into(),
@@ -209,7 +209,7 @@ impl From<&MmVariableParsedRequest> for Vec<u8> {
                 blob
             }
             MmVariableParsedRequest::SetVariable(var) => {
-                let hdr = MmVariableHeader::new_from_nr(SET_VARIABLE);
+                let hdr = MmVariableHeader::new(SET_VARIABLE, None);
                 let name = CString16::try_from(var.name.as_str()).unwrap_or(CString16::new());
                 let access = MmVariableAccess {
                     guid: var.guid.into(),
