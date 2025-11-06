@@ -20,9 +20,11 @@ pub enum SecureBootProfile {
     Uefi11,
     Uefi23,
     UefiRom23,
+    All,
+
+    // redhat profiles
     RedHat,
     RedHatRom,
-    All,
 
     // Enroll all certs, including the rh test cert which is used to
     // sign test builds.  The private key is public, so that does not
