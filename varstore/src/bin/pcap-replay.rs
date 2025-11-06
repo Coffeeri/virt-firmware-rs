@@ -67,7 +67,7 @@ fn print_reply(data: &[u8]) {
     let guid = Guid::from_bytes(core.guid);
     match guid {
         guids::EfiSmmVariableProtocol => {
-            let hdr_res = MmVariableHeader::new(core.data);
+            let hdr_res = MmVariableHeader::from_data(core.data);
             if let Err(e) = hdr_res.as_ref() {
                 error!("{e}");
             };

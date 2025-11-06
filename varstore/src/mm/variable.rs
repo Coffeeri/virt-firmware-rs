@@ -32,12 +32,13 @@ pub struct MmVariableHeader {
 }
 
 impl MmVariableHeader {
-    pub fn new(data: &[u8]) -> Result<(Self, &[u8]), Error<&'static str>> {
+    pub fn from_data(data: &[u8]) -> Result<(Self, &[u8]), Error<&'static str>> {
         Self::read_from_prefix(data).or(Err(Error::new(
             Status::BAD_BUFFER_SIZE,
             "read MmVariableHeader",
         )))
     }
+
     pub fn new_from_nr(nr: u64) -> Self {
         Self {
             function: nr,
@@ -59,7 +60,7 @@ struct MmVariableAccess {
 }
 
 impl MmVariableAccess {
-    fn new(data: &[u8]) -> Result<(Self, &[u8]), Error<&'static str>> {
+    fn from_data(data: &[u8]) -> Result<(Self, &[u8]), Error<&'static str>> {
         Self::read_from_prefix(data).or(Err(Error::new(
             Status::BAD_BUFFER_SIZE,
             "read MmVariableAccess",
@@ -77,7 +78,7 @@ struct MmNextVariable {
 }
 
 impl MmNextVariable {
-    fn new(data: &[u8]) -> Result<(Self, &[u8]), Error<&'static str>> {
+    fn from_data(data: &[u8]) -> Result<(Self, &[u8]), Error<&'static str>> {
         Self::read_from_prefix(data).or(Err(Error::new(
             Status::BAD_BUFFER_SIZE,
             "read MmNextVariable",
@@ -120,7 +121,7 @@ impl MmVariableParsedRequest {
     pub fn new(function: u64, body: &[u8]) -> Result<Self, Error<&'static str>> {
         let req = match function {
             GET_VARIABLE => {
-                let (access, namedata) = MmVariableAccess::new(body)?;
+                let (access, namedata) = MmVariableAccess::from_data(body)?;
                 let ns = access.name_size as usize;
                 let Some(slice) = &namedata.get(0..ns) else {
                     return Err(Error::new(Status::BAD_BUFFER_SIZE, "invalid name size"));
@@ -131,7 +132,7 @@ impl MmVariableParsedRequest {
                 MmVariableParsedRequest::GetVariable(id)
             }
             GET_NEXT_VARIABLE_NAME | LOCK_VARIABLE => {
-                let (next, namebytes) = MmNextVariable::new(body)?;
+                let (next, namebytes) = MmNextVariable::from_data(body)?;
                 let ns = next.name_size as usize;
                 let Some(slice) = &namebytes.get(0..ns) else {
                     return Err(Error::new(Status::BAD_BUFFER_SIZE, "invalid name size"));
@@ -146,7 +147,7 @@ impl MmVariableParsedRequest {
                 }
             }
             SET_VARIABLE => {
-                let (access, namedata) = MmVariableAccess::new(body)?;
+                let (access, namedata) = MmVariableAccess::from_data(body)?;
                 let ns = access.name_size as usize;
                 let ds = access.data_size as usize;
                 let Some(slice) = &namedata.get(0..ns) else {
@@ -298,7 +299,7 @@ pub struct MmVariableRequest<'a> {
 
 impl<'a> MmVariableRequest<'a> {
     pub fn new(data: &'a [u8]) -> Result<Self, Error<&'static str>> {
-        let (header, body) = MmVariableHeader::new(data)?;
+        let (header, body) = MmVariableHeader::from_data(data)?;
         let req = match MmVariableParsedRequest::new(header.function, body) {
             Ok(req) => {
                 debug!("variable/req/ok: {req}");
