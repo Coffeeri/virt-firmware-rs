@@ -20,7 +20,7 @@ pub enum PkEnroll {
 }
 
 #[derive(Parser, Debug)]
-#[command(version, name = "setup-efi-vars",
+#[command(version, name = "virt-fw-vars-setup",
           about = "generate uefi variable store in json format",
           long_about = None)]
 struct Args {

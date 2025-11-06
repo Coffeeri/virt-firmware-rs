@@ -19,7 +19,7 @@ name = "json-read"
 required-features = [ "std", "json" ]
 
 [[bin]]
-name = "setup-efi-vars"
+name = "virt-fw-vars-setup"
 required-features = [ "std", "json", "pem" ]
 
 [features]
