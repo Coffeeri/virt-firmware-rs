@@ -7,6 +7,7 @@ use core::fmt::Display;
 use log::{debug, error};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
+use uefi::data_types::FromStrError;
 use uefi::{CString16, Error, Status};
 use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr, EfiVarId};
 use virtfw_libefi::guids::RawGuid;
@@ -172,8 +173,8 @@ impl MmVariableParsedRequest {
     }
 
     // MmVariableAccess (name only)
-    fn serialize_access_id(id: &EfiVarId) -> Vec<u8> {
-        let name = CString16::try_from(id.name.as_str()).unwrap_or(CString16::new());
+    fn serialize_access_id(id: &EfiVarId) -> Result<Vec<u8>, FromStrError> {
+        let name = CString16::try_from(id.name.as_str())?;
         let access = MmVariableAccess {
             guid: id.guid.into(),
             attributes: EfiVarAttr::new(),
@@ -183,12 +184,12 @@ impl MmVariableParsedRequest {
         let mut blob = Vec::new();
         blob.extend_from_slice(access.as_bytes());
         blob.extend_from_slice(name.as_bytes());
-        blob
+        Ok(blob)
     }
 
     // MmVariableAccess (name+data)
-    fn serialize_access_var(var: &EfiVar) -> Vec<u8> {
-        let name = CString16::try_from(var.name.as_str()).unwrap_or(CString16::new());
+    fn serialize_access_var(var: &EfiVar) -> Result<Vec<u8>, FromStrError> {
+        let name = CString16::try_from(var.name.as_str())?;
         let access = MmVariableAccess {
             guid: var.guid.into(),
             attributes: var.attr,
@@ -199,12 +200,12 @@ impl MmVariableParsedRequest {
         blob.extend_from_slice(access.as_bytes());
         blob.extend_from_slice(name.as_bytes());
         blob.extend_from_slice(var.data.as_bytes());
-        blob
+        Ok(blob)
     }
 
     // MmNextVariable
-    fn serialize_next(id: &EfiVarId) -> Vec<u8> {
-        let name = CString16::try_from(id.name.as_str()).unwrap_or(CString16::new());
+    fn serialize_next(id: &EfiVarId) -> Result<Vec<u8>, FromStrError> {
+        let name = CString16::try_from(id.name.as_str())?;
         let next = MmNextVariable {
             guid: id.guid.into(),
             name_size: name.num_bytes() as u64,
@@ -212,27 +213,28 @@ impl MmVariableParsedRequest {
         let mut blob = Vec::new();
         blob.extend_from_slice(next.as_bytes());
         blob.extend_from_slice(name.as_bytes());
-        blob
+        Ok(blob)
     }
 }
 
-impl From<&MmVariableParsedRequest> for Vec<u8> {
-    fn from(value: &MmVariableParsedRequest) -> Vec<u8> {
+impl TryFrom<&MmVariableParsedRequest> for Vec<u8> {
+    type Error = FromStrError;
+    fn try_from(value: &MmVariableParsedRequest) -> Result<Vec<u8>, FromStrError> {
         let (function, data) = match value {
             MmVariableParsedRequest::GetVariable(id) => (
                 GET_VARIABLE,
-                MmVariableParsedRequest::serialize_access_id(id),
+                MmVariableParsedRequest::serialize_access_id(id)?,
             ),
             MmVariableParsedRequest::SetVariable(var) => (
                 SET_VARIABLE,
-                MmVariableParsedRequest::serialize_access_var(var),
+                MmVariableParsedRequest::serialize_access_var(var)?,
             ),
             MmVariableParsedRequest::GetNextVariableName(id) => (
                 GET_NEXT_VARIABLE_NAME,
-                MmVariableParsedRequest::serialize_next(id),
+                MmVariableParsedRequest::serialize_next(id)?,
             ),
             MmVariableParsedRequest::LockVariable(id) => {
-                (LOCK_VARIABLE, MmVariableParsedRequest::serialize_next(id))
+                (LOCK_VARIABLE, MmVariableParsedRequest::serialize_next(id)?)
             }
             MmVariableParsedRequest::QueryVariableInfo => (QUERY_VARIABLE_INFO, Vec::new()),
             MmVariableParsedRequest::ReadyToBoot => (READY_TO_BOOT, Vec::new()),
@@ -245,7 +247,7 @@ impl From<&MmVariableParsedRequest> for Vec<u8> {
         let mut blob = Vec::new();
         blob.extend_from_slice(hdr.as_bytes());
         blob.extend_from_slice(&data);
-        blob
+        Ok(blob)
     }
 }
 

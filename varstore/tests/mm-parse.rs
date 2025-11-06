@@ -5,7 +5,7 @@ use virtfw_libefi::guids;
 use virtfw_varstore::mm::variable::{MmVariableParsedRequest, MmVariableRequest};
 
 fn verify_req(req: &MmVariableParsedRequest) {
-    let buffer = Vec::<u8>::from(req);
+    let buffer = Vec::<u8>::try_from(req).unwrap();
     let compare = MmVariableRequest::new(&buffer).unwrap();
     assert_eq!(compare.parsed.unwrap(), *req);
 }
