@@ -141,7 +141,8 @@ impl ValueEnum for SecureBootProfile {
                 SecureBootProfile::All => PossibleValue::new("all")
                     .help("Both Windows and UEFI CA certificates, 2011 + 2023"),
                 #[cfg(feature = "sbtest")]
-                SecureBootProfile::RedHatTest => PossibleValue::new("rh-test"),
+                SecureBootProfile::RedHatTest => PossibleValue::new("rh-test")
+                    .help("Include Red Hat *Test* Build certificate (insecure)"),
             };
         Some(pv)
     }
