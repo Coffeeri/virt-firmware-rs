@@ -1,5 +1,5 @@
 use clap::Parser;
-use log::info;
+use log::{error, info};
 use std::process::ExitCode;
 
 use igvm::IgvmFile;
@@ -18,6 +18,25 @@ struct Args {
     files: Vec<String>,
 }
 
+fn print_one(filename: &str, ovmfmeta: bool) -> Result<(), Box<dyn std::error::Error>> {
+    info!("inspecting {filename}");
+
+    let blob = std::fs::read(filename)?;
+    let igvm = IgvmFile::new_from_binary(&blob, None)?;
+
+    inspect_igvm(&igvm);
+
+    if ovmfmeta {
+        for page in igvm.directives().iter().filter_map(find_resetvector) {
+            if let Some(ovmfmeta) = OvmfMeta::new(page) {
+                ovmfmeta.print();
+            }
+        }
+    };
+
+    Ok(())
+}
+
 fn main() -> ExitCode {
     let cfg = Args::parse();
 
@@ -28,19 +47,8 @@ fn main() -> ExitCode {
         .unwrap();
 
     for arg in &cfg.files {
-        info!("inspecting {arg}");
-
-        let blob = std::fs::read(arg).expect("file read error");
-        let igvm = IgvmFile::new_from_binary(&blob, None).expect("file parse error");
-
-        inspect_igvm(&igvm);
-
-        if cfg.meta {
-            for page in igvm.directives().iter().filter_map(find_resetvector) {
-                if let Some(ovmfmeta) = OvmfMeta::new(page) {
-                    ovmfmeta.print();
-                }
-            }
+        if let Err(e) = print_one(arg, cfg.meta) {
+            error!("{arg}: {e}");
         }
     }
 
