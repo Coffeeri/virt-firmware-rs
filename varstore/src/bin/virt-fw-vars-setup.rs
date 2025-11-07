@@ -1,4 +1,6 @@
 use clap::{Parser, ValueEnum};
+use log::error;
+use std::process::ExitCode;
 
 use der::{DecodePem, Encode};
 use x509_cert::Certificate;
@@ -100,18 +102,18 @@ fn cert_is_pem(data: &[u8]) -> bool {
     s.contains("-----BEGIN")
 }
 
-fn cert_load(filename: &str) -> Vec<u8> {
-    let data = std::fs::read(filename).expect("read cert file");
+fn cert_load(filename: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+    let data = std::fs::read(filename)?;
 
     if cert_is_pem(&data) {
-        let cert = Certificate::from_pem(&data).expect("parse pem cert");
-        cert.to_der().expect("serialize cert")
+        let cert = Certificate::from_pem(&data)?;
+        Ok(cert.to_der().expect("serialize cert"))
     } else {
-        data
+        Ok(data)
     }
 }
 
-fn main() {
+fn main() -> ExitCode {
     let cfg = Args::parse();
     loginit();
 
@@ -121,13 +123,23 @@ fn main() {
     let mut db = cfg.profile.sigdb();
     for filename in cfg.add_db_cert {
         let der = cert_load(&filename);
-        db.add_x509_from_der(&guids::OvmfEnrollDefaultKeys, &der);
+        if let Err(e) = der {
+            error!("{filename}: {e}");
+            return 1.into();
+        }
+        db.add_x509_from_der(&guids::OvmfEnrollDefaultKeys, &der.unwrap());
     }
     store.enroll_db(db.get_x509_mtime(), &db);
 
     // dbx
     let auth = if let Some(filename) = cfg.set_dbx_update {
-        std::fs::read(filename).expect("read dbx update")
+        match std::fs::read(&filename) {
+            Err(e) => {
+                error!("{filename}: {e}");
+                return 1.into();
+            }
+            Ok(a) => a,
+        }
     } else {
         get_dbx_opt(cfg.arch).into()
     };
@@ -142,7 +154,11 @@ fn main() {
         let mut kek = EfiSigDB::new();
         for filename in cfg.add_kek_cert {
             let der = cert_load(&filename);
-            kek.add_x509_from_der(&guids::OvmfEnrollDefaultKeys, &der);
+            if let Err(e) = der {
+                error!("{filename}: {e}");
+                return 1.into();
+            }
+            kek.add_x509_from_der(&guids::OvmfEnrollDefaultKeys, &der.unwrap());
         }
         store.enroll_kek(kek.get_x509_mtime(), &kek);
     }
@@ -151,7 +167,11 @@ fn main() {
     if let Some(filename) = cfg.set_pk_cert {
         let mut pk = EfiSigDB::new();
         let der = cert_load(&filename);
-        pk.add_x509_from_der(&guids::OvmfEnrollDefaultKeys, &der);
+        if let Err(e) = der {
+            error!("{filename}: {e}");
+            return 1.into();
+        }
+        pk.add_x509_from_der(&guids::OvmfEnrollDefaultKeys, &der.unwrap());
         store.enroll_pk(pk.get_x509_mtime(), &pk);
     } else {
         match cfg.enroll {
@@ -167,8 +187,13 @@ fn main() {
     let json = serde_json::to_string(&jstore).expect("serialize to json failed");
 
     if let Some(filename) = cfg.output {
-        std::fs::write(filename, json).expect("writing json file failed");
+        if let Err(e) = std::fs::write(&filename, json) {
+            error!("{filename}: {e}");
+            return 1.into();
+        }
     } else {
         println!("{json}");
-    }
+    };
+
+    0.into()
 }
