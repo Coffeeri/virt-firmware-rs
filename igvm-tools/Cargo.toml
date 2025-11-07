@@ -1,6 +1,6 @@
 [package]
 name = "virtfw-igvm-tools"
-version = "0.1.7"
+version = "0.1.8"
 publish = true
 description = "igvm related linux applications"
 readme = "README.md"
