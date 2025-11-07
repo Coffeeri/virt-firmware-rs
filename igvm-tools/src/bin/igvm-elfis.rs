@@ -10,6 +10,7 @@ use object::{Endianness, Object, ObjectSection};
 use std::fs;
 use std::process::ExitCode;
 
+use igvm::IgvmFile;
 use virtfw_igvm_tools::builder::Builder;
 use virtfw_igvm_tools::efidata::{EfiIgvmDataList, EfiIgvmDataType};
 use virtfw_igvm_tools::inspect::inspect_igvm;
@@ -200,21 +201,12 @@ fn igvm_add_kernel(builder: &mut Builder, hobs_region: &Region, kernel_blob: Opt
     }
 }
 
-fn main() -> ExitCode {
-    let cfg = Args::parse();
-
-    stderrlog::new()
-        .module(module_path!())
-        .verbosity(stderrlog::LogLevelNum::Info)
-        .init()
-        .unwrap();
-
+fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
     info!("reading {}", &cfg.input);
-    let binary = fs::read(cfg.input).expect("input: file read error");
-    let object = File::parse(&*binary).expect("binary parse error");
+    let binary = fs::read(&cfg.input)?;
+    let object = File::parse(&*binary)?;
     let File::Elf64(elf) = object else {
-        error!("not an elf64 file");
-        return ExitCode::from(1);
+        return Err("not an elf64 file".into());
     };
 
     info!("parsing elf");
@@ -317,12 +309,26 @@ fn main() -> ExitCode {
     }
 
     // constructing igvm is complete
-    let igvm_res = builder.finalize();
-    if let Err(e) = igvm_res {
-        error!("build igvm: {e}");
-        return ExitCode::from(1);
-    }
-    let igvm = igvm_res.unwrap();
+    let igvm = builder.finalize()?;
+    Ok(igvm)
+}
+
+fn main() -> ExitCode {
+    let cfg = Args::parse();
+
+    stderrlog::new()
+        .module(module_path!())
+        .verbosity(stderrlog::LogLevelNum::Info)
+        .init()
+        .unwrap();
+
+    let igvm = match process(&cfg) {
+        Err(e) => {
+            error!("{e}");
+            return 1.into();
+        }
+        Ok(i) => i,
+    };
 
     if cfg.inspect {
         info!("inspect igvm");
