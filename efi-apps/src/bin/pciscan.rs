@@ -10,6 +10,7 @@ use uefi::println;
 use virtfw_efi_apps::misc;
 use virtfw_efi_apps::pager::Pager;
 use virtfw_efi_apps::qemu;
+#[cfg(feature = "fdt")]
 use virtfw_libhw::pci::ecam::PciHostEcam;
 use virtfw_libhw::pci::PciHost;
 
