@@ -202,6 +202,39 @@ fn igvm_add_kernel(
     builder.finalize().expect("build updated igvm")
 }
 
+fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
+    info!("reading {}", &cfg.input);
+    let blob = std::fs::read(&cfg.input)?;
+    let igvm = IgvmFile::new_from_binary(&blob, None)?;
+
+    // shim
+    let shim_blob = if let Some(shim_name) = &cfg.shim {
+        info!("reading {}", &shim_name);
+        let data = std::fs::read(shim_name)?;
+        Some(data)
+    } else {
+        None
+    };
+
+    // kernel
+    let kernel_blob = if let Some(kernel_name) = &cfg.kernel {
+        info!("reading {}", &kernel_name);
+        let data = std::fs::read(kernel_name)?;
+        Some(data)
+    } else {
+        None
+    };
+
+    // merge
+    let new_igvm = igvm_add_kernel(cfg, &igvm, shim_blob.as_deref(), kernel_blob.as_deref());
+    if cfg.inspect {
+        println!("updated IGVM image");
+        inspect_igvm(&new_igvm);
+    }
+
+    Ok(new_igvm)
+}
+
 fn main() -> ExitCode {
     let cfg = Args::parse();
 
@@ -212,38 +245,17 @@ fn main() -> ExitCode {
         .init()
         .unwrap();
 
-    info!("reading {}", &cfg.input);
-    let blob = std::fs::read(&cfg.input).expect("igvm: file read error");
-    let igvm = IgvmFile::new_from_binary(&blob, None).expect("igvm: file parse error");
-
-    // shim
-    let shim_blob = if let Some(shim_name) = &cfg.shim {
-        info!("reading {}", &shim_name);
-        let data = std::fs::read(shim_name).expect("shim: file read error");
-        Some(data)
-    } else {
-        None
+    let igvm = match process(&cfg) {
+        Err(e) => {
+            error!("{e}");
+            return 1.into();
+        }
+        Ok(i) => i,
     };
-
-    // kernel
-    let kernel_blob = if let Some(kernel_name) = &cfg.kernel {
-        info!("reading {}", &kernel_name);
-        let data = std::fs::read(kernel_name).expect("kernel: file read error");
-        Some(data)
-    } else {
-        None
-    };
-
-    // merge
-    let new_igvm = igvm_add_kernel(&cfg, &igvm, shim_blob.as_deref(), kernel_blob.as_deref());
-    if cfg.inspect {
-        println!("updated IGVM image");
-        inspect_igvm(&new_igvm);
-    }
 
     if let Some(outfile) = cfg.output {
         let mut blob = Vec::new();
-        let res = new_igvm.serialize(&mut blob);
+        let res = igvm.serialize(&mut blob);
         if let Err(e) = res {
             error!("serialize igvm: {e}");
             return ExitCode::from(1);
