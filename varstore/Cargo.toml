@@ -23,7 +23,7 @@ name = "virt-fw-vars-setup"
 required-features = [ "std", "json", "pem" ]
 
 [features]
-std = [ "zerocopy/std", "virtfw-libefi/std", "x509-cert/std", "dep:flate2", "dep:clap", "dep:stderrlog" ]
+std = [ "zerocopy/std", "virtfw-libefi/std", "x509-cert/std", "dep:flate2", "dep:clap", "dep:clap_mangen", "dep:stderrlog" ]
 json = [ "dep:serde", "dep:serde_json", "uguid/serde" ]
 sbtest = [ "virtfw-libefi/sbtest" ]
 pem = [ "der/pem", "x509-cert/pem" ]
@@ -36,6 +36,7 @@ x509-cert.workspace = true
 zerocopy.workspace = true
 
 clap = { workspace = true, optional = true }
+clap_mangen = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }
 stderrlog = { workspace = true , optional = true }

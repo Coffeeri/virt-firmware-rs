@@ -21,6 +21,7 @@ edition = "2021"
 bitfield-struct = { version = "0.12" }
 byteorder = { version = "1", default-features = false }
 clap = { version = "4.5.4", features = [ "derive", "wrap_help" ] }
+clap_mangen = { version = "0.2.30" }
 der = { version = "0.7.10" }
 fdt = { version = "0.1" }
 igvm = { version = "0.4" }

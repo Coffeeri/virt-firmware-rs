@@ -1,4 +1,4 @@
-use clap::{Parser, ValueEnum};
+use clap::{CommandFactory, Parser, ValueEnum};
 use log::error;
 use std::process::ExitCode;
 
@@ -22,7 +22,7 @@ pub enum PkEnroll {
 }
 
 #[derive(Parser, Debug)]
-#[command(version, name = "virt-fw-vars-setup",
+#[command(version, author, name = "virt-fw-vars-setup",
           about = "generate uefi variable store in json format",
           long_about = None)]
 struct Args {
@@ -32,14 +32,22 @@ struct Args {
     #[arg(long, value_name = "FILE")]
     output: Option<String>,
 
+    #[arg(long, hide = true)]
+    manpage: bool,
+
     /// select 'db' profile
     ///
     /// Use 'uefi*' profiles for linux guests, use 'win*' profiles for
     /// windows guests.  If in doubt you can also use the 'all'
     /// profile which includes both and matches the typical
     /// configuration of physical hardware.
-    #[arg(long, value_name = "NAME", help_heading = "Quick setup")]
-    profile: SecureBootProfile,
+    #[arg(
+        long,
+        value_name = "NAME",
+        help_heading = "Quick setup",
+        required_unless_present = "manpage"
+    )]
+    profile: Option<SecureBootProfile>,
 
     /// select 'PK' mode
     #[arg(long, value_name = "MODE", help_heading = "Quick setup",
@@ -117,10 +125,16 @@ fn main() -> ExitCode {
     let cfg = Args::parse();
     loginit();
 
+    if cfg.manpage {
+        let man = clap_mangen::Man::new(Args::command());
+        man.render(&mut std::io::stdout()).expect("render manpage");
+        return 0.into();
+    }
+
     let mut store = EfiVarStore::new();
 
     // db
-    let mut db = cfg.profile.sigdb();
+    let mut db = cfg.profile.unwrap().sigdb();
     for filename in cfg.add_db_cert {
         let der = cert_load(&filename);
         if let Err(e) = der {
