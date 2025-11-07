@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{CommandFactory, Parser};
 use log::{error, info};
 use std::process::ExitCode;
 
@@ -7,7 +7,9 @@ use virtfw_igvm_tools::inspect::{find_resetvector, inspect_igvm};
 use virtfw_igvm_tools::ovmfmeta::OvmfMeta;
 
 #[derive(Parser, Debug)]
-#[command(version, name = "igvm-inspect",  about = "inspect igvm file content", long_about = None)]
+#[command(version, author, name = "igvm-inspect",
+          about = "inspect igvm file content",
+          long_about = None)]
 struct Args {
     /// print ovmf metadata
     #[arg(long)]
@@ -16,6 +18,9 @@ struct Args {
     /// files to inspect
     #[arg()]
     files: Vec<String>,
+
+    #[arg(long, hide = true)]
+    manpage: bool,
 }
 
 fn print_one(filename: &str, ovmfmeta: bool) -> Result<(), Box<dyn std::error::Error>> {
@@ -39,6 +44,12 @@ fn print_one(filename: &str, ovmfmeta: bool) -> Result<(), Box<dyn std::error::E
 
 fn main() -> ExitCode {
     let cfg = Args::parse();
+
+    if cfg.manpage {
+        let man = clap_mangen::Man::new(Args::command());
+        man.render(&mut std::io::stdout()).expect("render manpage");
+        return 0.into();
+    }
 
     stderrlog::new()
         .module(module_path!())

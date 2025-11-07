@@ -1,7 +1,7 @@
 //!
 //! convert elf images into igvm
 //!
-use clap::Parser;
+use clap::{CommandFactory, Parser};
 use log::{debug, error, info};
 use object::elf::{FileHeader64, PT_LOAD, SHF_ALLOC};
 use object::read::elf::{ElfFile, ProgramHeader, SectionHeader};
@@ -22,7 +22,9 @@ const IGVM_PARAM_MEMMAP: &str = ".igvm.memmap";
 const IGVM_DATA_HOB: &str = ".igvm.datahobs";
 
 #[derive(Parser, Debug)]
-#[command(version, name = "igvm-elfis", about = "convert elf images into igvm", long_about = None)]
+#[command(version, author, name = "igvm-elfis",
+          about = "convert elf images into igvm",
+          long_about = None)]
 struct Args {
     /// list regions in elf image
     #[arg(long)]
@@ -33,8 +35,8 @@ struct Args {
     inspect: bool,
 
     /// input elf image
-    #[arg(short, long, value_name = "ELF")]
-    input: String,
+    #[arg(short, long, value_name = "ELF", required_unless_present = "manpage")]
+    input: Option<String>,
 
     /// input efi binary (usually linux kernel)
     #[arg(short, long, value_name = "EFI")]
@@ -43,6 +45,9 @@ struct Args {
     /// output igvm image
     #[arg(short, long, value_name = "IGVM")]
     output: Option<String>,
+
+    #[arg(long, hide = true)]
+    manpage: bool,
 }
 
 struct Region<'r> {
@@ -202,8 +207,9 @@ fn igvm_add_kernel(builder: &mut Builder, hobs_region: &Region, kernel_blob: Opt
 }
 
 fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
-    info!("reading {}", &cfg.input);
-    let binary = fs::read(&cfg.input)?;
+    let input = cfg.input.as_ref().unwrap();
+    info!("reading {}", input);
+    let binary = fs::read(input)?;
     let object = File::parse(&*binary)?;
     let File::Elf64(elf) = object else {
         return Err("not an elf64 file".into());
@@ -315,6 +321,12 @@ fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
 
 fn main() -> ExitCode {
     let cfg = Args::parse();
+
+    if cfg.manpage {
+        let man = clap_mangen::Man::new(Args::command());
+        man.render(&mut std::io::stdout()).expect("render manpage");
+        return 0.into();
+    }
 
     stderrlog::new()
         .module(module_path!())

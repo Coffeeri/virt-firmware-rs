@@ -1,7 +1,7 @@
 //!
 //! wrap classic native firmware image as igvm
 //!
-use clap::Parser;
+use clap::{CommandFactory, Parser};
 use log::{error, info};
 use std::fs;
 use std::process::ExitCode;
@@ -12,7 +12,9 @@ use virtfw_igvm_tools::ovmfmeta::OvmfMeta;
 use virtfw_igvm_tools::x86regs::{flat32_mode_regs, real_mode_regs};
 
 #[derive(Parser, Debug)]
-#[command(version, name = "igvm-wrap", about = "wrap classic native firmware image as igvm", long_about = None)]
+#[command(version, author, name = "igvm-wrap",
+          about = "wrap classic native firmware image as igvm",
+          long_about = None)]
 struct Args {
     /// print ovmf metadata
     #[arg(long)]
@@ -49,10 +51,19 @@ struct Args {
     /// output igvm image
     #[arg(short, long, value_name = "IGVM")]
     output: Option<String>,
+
+    #[arg(long, hide = true)]
+    manpage: bool,
 }
 
 fn main() -> ExitCode {
     let cfg = Args::parse();
+
+    if cfg.manpage {
+        let man = clap_mangen::Man::new(Args::command());
+        man.render(&mut std::io::stdout()).expect("render manpage");
+        return 0.into();
+    }
 
     stderrlog::new()
         .module(module_path!())

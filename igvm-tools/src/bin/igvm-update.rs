@@ -1,7 +1,7 @@
 //!
 //! add kernel image to (ovmf) igvm
 //!
-use clap::Parser;
+use clap::{CommandFactory, Parser};
 use log::{debug, error, info};
 use std::process::ExitCode;
 
@@ -27,11 +27,13 @@ use virtfw_igvm_tools::inspect::{find_resetvector, inspect_igvm};
 use virtfw_igvm_tools::ovmfmeta::{OvmfMeta, OvmfRegionType};
 
 #[derive(Parser, Debug)]
-#[command(version, name = "igvm-update", about = "add kernel to igvm file", long_about = None)]
+#[command(version, author, name = "igvm-update",
+          about = "add kernel to igvm file",
+          long_about = None)]
 struct Args {
     /// input igvm image
-    #[arg(short, long, value_name = "FILE")]
-    input: String,
+    #[arg(short, long, value_name = "FILE", required_unless_present = "manpage")]
+    input: Option<String>,
 
     /// input shim image (optional)
     #[arg(short, long, value_name = "SHIM")]
@@ -65,6 +67,9 @@ struct Args {
     /// output igvm image
     #[arg(short, long, value_name = "FILE")]
     output: Option<String>,
+
+    #[arg(long, hide = true)]
+    manpage: bool,
 }
 
 #[cfg(feature = "authenticode")]
@@ -203,8 +208,9 @@ fn igvm_add_kernel(
 }
 
 fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
-    info!("reading {}", &cfg.input);
-    let blob = std::fs::read(&cfg.input)?;
+    let input = cfg.input.as_ref().unwrap();
+    info!("reading {}", input);
+    let blob = std::fs::read(input)?;
     let igvm = IgvmFile::new_from_binary(&blob, None)?;
 
     // shim
@@ -237,6 +243,12 @@ fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
 
 fn main() -> ExitCode {
     let cfg = Args::parse();
+
+    if cfg.manpage {
+        let man = clap_mangen::Man::new(Args::command());
+        man.render(&mut std::io::stdout()).expect("render manpage");
+        return 0.into();
+    }
 
     stderrlog::new()
         .module(module_path!())
