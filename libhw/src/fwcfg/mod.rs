@@ -22,6 +22,7 @@ use log::debug;
 
 use core::ptr;
 
+#[cfg(feature = "alloc")]
 use crate::size::*;
 
 pub const ITEM_SIGNATURE: u16 = 0x00;
