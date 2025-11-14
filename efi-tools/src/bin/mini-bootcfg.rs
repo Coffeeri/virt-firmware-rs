@@ -90,6 +90,14 @@ struct Args {
     /// print boot loader name
     #[arg(long, help_heading = "Print system information")]
     print_loader: bool,
+
+    /// print efi stub info
+    #[arg(long, help_heading = "Print system information")]
+    print_stub_info: bool,
+
+    /// print efi stub image
+    #[arg(long, help_heading = "Print system information")]
+    print_stub_image: bool,
 }
 
 fn create_file_boot_entry(
@@ -412,6 +420,13 @@ fn show_bootcfg(bootcfg: &BootConfig, verbose: bool) {
     }
 }
 
+fn read_efi_var_str(name: &str) -> Option<String> {
+    let variable = sysfs::varstore_read(name, &guids::LoaderInfo)?;
+    let mut rd = Cursor::new(variable.data);
+    let value = rd.read_efi_string().ok()?;
+    Some(value)
+}
+
 fn main() -> ExitCode {
     let cfg = Args::parse();
 
@@ -563,16 +578,26 @@ fn main() -> ExitCode {
     }
 
     if cfg.print_loader {
-        let Some(var) = sysfs::varstore_read("LoaderInfo", &guids::LoaderInfo) else {
-            println!("unknown");
-            return ExitCode::from(0);
-        };
-        let mut r = Cursor::new(var.data);
-        let Ok(name) = r.read_efi_string() else {
-            println!("unknown");
-            return ExitCode::from(0);
-        };
-        println!("{name}");
+        match read_efi_var_str("LoaderInfo") {
+            Some(s) => println!("{s}"),
+            None => println!("unknown"),
+        }
+        return ExitCode::from(0);
+    }
+
+    if cfg.print_stub_info {
+        match read_efi_var_str("StubInfo") {
+            Some(s) => println!("{s}"),
+            None => println!("unknown"),
+        }
+        return ExitCode::from(0);
+    }
+
+    if cfg.print_stub_image {
+        if let Some(efipath) = read_efi_var_str("StubImageIdentifier") {
+            let linuxpath = efipath.replace("\\", "/");
+            println!("{linuxpath}");
+        }
         return ExitCode::from(0);
     }
 
