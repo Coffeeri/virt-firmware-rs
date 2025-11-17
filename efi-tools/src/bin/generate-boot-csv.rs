@@ -27,6 +27,10 @@ struct Args {
     /// override csv output location
     #[arg(long, value_name = "CSV")]
     csv: Option<String>,
+
+    /// override kernel cmd line (default: /etc/kernel/cmdline)
+    #[arg(long, value_name = "APPEND")]
+    cmdline: Option<String>,
 }
 
 fn main() -> ExitCode {
@@ -75,11 +79,28 @@ fn main() -> ExitCode {
     let uki_glob = format!("{esp}/EFI/Linux/*.efi");
     debug!("find kernels: {uki_glob}");
 
+    let cmdline = match args.cmdline {
+        Some(c) => c,
+        None => std::fs::read_to_string("/etc/kernel/cmdline").unwrap_or("".into()),
+    };
+    info!("cmdline: {}", cmdline);
+
     let mut csv = String::new();
+    let esp_path = std::path::Path::new(&esp);
     for uki in glob::glob(&uki_glob).expect("uki glob failed").flatten() {
         info!("uki: {}", uki.display());
+        let efi = uki
+            .strip_prefix(esp_path)
+            .unwrap()
+            .display()
+            .to_string()
+            .replace("/", "\\");
+        info!("efi: -> \\{efi}");
         let title = uki.file_name().unwrap().to_str().unwrap();
-        let line = format!("{},{},{} ,{}\n", shim_name, title, uki.display(), "Comment");
+        let line = format!(
+            "{},{},\\{} {},{}\n",
+            shim_name, title, efi, cmdline, "Comment"
+        );
         csv.push_str(&line);
     }
     if csv.is_empty() {
