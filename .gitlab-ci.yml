@@ -13,7 +13,7 @@ stages:
 #    rust-std-static-x86_64-unknown-uefi
 #    rust-std-static-x86_64-unknown-none
 
-compile:
+compile-x64:
   stage: build
   script:
     - make build
@@ -28,6 +28,13 @@ compile:
       - target/doc
       - target/x86_64-unknown-none/doc
       - target/x86_64-unknown-uefi/doc
+
+compile-aa64:
+  stage: build
+  tags:
+    - aarch64.slow
+  script:
+    - make build
 
 tests:
   stage: build
