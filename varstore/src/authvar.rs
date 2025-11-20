@@ -76,17 +76,16 @@ impl EfiVarStore {
     }
 
     fn is_sb_pk(&self, var: &EfiVar) -> bool {
-        var.guid() == &guids::EfiGlobalVariable && var.name() == SB_PK
+        var.deref() == ids::PK
     }
 
     fn is_sb_kek(&self, var: &EfiVar) -> bool {
-        var.guid() == &guids::EfiGlobalVariable && var.name() == SB_KEK
+        var.deref() == ids::KEK
     }
 
     // image security database (db + dbx)
     fn is_sb_imgdb(&self, var: &EfiVar) -> bool {
-        var.guid() == &guids::EfiImageSecurityDatabase
-            && (var.name() == SB_DB || var.name() == SB_DBX)
+        var.deref() == ids::DB || var.deref() == ids::DBX
     }
 
     // is secure boot auth var?
