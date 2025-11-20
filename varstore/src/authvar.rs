@@ -156,7 +156,7 @@ impl EfiVarStore {
         let v = EfiVar::new_from_slice(
             variable.guid(),
             variable.name(),
-            variable.attr,
+            variable.attr(),
             authvar.data,
         );
 

@@ -115,7 +115,7 @@ impl<'a> EfiVarAuth2<'a> {
         sdata.extend_from_slice(&variable.guid().to_bytes());
 
         // Attributes
-        let attr: u32 = u32::from(variable.attr);
+        let attr: u32 = variable.attr().into();
         sdata.extend_from_slice(&attr.to_le_bytes());
 
         // TimeStamp

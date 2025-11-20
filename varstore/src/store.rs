@@ -86,7 +86,7 @@ impl EfiVarStore {
     }
 
     pub fn check_old_new(&self, old: &EfiVar, new: &EfiVar) -> Result<(), Error<&'static str>> {
-        if old.attr != new.attr {
+        if old.attr() != new.attr() {
             return Err(Error::new(Status::INVALID_PARAMETER, "attribute mismatch"));
         }
         Ok(())
@@ -95,12 +95,12 @@ impl EfiVarStore {
     pub fn check_service(&self, variable: &EfiVar) -> Result<(), Error<&'static str>> {
         if !self.exit_boot_service {
             // boot service
-            if !variable.attr.bootservice_access() {
+            if !variable.attr().bootservice_access() {
                 return Err(Error::new(Status::NOT_FOUND, "BS attr not set"));
             }
         } else {
             // runtime
-            if !variable.attr.runtime_access() {
+            if !variable.attr().runtime_access() {
                 return Err(Error::new(Status::NOT_FOUND, "RT attr not set"));
             }
         };
@@ -108,13 +108,13 @@ impl EfiVarStore {
     }
 
     pub fn check_attributes(&self, variable: &EfiVar) -> Result<(), Error<&'static str>> {
-        if variable.attr.reserved() != 0 {
+        if variable.attr().reserved() != 0 {
             return Err(Error::new(Status::INVALID_PARAMETER, "reserved bit set"));
         }
-        if variable.attr.hardware_error() {
+        if variable.attr().hardware_error() {
             return Err(Error::new(Status::INVALID_PARAMETER, "hw-error bit set"));
         }
-        if variable.attr.auth_wr_access() {
+        if variable.attr().auth_wr_access() {
             // not used any more
             return Err(Error::new(Status::UNSUPPORTED, "auth bit set"));
         }
@@ -174,7 +174,7 @@ impl EfiVarStore {
             self.check_service(old)?;
             self.check_attributes(old)?;
             self.policy_check(&new, false)?;
-            if old.attr.time_auth_wr_access() {
+            if old.attr().time_auth_wr_access() {
                 return Err(Error::new(
                     Status::SECURITY_VIOLATION,
                     "tried to delete auth var without pkcs7 signature",
@@ -197,7 +197,7 @@ impl EfiVarStore {
         self.check_attributes(&new)?;
         self.policy_check(&new, old_opt.is_none())?;
 
-        if new.attr.time_auth_wr_access() {
+        if new.attr().time_auth_wr_access() {
             return self.set_time_auth(&new);
         }
 
@@ -210,7 +210,7 @@ impl EfiVarStore {
         self.ready_to_boot = false;
         self.exit_boot_service = false;
 
-        self.variables.retain(|v| v.attr.non_volatile());
+        self.variables.retain(|v| v.attr().non_volatile());
         self.auth_init();
 
         self.policy_locked = false;

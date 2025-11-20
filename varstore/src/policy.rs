@@ -78,7 +78,7 @@ impl EfiVarStore {
             return Err(Error::new(Status::INVALID_PARAMETER, "policy max-size"));
         }
 
-        let attr = u32::from(var.attr);
+        let attr = u32::from(var.attr());
         let must = u32::from(policy.attr_must_have);
         let cant = u32::from(policy.attr_cant_have);
         if (attr & must) != must {

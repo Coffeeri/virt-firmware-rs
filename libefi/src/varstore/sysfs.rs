@@ -65,7 +65,7 @@ pub fn varstore_write(var: &types::EfiVar) -> io::Result<()> {
     // must write variable with a single syscall
     // so go prepare a buffer with all data
     let mut blob: Vec<u8> = Vec::new();
-    let attr: u32 = var.attr.into();
+    let attr: u32 = var.attr().into();
     blob.extend_from_slice(&attr.to_le_bytes());
     blob.extend_from_slice(&var.data);
     trace!("datablob={blob:?}");

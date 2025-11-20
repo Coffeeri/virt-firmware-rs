@@ -78,7 +78,7 @@ impl From<&EfiVar> for JsonEfiVariable {
         Self {
             guid: *v.guid(),
             name: v.name().into(),
-            attr: u32::from(v.attr),
+            attr: v.attr().into(),
             data: JsonHexString::from(v.data.as_ref()),
             time: v.time.map(|t| JsonHexString::from(t.as_bytes())),
             digest: None,
@@ -118,7 +118,7 @@ impl EfiVarStore {
         let variables = self
             .variables
             .iter()
-            .filter(|v| v.attr.non_volatile())
+            .filter(|v| v.attr().non_volatile())
             .map(JsonEfiVariable::from)
             .collect();
         JsonEfiVarStore {
