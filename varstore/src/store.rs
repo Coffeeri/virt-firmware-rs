@@ -136,7 +136,7 @@ impl EfiVarStore {
         Ok(())
     }
 
-    pub fn get_next(&self, id: &EfiVarId) -> Result<(&str, &Guid), Error<&'static str>> {
+    pub fn get_next(&self, id: &EfiVarId) -> Result<&EfiVarId, Error<&'static str>> {
         let mut next_index = 0;
         if !id.name().is_empty() {
             let Some(index) = self.get_position(id) else {
@@ -157,7 +157,7 @@ impl EfiVarStore {
                 next_index += 1;
                 continue;
             }
-            return Ok((var.name(), var.guid()));
+            return Ok(var);
         }
     }
 

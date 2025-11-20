@@ -384,11 +384,10 @@ impl<'a> MmVariableRequest<'a> {
         if let Err(e) = res {
             return self.response(e.status(), None);
         }
-        let (next_name, next_guid) = res.unwrap();
-        debug!("variable/next: {} -> {}", id.name(), next_name);
+        let next_id = res.unwrap();
+        debug!("variable/next: {} -> {}", id.name(), next_id.name());
 
-        let next_id = EfiVarId::new(next_name.into(), *next_guid);
-        let reply = MmVariableParsedRequest::serialize_next(&next_id);
+        let reply = MmVariableParsedRequest::serialize_next(next_id);
         match reply {
             Err(_) => self.response(Status::DEVICE_ERROR, None),
             Ok(r) => self.response(Status::SUCCESS, Some(&r)),
