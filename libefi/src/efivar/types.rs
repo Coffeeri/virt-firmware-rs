@@ -100,14 +100,14 @@ pub struct EfiVar {
 }
 
 impl EfiVar {
-    pub fn new_with_vec(guid: &Guid, name: &str, attr: EfiVarAttr, data: Vec<u8>) -> Self {
+    pub fn new_with_vec(id: EfiVarId, attr: EfiVarAttr, data: Vec<u8>) -> Self {
         let time = if attr.time_auth_wr_access() {
             Some(EfiTime::default())
         } else {
             None
         };
         Self {
-            id: EfiVarId::new(name.into(), *guid),
+            id,
             attr,
             data,
             time,
@@ -115,27 +115,26 @@ impl EfiVar {
     }
 
     pub fn new_with_vec_full(
-        guid: &Guid,
-        name: &str,
+        id: EfiVarId,
         attr: EfiVarAttr,
         data: Vec<u8>,
         time: Option<EfiTime>,
     ) -> Self {
         Self {
-            id: EfiVarId::new(name.into(), *guid),
+            id,
             attr,
             data,
             time,
         }
     }
 
-    pub fn new_from_slice(guid: &Guid, name: &str, attr: EfiVarAttr, data: &[u8]) -> Self {
-        Self::new_with_vec(guid, name, attr, data.into())
+    pub fn new_from_slice(id: EfiVarId, attr: EfiVarAttr, data: &[u8]) -> Self {
+        Self::new_with_vec(id, attr, data.into())
     }
 
-    pub fn new_from_bool(guid: &Guid, name: &str, attr: EfiVarAttr, value: bool) -> Self {
+    pub fn new_from_bool(id: EfiVarId, attr: EfiVarAttr, value: bool) -> Self {
         let data = if value { vec![1] } else { vec![0] };
-        Self::new_with_vec(guid, name, attr, data)
+        Self::new_with_vec(id, attr, data)
     }
 
     pub fn attr(&self) -> EfiVarAttr {

@@ -40,8 +40,8 @@ pub fn varstore_ls() -> io::Result<Vec<types::EfiVarId>> {
     Ok(vars)
 }
 
-pub fn varstore_read(name: &str, guid: &Guid) -> Option<types::EfiVar> {
-    let filename = varstore_filename(name, guid);
+pub fn varstore_read_id(id: &types::EfiVarId) -> Option<types::EfiVar> {
+    let filename = varstore_filename(id.name(), id.guid());
     debug!("reading {filename}");
     let Ok(blob) = fs::read(filename) else {
         return None;
@@ -50,15 +50,15 @@ pub fn varstore_read(name: &str, guid: &Guid) -> Option<types::EfiVar> {
         return None;
     };
     Some(types::EfiVar::new_from_slice(
-        guid,
-        name,
+        id.clone(),
         types::EfiVarAttr::from(attr),
         data,
     ))
 }
 
-pub fn varstore_read_id(id: &types::EfiVarId) -> Option<types::EfiVar> {
-    varstore_read(id.name(), id.guid())
+pub fn varstore_read(name: &str, guid: &Guid) -> Option<types::EfiVar> {
+    let id = types::EfiVarId::new(name.into(), *guid);
+    varstore_read_id(&id)
 }
 
 pub fn varstore_write(var: &types::EfiVar) -> io::Result<()> {

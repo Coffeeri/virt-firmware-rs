@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use uguid::Guid;
 use zerocopy::{FromBytes, IntoBytes};
 
-use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr};
+use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr, EfiVarId};
 use virtfw_libefi::guids;
 use virtfw_libefi::types::EfiTime;
 
@@ -67,9 +67,14 @@ impl TryFrom<&JsonEfiVariable> for EfiVar {
         let attr = EfiVarAttr::from(v.attr);
         let data = Vec::<u8>::try_from(&v.data)?;
         let time = v.parse_time();
-        Ok(EfiVar::new_with_vec_full(
-            &v.guid, &v.name, attr, data, time,
-        ))
+        let id = v.into();
+        Ok(EfiVar::new_with_vec_full(id, attr, data, time))
+    }
+}
+
+impl From<&JsonEfiVariable> for EfiVarId {
+    fn from(v: &JsonEfiVariable) -> Self {
+        Self::new(v.name.clone(), v.guid)
     }
 }
 

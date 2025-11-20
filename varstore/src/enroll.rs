@@ -3,25 +3,22 @@
 //!
 //use alloc::vec::Vec;
 
-use uguid::Guid;
-
 use virtfw_libefi::efivar::auth::auth_to_esl;
+use virtfw_libefi::efivar::ids;
 use virtfw_libefi::efivar::sigdb::EfiSigDB;
-use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr};
+use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr, EfiVarId};
 use virtfw_libefi::guids;
 use virtfw_libefi::sb::certs::profiles::SecureBootProfile;
 use virtfw_libefi::sb::certs::*;
 use virtfw_libefi::sb::dbx::*;
 use virtfw_libefi::types::EfiTime;
 
-use crate::authvar::{SB_DB, SB_DBX, SB_KEK, SB_PK};
 use crate::store::EfiVarStore;
 
 impl EfiVarStore {
-    fn enroll_sigdb(&mut self, guid: &Guid, name: &str, ts: Option<EfiTime>, sigdb: &EfiSigDB) {
+    fn enroll_sigdb(&mut self, id: EfiVarId, ts: Option<EfiTime>, sigdb: &EfiSigDB) {
         let var = EfiVar::new_with_vec_full(
-            guid,
-            name,
+            id,
             EfiVarAttr::new_nv_bs_rt().with_time_auth_wr_access(true),
             sigdb.into(),
             ts,
@@ -30,19 +27,19 @@ impl EfiVarStore {
     }
 
     pub fn enroll_pk(&mut self, ts: Option<EfiTime>, pk: &EfiSigDB) {
-        self.enroll_sigdb(&guids::EfiGlobalVariable, SB_PK, ts, pk);
+        self.enroll_sigdb(ids::PK.into(), ts, pk);
     }
 
     pub fn enroll_kek(&mut self, ts: Option<EfiTime>, kek: &EfiSigDB) {
-        self.enroll_sigdb(&guids::EfiGlobalVariable, SB_KEK, ts, kek);
+        self.enroll_sigdb(ids::KEK.into(), ts, kek);
     }
 
     pub fn enroll_db(&mut self, ts: Option<EfiTime>, db: &EfiSigDB) {
-        self.enroll_sigdb(&guids::EfiImageSecurityDatabase, SB_DB, ts, db);
+        self.enroll_sigdb(ids::DB.into(), ts, db);
     }
 
     pub fn enroll_dbx(&mut self, ts: Option<EfiTime>, dbx: &EfiSigDB) {
-        self.enroll_sigdb(&guids::EfiImageSecurityDatabase, SB_DBX, ts, dbx);
+        self.enroll_sigdb(ids::DBX.into(), ts, dbx);
     }
 
     pub fn enroll_pk_mgmt(&mut self) {

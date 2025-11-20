@@ -14,7 +14,8 @@ const DATA_FEDORA_BOOT_2_JSON: &str = include_str!("data/fedora-boot-2.json");
 fn compare_store(jstore: JsonEfiVarStore, store: &mut EfiVarStore) {
     store.reset();
     for jvar in jstore.variables {
-        let var1 = store.get(&jvar.name, &jvar.guid).unwrap();
+        let id = (&jvar).into();
+        let var1 = store.get(&id).unwrap();
         let var2 = &EfiVar::try_from(&jvar).unwrap();
         assert_eq!(var1, var2);
     }

@@ -143,7 +143,8 @@ impl MmVariableParsedRequest {
             return Err(Error::new(Status::BAD_BUFFER_SIZE, "invalid data size"));
         };
         let guid = access.guid.into();
-        let var = EfiVar::new_from_slice(&guid, &String::from(name), access.attributes, data);
+        let id = EfiVarId::new(String::from(name), guid);
+        let var = EfiVar::new_from_slice(id, access.attributes, data);
         Ok(var)
     }
 
@@ -364,7 +365,7 @@ impl<'a> MmVariableRequest<'a> {
     }
 
     fn get_variable(&self, store: &EfiVarStore, id: &EfiVarId) -> Vec<u8> {
-        let res = store.get(id.name(), id.guid());
+        let res = store.get(id);
         if let Err(e) = res {
             debug!("variable/get/error: {e}");
             return self.response(e.status(), None);
@@ -379,7 +380,7 @@ impl<'a> MmVariableRequest<'a> {
     }
 
     fn get_next_variable_name(&self, store: &EfiVarStore, id: &EfiVarId) -> Vec<u8> {
-        let res = store.get_next(id.name(), id.guid());
+        let res = store.get_next(id);
         if let Err(e) = res {
             return self.response(e.status(), None);
         }

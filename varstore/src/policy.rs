@@ -5,7 +5,7 @@ use alloc::string::String;
 use uguid::Guid;
 
 use uefi::{Error, Status};
-use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr};
+use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr, EfiVarId};
 
 use crate::store::EfiVarStore;
 
@@ -103,7 +103,8 @@ impl EfiVarStore {
                 name,
                 value,
             } => {
-                if let Ok(lockvar) = self.get(name, namespace) {
+                let id = EfiVarId::new(name.into(), *namespace);
+                if let Ok(lockvar) = self.get(&id) {
                     if lockvar.data().len() == 1 && lockvar.data()[0] == *value {
                         return Err(Error::new(
                             Status::WRITE_PROTECTED,

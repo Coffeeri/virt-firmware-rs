@@ -7,8 +7,8 @@ use openssl::x509::verify::X509VerifyFlags;
 use openssl::x509::{X509PurposeId, X509};
 
 use virtfw_libefi::efivar::auth::EfiVarAuth2;
+use virtfw_libefi::efivar::ids;
 use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr};
-use virtfw_libefi::guids;
 use virtfw_libefi::sb::certs::*;
 use virtfw_libefi::sb::dbx::*;
 
@@ -58,8 +58,7 @@ fn kek_store() -> X509Store {
 #[test]
 fn test_dbx_update_pkcs7() {
     let variable = EfiVar::new_with_vec(
-        &guids::EfiImageSecurityDatabase,
-        "dbx",
+        ids::DBX.into(),
         EfiVarAttr::new_nv_bs_rt()
             .with_time_auth_wr_access(true)
             .with_append_write(true),

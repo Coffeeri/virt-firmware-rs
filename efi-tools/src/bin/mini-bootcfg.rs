@@ -10,10 +10,12 @@ use virtfw_libefi::distro::LinuxOsInfo;
 use virtfw_libefi::efifile::EfiFile;
 use virtfw_libefi::efivar::boot;
 use virtfw_libefi::efivar::devpath as dp;
+use virtfw_libefi::efivar::ids;
 use virtfw_libefi::efivar::io::ReadEfiExt;
 use virtfw_libefi::efivar::io::WriteEfiExt;
 use virtfw_libefi::efivar::types::EfiVar;
 use virtfw_libefi::efivar::types::EfiVarAttr;
+use virtfw_libefi::efivar::types::EfiVarId;
 use virtfw_libefi::guids;
 use virtfw_libefi::nocasestr::NoCaseString;
 use virtfw_libefi::varstore::sysfs;
@@ -217,13 +219,8 @@ fn write_bootentry(
     let mut wr = Cursor::new(Vec::new());
     wr.write_boot_entry(&entry)?;
 
-    let name = format!("Boot{index}");
-    let be = EfiVar::new_with_vec(
-        &guids::EfiGlobalVariable,
-        &name,
-        EfiVarAttr::new_nv_bs_rt(),
-        wr.into_inner(),
-    );
+    let id = EfiVarId::new(format!("Boot{index}"), guids::EfiGlobalVariable);
+    let be = EfiVar::new_with_vec(id, EfiVarAttr::new_nv_bs_rt(), wr.into_inner());
 
     info!(
         "set efivar: {} = \"{}\" {} {}",
@@ -238,8 +235,7 @@ fn write_bootentry(
 
 fn write_bootnext(index: &boot::BootIndex, dryrun: bool) -> io::Result<()> {
     let bn = EfiVar::new_with_vec(
-        &guids::EfiGlobalVariable,
-        "BootNext",
+        ids::BOOT_NEXT.into(),
         EfiVarAttr::new_nv_bs_rt(),
         Vec::from(index),
     );
@@ -255,8 +251,7 @@ fn update_bootorder(
     dryrun: bool,
 ) -> io::Result<()> {
     let bo = EfiVar::new_with_vec(
-        &guids::EfiGlobalVariable,
-        "BootOrder",
+        ids::BOOT_ORDER.into(),
         EfiVarAttr::new_nv_bs_rt(),
         Vec::from(new_order),
     );

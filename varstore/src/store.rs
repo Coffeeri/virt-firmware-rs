@@ -4,10 +4,11 @@
 
 #![allow(clippy::collapsible_else_if)]
 use alloc::vec::Vec;
+use core::ops::Deref;
 use uguid::Guid;
 
 use uefi::{Error, Status};
-use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr};
+use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr, EfiVarId};
 
 use crate::policy::{VariablePolicyEntry, VariablePolicyType};
 
@@ -41,19 +42,17 @@ impl EfiVarStore {
         }
     }
 
-    fn get_position(&self, name: &str, guid: &Guid) -> Option<usize> {
-        self.variables
-            .iter()
-            .position(|v| v.name() == name && v.guid() == guid)
+    fn get_position(&self, id: &EfiVarId) -> Option<usize> {
+        self.variables.iter().position(|v| v.deref() == id)
     }
 
-    pub(crate) fn get_unchecked(&self, name: &str, guid: &Guid) -> Option<&EfiVar> {
-        let index = self.get_position(name, guid)?;
+    pub(crate) fn get_unchecked(&self, id: &EfiVarId) -> Option<&EfiVar> {
+        let index = self.get_position(id)?;
         Some(&self.variables[index])
     }
 
     pub(crate) fn set_unchecked(&mut self, variable: EfiVar) {
-        let index = self.get_position(variable.name(), variable.guid());
+        let index = self.get_position(variable.deref());
         if let Some(i) = index {
             // replace
             if false {
@@ -69,14 +68,8 @@ impl EfiVarStore {
         }
     }
 
-    pub(crate) fn set_unchecked_bool(
-        &mut self,
-        guid: &Guid,
-        name: &str,
-        attr: EfiVarAttr,
-        boolean: bool,
-    ) {
-        let var = EfiVar::new_from_bool(guid, name, attr, boolean);
+    pub(crate) fn set_unchecked_bool(&mut self, id: EfiVarId, attr: EfiVarAttr, boolean: bool) {
+        let var = EfiVar::new_from_bool(id, attr, boolean);
         self.set_unchecked(var);
     }
 
@@ -121,8 +114,8 @@ impl EfiVarStore {
         Ok(())
     }
 
-    pub fn get(&self, name: &str, guid: &Guid) -> Result<&EfiVar, Error<&'static str>> {
-        if let Some(var) = self.get_unchecked(name, guid) {
+    pub fn get(&self, id: &EfiVarId) -> Result<&EfiVar, Error<&'static str>> {
+        if let Some(var) = self.get_unchecked(id) {
             self.check_service(var)?;
             return Ok(var);
         }
@@ -143,10 +136,10 @@ impl EfiVarStore {
         Ok(())
     }
 
-    pub fn get_next(&self, name: &str, guid: &Guid) -> Result<(&str, &Guid), Error<&'static str>> {
+    pub fn get_next(&self, id: &EfiVarId) -> Result<(&str, &Guid), Error<&'static str>> {
         let mut next_index = 0;
-        if !name.is_empty() {
-            let Some(index) = self.get_position(name, guid) else {
+        if !id.name().is_empty() {
+            let Some(index) = self.get_position(id) else {
                 return Err(Error::new(Status::NOT_FOUND, "variable not found"));
             };
             let var = self.variables.get(index).unwrap();
@@ -169,7 +162,7 @@ impl EfiVarStore {
     }
 
     pub fn delete(&mut self, new: EfiVar) -> Result<(), Error<&'static str>> {
-        let old_opt = self.get_unchecked(new.name(), new.guid());
+        let old_opt = self.get_unchecked(&new);
         if let Some(old) = old_opt {
             self.check_service(old)?;
             self.check_attributes(old)?;
@@ -189,7 +182,7 @@ impl EfiVarStore {
         if new.data().is_empty() {
             return self.delete(new);
         }
-        let old_opt = self.get_unchecked(new.name(), new.guid());
+        let old_opt = self.get_unchecked(&new);
         if let Some(old) = old_opt {
             self.check_old_new(old, &new)?;
         }
