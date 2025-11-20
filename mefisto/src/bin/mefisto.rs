@@ -33,6 +33,7 @@ use virtfw_mefisto::efi::console::Console;
 use virtfw_mefisto::efi::loader;
 use virtfw_mefisto::efi::mapper;
 use virtfw_mefisto::efi::rng;
+use virtfw_mefisto::efi::vars::qemuvars;
 use virtfw_mefisto::exception::exception_init;
 use virtfw_mefisto::sercon::sercon_init;
 use virtfw_mefisto::{println, symrange};
@@ -346,6 +347,10 @@ fn main() {
     let rng = rng::Random::new();
     let efi = efiloader::init(Some(&CONSOLE), memmap, mapper, rng).expect("init efi runtime");
     info!("efi loader init complete");
+
+    if let Err(e) = qemuvars::init(efi, &FWCFG) {
+        error!("qemuvars: {e}");
+    }
 
     if let Some(mut smbios) = smbios::SmbiosLoader::new(&FWCFG) {
         let version = format!("{META_BIOS_NAME} v{META_BIOS_MAJOR}.{META_BIOS_MINOR}");
