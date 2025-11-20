@@ -15,7 +15,7 @@ Related python project: https://gitlab.com/kraxel/virt-firmware
  * [helper functions for direct hardware access](libhw/)
  * [helper functions for efi variables + data structures](libefi/)
  * [uefi variable store](varstore/)
- * [64-bit firmware images](bios-64/)
+ * [64-bit firmware images](mefisto/)
 
 ### C code
 

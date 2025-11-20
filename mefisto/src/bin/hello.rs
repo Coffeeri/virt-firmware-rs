@@ -2,8 +2,8 @@
 #![no_std]
 #![no_main]
 
-use virtfw_bios_64::println;
-use virtfw_bios_64::sercon::sercon_init;
+use virtfw_mefisto::println;
+use virtfw_mefisto::sercon::sercon_init;
 use virtfw_libhw::qemuboards::qemu_try_poweroff;
 
 #[no_mangle]

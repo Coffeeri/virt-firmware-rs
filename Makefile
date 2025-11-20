@@ -5,7 +5,7 @@ BIOS32	:=
 POST64	:=
 
 ifeq ($(ARCH),x86_64)
-PKGS	+= bios-64 efi-apps
+PKGS	+= mefisto efi-apps
 BIOS32	+= build-bios-32
 BIOS32	+= build-none-libefi
 BIOS32	+= build-none-varstore
@@ -17,7 +17,7 @@ PKGS	+= efi-apps
 endif
 
 # target specific variables
-doc-bios-64 build-bios-64 clippy-bios-64 clippy-fix-bios-64 release-bios-64 package-bios-64 : TARGET := --target $(ARCH)-unknown-none --features efiloader
+doc-mefisto build-mefisto clippy-mefisto clippy-fix-mefisto release-mefisto package-mefisto : TARGET := --target $(ARCH)-unknown-none --features efiloader
 doc-efi-apps build-efi-apps clippy-efi-apps clippy-fix-efi-apps release-efi-apps package-efi-apps : TARGET := --target $(ARCH)-unknown-uefi --features fdt
 doc-efi-tools build-efi-tools clippy-efi-tools clippy-fix-efi-tools release-efi-tools package-efi-tools : TARGET := --features udev
 doc-varstore build-varstore clippy-varstore clippy-fix-varstore release-varstore package-varstore : TARGET := --features std,json,pem
@@ -60,7 +60,7 @@ BIOSBIN	:= $(patsubst %,target/x86_64-unknown-none/debug/%.bin,$(BIOS64))
 IGVM	+= $(patsubst %,target/x86_64-unknown-none/debug/%.igvm,$(BIOS64))
 
 cargo-post: $(BIOSBIN) $(IGVM)
-$(BIOSELF): build-bios-64
+$(BIOSELF): build-mefisto
 
 %.bin: %
 	objcopy -O binary $< $@

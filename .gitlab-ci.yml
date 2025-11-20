@@ -96,14 +96,14 @@ pages:
     - compile-x64
     - compile-aa64
   script:
-    - mkdir -p public/bios-32 public/bios-64 public/efi-apps/x64 public/efi-apps/aa64
+    - mkdir -p public/bios-32 public/mefisto public/efi-apps/x64 public/efi-apps/aa64
     - for binary in helloefi.efi netboot.efi pciscan.efi hoblist.efi debuglog.efi; do
       mv -v target/x86_64-unknown-uefi/debug/$binary public/efi-apps/x64;
       mv -v target/aarch64-unknown-uefi/debug/$binary public/efi-apps/aa64;
       done
     - mv -v bios-32/*.bin public/bios-32
-    - mv -v target/x86_64-unknown-none/debug/*.bin public/bios-64
-    - mv -v target/x86_64-unknown-none/debug/*.igvm public/bios-64
+    - mv -v target/x86_64-unknown-none/debug/*.bin public/mefisto
+    - mv -v target/x86_64-unknown-none/debug/*.igvm public/mefisto
     - tree -T "$CI_PROJECT_NAME" --charset utf8 -H -. public > index.html
     - mv index.html public
   only:

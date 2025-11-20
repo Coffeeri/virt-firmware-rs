@@ -13,6 +13,14 @@ to long mode, finally call into rust code.
 
 Print hello world to serial console, poweroff
 
+### qemuinit
+
+Testing: initialize qemu hardware.
+
+### igvmtest
+
+Testing: igvm parameters.
+
 ### mefisto
 
 Minimal efi environment for direct linux kernel boot, using

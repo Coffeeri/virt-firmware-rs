@@ -5,9 +5,9 @@
 extern crate alloc;
 use log::info;
 
-use virtfw_bios_64::alloc::alloc_init;
-use virtfw_bios_64::println;
-use virtfw_bios_64::sercon::sercon_init;
+use virtfw_mefisto::alloc::alloc_init;
+use virtfw_mefisto::println;
+use virtfw_mefisto::sercon::sercon_init;
 use virtfw_libhw::fwcfg::x86::FwCfgX86;
 use virtfw_libhw::fwcfg::{acpi, default_static_alloc, smbios};
 use virtfw_libhw::pci::setup::PciSetup;

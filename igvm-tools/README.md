@@ -17,4 +17,4 @@ boot.  Requires edk2-stable202511 or newer.
 
 ### igvm-elfis
 
-Convert elf binaries (as created by bios-64 crate) into igvm files.
+Convert elf binaries (as created by mefisto crate) into igvm files.

@@ -1,8 +1,8 @@
 [package]
-name = "virtfw-bios-64"
+name = "virtfw-mefisto"
 version = "0.0.1"
 publish = false
-description = "bios images for testing"
+description = "firmware images"
 readme = "README.md"
 
 license.workspace = true
