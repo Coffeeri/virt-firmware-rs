@@ -112,7 +112,7 @@ impl<'a> EfiVarAuth2<'a> {
         sdata.extend_from_slice(&name_bytes);
 
         // Variable Namespace Guid
-        sdata.extend_from_slice(&variable.guid.to_bytes());
+        sdata.extend_from_slice(&variable.guid().to_bytes());
 
         // Attributes
         let attr: u32 = u32::from(variable.attr);

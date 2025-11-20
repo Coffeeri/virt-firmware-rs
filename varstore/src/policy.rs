@@ -46,7 +46,7 @@ impl core::fmt::Display for VariablePolicyEntry {
 
 impl EfiVarStore {
     fn match_wildcard(pe: &VariablePolicyEntry, var: &EfiVar) -> bool {
-        if pe.namespace != var.guid {
+        if &pe.namespace != var.guid() {
             return false;
         }
         if pe.name.len() != var.name().len() {

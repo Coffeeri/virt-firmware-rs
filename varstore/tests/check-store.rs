@@ -22,17 +22,17 @@ fn read_write_nv_bs() {
     store.set(tvar.clone()).expect("set failed");
 
     // boot service -> ok
-    let var = store.get(tvar.name(), &tvar.guid).expect("get #1 failed");
+    let var = store.get(tvar.name(), tvar.guid()).expect("get #1 failed");
     assert_eq!(*var, tvar);
 
     // runtime service -> not found (no runtime access)
     store.exit_boot_service();
-    let res = store.get(tvar.name(), &tvar.guid);
+    let res = store.get(tvar.name(), tvar.guid());
     assert_eq!(res.err().unwrap().status(), Status::NOT_FOUND);
 
     // reset -> boot service -> ok
     store.reset();
-    let var = store.get(tvar.name(), &tvar.guid).expect("get #2 failed");
+    let var = store.get(tvar.name(), tvar.guid()).expect("get #2 failed");
     assert_eq!(*var, tvar);
 }
 
@@ -49,17 +49,17 @@ fn read_write_bs_rt() {
     store.set(tvar.clone()).expect("set failed");
 
     // boot service -> ok
-    let var = store.get(tvar.name(), &tvar.guid).expect("get #1 failed");
+    let var = store.get(tvar.name(), tvar.guid()).expect("get #1 failed");
     assert_eq!(*var, tvar);
 
     // runtime service -> ok
     store.exit_boot_service();
-    let var = store.get(tvar.name(), &tvar.guid).expect("get #2 failed");
+    let var = store.get(tvar.name(), tvar.guid()).expect("get #2 failed");
     assert_eq!(*var, tvar);
 
     // reset -> not found (volatile vars removed)
     store.reset();
-    let res = store.get(tvar.name(), &tvar.guid);
+    let res = store.get(tvar.name(), tvar.guid());
     assert_eq!(res.err().unwrap().status(), Status::NOT_FOUND);
 }
 
@@ -117,7 +117,7 @@ fn lock_now() {
     let mut store = EfiVarStore::new();
     store.set(tvar.clone()).expect("set failed");
 
-    store.lock(tvar.name(), &tvar.guid).expect("lock failed");
+    store.lock(tvar.name(), tvar.guid()).expect("lock failed");
     store.end_of_dxe();
 
     let res = store.set(tvar.clone());

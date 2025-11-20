@@ -76,7 +76,7 @@ impl TryFrom<&JsonEfiVariable> for EfiVar {
 impl From<&EfiVar> for JsonEfiVariable {
     fn from(v: &EfiVar) -> Self {
         Self {
-            guid: v.guid,
+            guid: *v.guid(),
             name: v.name().into(),
             attr: u32::from(v.attr),
             data: JsonHexString::from(v.data.as_ref()),

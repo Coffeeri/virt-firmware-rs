@@ -93,7 +93,7 @@ impl EfiVarId {
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct EfiVar {
     name: String,
-    pub guid: Guid,
+    guid: Guid,
     pub attr: EfiVarAttr,
     pub data: Vec<u8>,
     pub time: Option<EfiTime>,
@@ -142,5 +142,9 @@ impl EfiVar {
 
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    pub fn guid(&self) -> &Guid {
+        &self.guid
     }
 }

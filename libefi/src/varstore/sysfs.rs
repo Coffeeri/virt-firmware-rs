@@ -70,7 +70,7 @@ pub fn varstore_write(var: &types::EfiVar) -> io::Result<()> {
     blob.extend_from_slice(&var.data);
     trace!("datablob={blob:?}");
 
-    let filename = varstore_filename(var.name(), &var.guid);
+    let filename = varstore_filename(var.name(), var.guid());
     debug!("writing {filename}");
     let mut f = fs::OpenOptions::new()
         .create(true)

@@ -205,7 +205,7 @@ impl MmVariableParsedRequest {
     fn serialize_access_var(var: &EfiVar) -> Result<Vec<u8>, FromStrError> {
         let name = CString16::try_from(var.name())?;
         let access = MmVariableAccess {
-            guid: var.guid.into(),
+            guid: var.guid().into(),
             attributes: var.attr,
             name_size: name.num_bytes() as u64,
             data_size: var.data.len() as u64,
