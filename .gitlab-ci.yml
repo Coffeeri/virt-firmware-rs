@@ -52,34 +52,40 @@ release:
 
 pkg-libhw:
   stage: package
+  needs: []
   script:
     - make package-libhw
 
 pkg-libefi:
   stage: package
+  needs: []
   script:
     - make package-libefi
 
 pkg-efi-apps:
   stage: package
+  needs: []
   script:
     - make package-efi-apps
   allow_failure: true
 
 pkg-efi-tools:
   stage: package
+  needs: []
   script:
     - make package-efi-tools
   allow_failure: true
 
 pkg-igvm-tools:
   stage: package
+  needs: []
   script:
     - make package-igvm-tools
   allow_failure: true
 
 pkg-varstore:
   stage: package
+  needs: []
   script:
     - make package-varstore
   allow_failure: true
