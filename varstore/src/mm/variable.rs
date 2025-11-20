@@ -190,7 +190,7 @@ impl MmVariableParsedRequest {
     fn serialize_access_id(id: &EfiVarId) -> Result<Vec<u8>, FromStrError> {
         let name = CString16::try_from(id.name())?;
         let access = MmVariableAccess {
-            guid: id.guid.into(),
+            guid: id.guid().into(),
             attributes: EfiVarAttr::new(),
             name_size: name.num_bytes() as u64,
             data_size: 0,
@@ -221,7 +221,7 @@ impl MmVariableParsedRequest {
     fn serialize_next(id: &EfiVarId) -> Result<Vec<u8>, FromStrError> {
         let name = CString16::try_from(id.name())?;
         let next = MmNextVariable {
-            guid: id.guid.into(),
+            guid: id.guid().into(),
             name_size: name.num_bytes() as u64,
         };
         let mut blob = Vec::new();
@@ -364,7 +364,7 @@ impl<'a> MmVariableRequest<'a> {
     }
 
     fn get_variable(&self, store: &EfiVarStore, id: &EfiVarId) -> Vec<u8> {
-        let res = store.get(id.name(), &id.guid);
+        let res = store.get(id.name(), id.guid());
         if let Err(e) = res {
             debug!("variable/get/error: {e}");
             return self.response(e.status(), None);
@@ -379,7 +379,7 @@ impl<'a> MmVariableRequest<'a> {
     }
 
     fn get_next_variable_name(&self, store: &EfiVarStore, id: &EfiVarId) -> Vec<u8> {
-        let res = store.get_next(id.name(), &id.guid);
+        let res = store.get_next(id.name(), id.guid());
         if let Err(e) = res {
             return self.response(e.status(), None);
         }
@@ -414,7 +414,7 @@ impl<'a> MmVariableRequest<'a> {
     }
 
     fn lock_variable(&self, store: &mut EfiVarStore, id: &EfiVarId) -> Vec<u8> {
-        let res = store.lock(id.name(), &id.guid);
+        let res = store.lock(id.name(), id.guid());
         if let Err(e) = res {
             debug!("variable/lock/error: {e}");
             return self.response(e.status(), None);

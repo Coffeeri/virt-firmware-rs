@@ -58,7 +58,7 @@ pub fn varstore_read(name: &str, guid: &Guid) -> Option<types::EfiVar> {
 }
 
 pub fn varstore_read_id(id: &types::EfiVarId) -> Option<types::EfiVar> {
-    varstore_read(id.name(), &id.guid)
+    varstore_read(id.name(), id.guid())
 }
 
 pub fn varstore_write(var: &types::EfiVar) -> io::Result<()> {
@@ -90,5 +90,5 @@ pub fn varstore_delete(name: &str, guid: &Guid) -> io::Result<()> {
 }
 
 pub fn varstore_delete_id(id: &types::EfiVarId) -> io::Result<()> {
-    varstore_delete(id.name(), &id.guid)
+    varstore_delete(id.name(), id.guid())
 }

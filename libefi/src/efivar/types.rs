@@ -73,7 +73,7 @@ impl core::fmt::Display for EfiVarAttr {
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct EfiVarId {
     name: String,
-    pub guid: Guid,
+    guid: Guid,
 }
 
 impl EfiVarId {
@@ -83,6 +83,10 @@ impl EfiVarId {
 
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    pub fn guid(&self) -> &Guid {
+        &self.guid
     }
 }
 

@@ -58,7 +58,7 @@ impl BootConfig {
         let vars = sysfs::varstore_ls().expect("failed to list efi vars");
 
         for var in vars {
-            if var.guid != guids::EfiGlobalVariable {
+            if var.guid() != &guids::EfiGlobalVariable {
                 continue;
             }
             if !var.name().starts_with("Boot") {
