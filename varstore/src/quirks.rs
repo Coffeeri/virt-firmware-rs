@@ -14,4 +14,16 @@ impl EfiVarStore {
             enabled,
         );
     }
+
+    pub fn quirk_fallback_verbose(&mut self, enabled: bool) {
+        self.set_unchecked_bool(
+            ids::FALLBACK_VERBOSE.into(),
+            EfiVarAttr::new_nv_bs(),
+            enabled,
+        );
+    }
+
+    pub fn quirk_shim_verbose(&mut self, enabled: bool) {
+        self.set_unchecked_bool(ids::SHIM_VERBOSE.into(), EfiVarAttr::new_nv_bs(), enabled);
+    }
 }
