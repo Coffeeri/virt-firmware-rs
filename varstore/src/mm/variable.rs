@@ -188,7 +188,7 @@ impl MmVariableParsedRequest {
 
     // MmVariableAccess (name only)
     fn serialize_access_id(id: &EfiVarId) -> Result<Vec<u8>, FromStrError> {
-        let name = CString16::try_from(id.name.as_str())?;
+        let name = CString16::try_from(id.name())?;
         let access = MmVariableAccess {
             guid: id.guid.into(),
             attributes: EfiVarAttr::new(),
@@ -219,7 +219,7 @@ impl MmVariableParsedRequest {
 
     // MmNextVariable
     fn serialize_next(id: &EfiVarId) -> Result<Vec<u8>, FromStrError> {
-        let name = CString16::try_from(id.name.as_str())?;
+        let name = CString16::try_from(id.name())?;
         let next = MmNextVariable {
             guid: id.guid.into(),
             name_size: name.num_bytes() as u64,
@@ -269,10 +269,10 @@ impl Display for MmVariableParsedRequest {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         match self {
             MmVariableParsedRequest::GetVariable(id) => {
-                write!(f, "request/var: get-variable {}", id.name)
+                write!(f, "request/var: get-variable {}", id.name())
             }
             MmVariableParsedRequest::GetNextVariableName(id) => {
-                write!(f, "request/var: get-next-variable-name {}", id.name)
+                write!(f, "request/var: get-next-variable-name {}", id.name())
             }
             MmVariableParsedRequest::SetVariable(var) => {
                 write!(
@@ -293,7 +293,7 @@ impl Display for MmVariableParsedRequest {
                 write!(f, "request/var: exit-boot-service")
             }
             MmVariableParsedRequest::LockVariable(id) => {
-                write!(f, "request/var: lock-variable {}", id.name)
+                write!(f, "request/var: lock-variable {}", id.name())
             }
             MmVariableParsedRequest::GetPayloadSize => {
                 write!(f, "request/var: get-payload-size")
@@ -364,7 +364,7 @@ impl<'a> MmVariableRequest<'a> {
     }
 
     fn get_variable(&self, store: &EfiVarStore, id: &EfiVarId) -> Vec<u8> {
-        let res = store.get(&id.name, &id.guid);
+        let res = store.get(id.name(), &id.guid);
         if let Err(e) = res {
             debug!("variable/get/error: {e}");
             return self.response(e.status(), None);
@@ -379,12 +379,12 @@ impl<'a> MmVariableRequest<'a> {
     }
 
     fn get_next_variable_name(&self, store: &EfiVarStore, id: &EfiVarId) -> Vec<u8> {
-        let res = store.get_next(&id.name, &id.guid);
+        let res = store.get_next(id.name(), &id.guid);
         if let Err(e) = res {
             return self.response(e.status(), None);
         }
         let (next_name, next_guid) = res.unwrap();
-        debug!("variable/next: {} -> {}", id.name, next_name);
+        debug!("variable/next: {} -> {}", id.name(), next_name);
 
         let next_id = EfiVarId::new(next_name.into(), *next_guid);
         let reply = MmVariableParsedRequest::serialize_next(&next_id);
@@ -414,7 +414,7 @@ impl<'a> MmVariableRequest<'a> {
     }
 
     fn lock_variable(&self, store: &mut EfiVarStore, id: &EfiVarId) -> Vec<u8> {
-        let res = store.lock(&id.name, &id.guid);
+        let res = store.lock(id.name(), &id.guid);
         if let Err(e) = res {
             debug!("variable/lock/error: {e}");
             return self.response(e.status(), None);

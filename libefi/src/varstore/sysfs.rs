@@ -31,10 +31,7 @@ pub fn varstore_ls() -> io::Result<Vec<types::EfiVarId>> {
                 let name = filename.get(..namelen).unwrap();
                 let guid_str = filename.get((namelen + 1)..).unwrap();
                 let guid = Guid::try_parse(guid_str).unwrap();
-                let id = types::EfiVarId {
-                    name: name.to_string(),
-                    guid,
-                };
+                let id = types::EfiVarId::new(name.to_string(), guid);
                 vars.push(id);
             }
         }
@@ -61,7 +58,7 @@ pub fn varstore_read(name: &str, guid: &Guid) -> Option<types::EfiVar> {
 }
 
 pub fn varstore_read_id(id: &types::EfiVarId) -> Option<types::EfiVar> {
-    varstore_read(&id.name, &id.guid)
+    varstore_read(id.name(), &id.guid)
 }
 
 pub fn varstore_write(var: &types::EfiVar) -> io::Result<()> {
@@ -93,5 +90,5 @@ pub fn varstore_delete(name: &str, guid: &Guid) -> io::Result<()> {
 }
 
 pub fn varstore_delete_id(id: &types::EfiVarId) -> io::Result<()> {
-    varstore_delete(&id.name, &id.guid)
+    varstore_delete(id.name(), &id.guid)
 }

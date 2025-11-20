@@ -61,11 +61,11 @@ impl BootConfig {
             if var.guid != guids::EfiGlobalVariable {
                 continue;
             }
-            if !var.name.starts_with("Boot") {
+            if !var.name().starts_with("Boot") {
                 continue;
             }
 
-            let index_str = var.name.get(4..).unwrap();
+            let index_str = var.name().get(4..).unwrap();
             let Ok(index_u16) = u16::from_str_radix(index_str, 16) else {
                 continue;
             };
