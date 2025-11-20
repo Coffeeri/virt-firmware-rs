@@ -46,3 +46,5 @@ pub const VENDOR_KEYS: ConstVarId = ConstVarId::new("VendorKeys", &guids::EfiGlo
 pub const VENDOR_KEYS_NV: ConstVarId = ConstVarId::new("VendorKeysNv", &guids::EfiGlobalVariable);
 
 pub const FB_NO_REBOOT: ConstVarId = ConstVarId::new("FB_NO_REBOOT", &guids::ShimVariable);
+pub const FALLBACK_VERBOSE: ConstVarId = ConstVarId::new("FALLBACK_VERBOSE", &guids::ShimVariable);
+pub const SHIM_VERBOSE: ConstVarId = ConstVarId::new("SHIM_VERBOSE", &guids::ShimVariable);
