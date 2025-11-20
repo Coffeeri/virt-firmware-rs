@@ -186,7 +186,7 @@ impl EfiVarStore {
     }
 
     pub fn set(&mut self, new: EfiVar) -> Result<(), Error<&'static str>> {
-        if new.data.is_empty() {
+        if new.data().is_empty() {
             return self.delete(new);
         }
         let old_opt = self.get_unchecked(new.name(), new.guid());

@@ -67,7 +67,7 @@ pub fn varstore_write(var: &types::EfiVar) -> io::Result<()> {
     let mut blob: Vec<u8> = Vec::new();
     let attr: u32 = var.attr().into();
     blob.extend_from_slice(&attr.to_le_bytes());
-    blob.extend_from_slice(&var.data);
+    blob.extend_from_slice(var.data());
     trace!("datablob={blob:?}");
 
     let filename = varstore_filename(var.name(), var.guid());

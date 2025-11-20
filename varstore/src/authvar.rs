@@ -48,7 +48,7 @@ impl EfiVarStore {
 
     fn get_secure_boot_enable(&mut self) -> Option<bool> {
         let sbe = self.get_unchecked(SB_SECURE_BOOT_ENABLE, &guids::EfiSecureBootEnable)?;
-        Some(sbe.data[0] != 0)
+        Some(sbe.data()[0] != 0)
     }
 
     pub fn set_secure_boot_enable(&mut self, enabled: bool) {
@@ -147,7 +147,7 @@ impl EfiVarStore {
     }
 
     pub(crate) fn set_time_auth(&mut self, variable: &EfiVar) -> Result<(), Error<&'static str>> {
-        let Some(authvar) = EfiVarAuth2::new_from_bytes(&variable.data) else {
+        let Some(authvar) = EfiVarAuth2::new_from_bytes(variable.data()) else {
             return Err(Error::new(Status::INVALID_PARAMETER, "authvar parse error"));
         };
 
@@ -160,7 +160,7 @@ impl EfiVarStore {
             authvar.data,
         );
 
-        if v.data.is_empty() {
+        if v.data().is_empty() {
             self.delete_unchecked(v);
         } else {
             self.set_unchecked(v);

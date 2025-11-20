@@ -71,10 +71,10 @@ impl EfiVarStore {
             return Ok(());
         };
 
-        if var.data.len() < policy.min_size as usize {
+        if var.data().len() < policy.min_size as usize {
             return Err(Error::new(Status::INVALID_PARAMETER, "policy min-size"));
         }
-        if var.data.len() > policy.max_size as usize {
+        if var.data().len() > policy.max_size as usize {
             return Err(Error::new(Status::INVALID_PARAMETER, "policy max-size"));
         }
 
@@ -104,7 +104,7 @@ impl EfiVarStore {
                 value,
             } => {
                 if let Ok(lockvar) = self.get(name, namespace) {
-                    if lockvar.data.len() == 1 && lockvar.data[0] == *value {
+                    if lockvar.data().len() == 1 && lockvar.data()[0] == *value {
                         return Err(Error::new(
                             Status::WRITE_PROTECTED,
                             "policy lock-on-var-state",

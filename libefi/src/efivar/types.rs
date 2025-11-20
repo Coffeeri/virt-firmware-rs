@@ -94,7 +94,7 @@ impl EfiVarId {
 pub struct EfiVar {
     id: EfiVarId,
     attr: EfiVarAttr,
-    pub data: Vec<u8>,
+    data: Vec<u8>,
     pub time: Option<EfiTime>,
 }
 
@@ -151,5 +151,9 @@ impl EfiVar {
 
     pub fn attr(&self) -> EfiVarAttr {
         self.attr
+    }
+
+    pub fn data(&self) -> &[u8] {
+        &self.data
     }
 }

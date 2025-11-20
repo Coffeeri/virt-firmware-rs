@@ -208,12 +208,12 @@ impl MmVariableParsedRequest {
             guid: var.guid().into(),
             attributes: var.attr(),
             name_size: name.num_bytes() as u64,
-            data_size: var.data.len() as u64,
+            data_size: var.data().len() as u64,
         };
         let mut blob = Vec::new();
         blob.extend_from_slice(access.as_bytes());
         blob.extend_from_slice(name.as_bytes());
-        blob.extend_from_slice(var.data.as_bytes());
+        blob.extend_from_slice(var.data().as_bytes());
         Ok(blob)
     }
 
@@ -280,7 +280,7 @@ impl Display for MmVariableParsedRequest {
                     "request/var: set-variable {}  {}  {} data bytes",
                     var.name(),
                     var.attr(),
-                    var.data.len()
+                    var.data().len()
                 )
             }
             MmVariableParsedRequest::QueryVariableInfo => {

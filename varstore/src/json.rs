@@ -79,7 +79,7 @@ impl From<&EfiVar> for JsonEfiVariable {
             guid: *v.guid(),
             name: v.name().into(),
             attr: v.attr().into(),
-            data: JsonHexString::from(v.data.as_ref()),
+            data: JsonHexString::from(v.data()),
             time: v.time.map(|t| JsonHexString::from(t.as_bytes())),
             digest: None,
         }

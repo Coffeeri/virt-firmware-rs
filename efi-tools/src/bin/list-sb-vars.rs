@@ -38,7 +38,7 @@ fn print_sigdb(name: &str, guid: &Guid) {
     };
     println!("{name}");
 
-    let Some(sigdb) = EfiSigDB::new_from_bytes(&var.data) else {
+    let Some(sigdb) = EfiSigDB::new_from_bytes(var.data()) else {
         error!("parse error");
         return;
     };

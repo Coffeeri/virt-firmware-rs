@@ -425,7 +425,7 @@ fn show_bootcfg(bootcfg: &BootConfig, verbose: bool) {
 
 fn read_efi_var_str(name: &str) -> Option<String> {
     let variable = sysfs::varstore_read(name, &guids::LoaderInfo)?;
-    let mut rd = Cursor::new(variable.data);
+    let mut rd = Cursor::new(variable.data());
     let value = rd.read_efi_string().ok()?;
     Some(value)
 }

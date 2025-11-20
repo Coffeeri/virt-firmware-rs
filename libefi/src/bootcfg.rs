@@ -24,8 +24,8 @@ pub struct BootConfig {
 impl BootConfig {
     fn read_bool(name: &str) -> bool {
         if let Some(var) = sysfs::varstore_read(name, &guids::EfiGlobalVariable) {
-            if var.data.len() == 1 {
-                return var.data[0] != 0;
+            if var.data().len() == 1 {
+                return var.data()[0] != 0;
             }
         }
         false
@@ -33,7 +33,7 @@ impl BootConfig {
 
     fn read_index(name: &str) -> Option<BootIndex> {
         let var = sysfs::varstore_read(name, &guids::EfiGlobalVariable)?;
-        let mut r = Cursor::new(var.data);
+        let mut r = Cursor::new(var.data());
         let index = r.read_boot_index();
         if let Err(e) = index {
             error!("failed to parse {name}: {e}");
@@ -44,7 +44,7 @@ impl BootConfig {
 
     fn read_order() -> Option<BootOrder> {
         let var = sysfs::varstore_read("BootOrder", &guids::EfiGlobalVariable)?;
-        let mut r = Cursor::new(var.data);
+        let mut r = Cursor::new(var.data());
         let order = r.read_boot_order();
         if let Err(e) = order {
             error!("failed to parse BootOrder: {e}");
@@ -58,11 +58,10 @@ impl BootConfig {
         let vars = sysfs::varstore_ls().expect("failed to list efi vars");
 
         for var in vars {
-            let name = var.name();
             if var.guid() != &guids::EfiGlobalVariable {
                 continue;
             }
-            if !name.starts_with("Boot") {
+            if !var.name().starts_with("Boot") {
                 continue;
             }
 
@@ -75,10 +74,10 @@ impl BootConfig {
             let Some(var) = sysfs::varstore_read_id(&var) else {
                 continue;
             };
-            let mut r = Cursor::new(var.data);
+            let mut r = Cursor::new(var.data());
             let entry = r.read_boot_entry();
             if let Err(e) = entry {
-                error!("failed to parse {}: {}", name, e);
+                error!("failed to parse {}: {}", var.name(), e);
                 continue;
             };
 
