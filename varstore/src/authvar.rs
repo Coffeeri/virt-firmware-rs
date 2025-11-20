@@ -157,7 +157,7 @@ impl EfiVarStore {
             variable.guid(),
             variable.name(),
             variable.attr(),
-            authvar.data,
+            authvar.data(),
         );
 
         if v.data().is_empty() {

@@ -25,9 +25,9 @@ pub struct EfiVarAuth2Header {
 }
 
 pub struct EfiVarAuth2<'a> {
-    pub header: EfiVarAuth2Header,
-    pub pkcs7: &'a [u8],
-    pub data: &'a [u8],
+    header: EfiVarAuth2Header,
+    pkcs7: &'a [u8],
+    data: &'a [u8],
 }
 
 impl<'a> EfiVarAuth2<'a> {
@@ -125,6 +125,14 @@ impl<'a> EfiVarAuth2<'a> {
         sdata.extend_from_slice(self.data);
 
         sdata
+    }
+
+    pub fn header(&self) -> &EfiVarAuth2Header {
+        &self.header
+    }
+
+    pub fn data(&self) -> &[u8] {
+        self.data
     }
 }
 
