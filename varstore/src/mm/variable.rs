@@ -203,7 +203,7 @@ impl MmVariableParsedRequest {
 
     // MmVariableAccess (name+data)
     fn serialize_access_var(var: &EfiVar) -> Result<Vec<u8>, FromStrError> {
-        let name = CString16::try_from(var.name.as_str())?;
+        let name = CString16::try_from(var.name())?;
         let access = MmVariableAccess {
             guid: var.guid.into(),
             attributes: var.attr,
@@ -278,7 +278,7 @@ impl Display for MmVariableParsedRequest {
                 write!(
                     f,
                     "request/var: set-variable {}  {}  {} data bytes",
-                    var.name,
+                    var.name(),
                     var.attr,
                     var.data.len()
                 )

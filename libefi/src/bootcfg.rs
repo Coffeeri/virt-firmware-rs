@@ -58,10 +58,11 @@ impl BootConfig {
         let vars = sysfs::varstore_ls().expect("failed to list efi vars");
 
         for var in vars {
+            let name = var.name();
             if var.guid() != &guids::EfiGlobalVariable {
                 continue;
             }
-            if !var.name().starts_with("Boot") {
+            if !name.starts_with("Boot") {
                 continue;
             }
 
@@ -77,7 +78,7 @@ impl BootConfig {
             let mut r = Cursor::new(var.data);
             let entry = r.read_boot_entry();
             if let Err(e) = entry {
-                error!("failed to parse {}: {}", var.name, e);
+                error!("failed to parse {}: {}", name, e);
                 continue;
             };
 

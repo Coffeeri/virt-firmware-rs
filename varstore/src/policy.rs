@@ -49,12 +49,12 @@ impl EfiVarStore {
         if pe.namespace != var.guid {
             return false;
         }
-        if pe.name.len() != var.name.len() {
+        if pe.name.len() != var.name().len() {
             return false;
         }
         pe.name
             .chars()
-            .zip(var.name.chars())
+            .zip(var.name().chars())
             .all(|(p, v)| p == '#' || p == v)
     }
 

@@ -101,16 +101,16 @@ impl EfiVarStore {
     }
 
     fn is_sb_pk(&self, var: &EfiVar) -> bool {
-        var.guid == guids::EfiGlobalVariable && var.name == SB_PK
+        var.guid == guids::EfiGlobalVariable && var.name() == SB_PK
     }
 
     fn is_sb_kek(&self, var: &EfiVar) -> bool {
-        var.guid == guids::EfiGlobalVariable && var.name == SB_KEK
+        var.guid == guids::EfiGlobalVariable && var.name() == SB_KEK
     }
 
     // image security database (db + dbx)
     fn is_sb_imgdb(&self, var: &EfiVar) -> bool {
-        var.guid == guids::EfiImageSecurityDatabase && (var.name == SB_DB || var.name == SB_DBX)
+        var.guid == guids::EfiImageSecurityDatabase && (var.name() == SB_DB || var.name() == SB_DBX)
     }
 
     // is secure boot auth var?
@@ -152,7 +152,8 @@ impl EfiVarStore {
 
         self.check_time_auth(variable, &authvar)?;
 
-        let v = EfiVar::new_from_slice(&variable.guid, &variable.name, variable.attr, authvar.data);
+        let v =
+            EfiVar::new_from_slice(&variable.guid, variable.name(), variable.attr, authvar.data);
 
         if v.data.is_empty() {
             self.delete_unchecked(v);

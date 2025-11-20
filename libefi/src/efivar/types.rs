@@ -92,7 +92,7 @@ impl EfiVarId {
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct EfiVar {
-    pub name: String,
+    name: String,
     pub guid: Guid,
     pub attr: EfiVarAttr,
     pub data: Vec<u8>,
@@ -138,5 +138,9 @@ impl EfiVar {
     pub fn new_from_bool(guid: &Guid, name: &str, attr: EfiVarAttr, value: bool) -> Self {
         let data = if value { vec![1] } else { vec![0] };
         Self::new_with_vec(guid, name, attr, data)
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
     }
 }

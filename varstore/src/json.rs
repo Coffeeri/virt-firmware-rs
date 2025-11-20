@@ -77,7 +77,7 @@ impl From<&EfiVar> for JsonEfiVariable {
     fn from(v: &EfiVar) -> Self {
         Self {
             guid: v.guid,
-            name: v.name.clone(),
+            name: v.name().into(),
             attr: u32::from(v.attr),
             data: JsonHexString::from(v.data.as_ref()),
             time: v.time.map(|t| JsonHexString::from(t.as_bytes())),

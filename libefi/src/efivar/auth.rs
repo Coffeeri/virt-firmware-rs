@@ -105,7 +105,7 @@ impl<'a> EfiVarAuth2<'a> {
 
         // Variable Name (without terminating \0)
         let name_bytes: Vec<u8> = variable
-            .name
+            .name()
             .encode_utf16()
             .flat_map(|u| u.to_le_bytes())
             .collect();

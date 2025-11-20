@@ -44,7 +44,7 @@ impl EfiVarStore {
     fn get_position(&self, name: &str, guid: &Guid) -> Option<usize> {
         self.variables
             .iter()
-            .position(|v| v.name == name && v.guid == *guid)
+            .position(|v| v.name() == name && v.guid == *guid)
     }
 
     pub(crate) fn get_unchecked(&self, name: &str, guid: &Guid) -> Option<&EfiVar> {
@@ -53,7 +53,7 @@ impl EfiVarStore {
     }
 
     pub(crate) fn set_unchecked(&mut self, variable: EfiVar) {
-        let index = self.get_position(&variable.name, &variable.guid);
+        let index = self.get_position(variable.name(), &variable.guid);
         if let Some(i) = index {
             // replace
             if false {
@@ -82,7 +82,7 @@ impl EfiVarStore {
 
     pub(crate) fn delete_unchecked(&mut self, new: EfiVar) {
         self.variables
-            .retain(|v| v.name != new.name || v.guid != new.guid);
+            .retain(|v| v.name() != new.name() || v.guid != new.guid);
     }
 
     pub fn check_old_new(&self, old: &EfiVar, new: &EfiVar) -> Result<(), Error<&'static str>> {
@@ -164,12 +164,12 @@ impl EfiVarStore {
                 next_index += 1;
                 continue;
             }
-            return Ok((&var.name, &var.guid));
+            return Ok((var.name(), &var.guid));
         }
     }
 
     pub fn delete(&mut self, new: EfiVar) -> Result<(), Error<&'static str>> {
-        let old_opt = self.get_unchecked(&new.name, &new.guid);
+        let old_opt = self.get_unchecked(new.name(), &new.guid);
         if let Some(old) = old_opt {
             self.check_service(old)?;
             self.check_attributes(old)?;
@@ -189,7 +189,7 @@ impl EfiVarStore {
         if new.data.is_empty() {
             return self.delete(new);
         }
-        let old_opt = self.get_unchecked(&new.name, &new.guid);
+        let old_opt = self.get_unchecked(new.name(), &new.guid);
         if let Some(old) = old_opt {
             self.check_old_new(old, &new)?;
         }

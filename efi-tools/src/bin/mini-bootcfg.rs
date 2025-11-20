@@ -191,9 +191,9 @@ fn find_boot_entry_for_file<'cfg>(
 
 fn write_variable(var: &EfiVar, dryrun: bool) -> io::Result<()> {
     if dryrun {
-        info!("skip update efivar: {} (dry-run)", var.name);
+        info!("skip update efivar: {} (dry-run)", var.name());
     } else {
-        info!("update efivar: {}", var.name);
+        info!("update efivar: {}", var.name());
         sysfs::varstore_write(var)?;
     }
     Ok(())
@@ -227,7 +227,10 @@ fn write_bootentry(
 
     info!(
         "set efivar: {} = \"{}\" {} {}",
-        be.name, entry.title, entry.devpath, entry.optdata
+        be.name(),
+        entry.title,
+        entry.devpath,
+        entry.optdata
     );
     write_variable(&be, dryrun)?;
     Ok(())
@@ -241,7 +244,7 @@ fn write_bootnext(index: &boot::BootIndex, dryrun: bool) -> io::Result<()> {
         Vec::from(index),
     );
 
-    debug!("set efivar: {} = {}", bn.name, index);
+    debug!("set efivar: {} = {}", bn.name(), index);
     write_variable(&bn, dryrun)?;
     Ok(())
 }
@@ -258,8 +261,8 @@ fn update_bootorder(
         Vec::from(new_order),
     );
 
-    debug!("old efivar: {} = {}", bo.name, old_order);
-    debug!("set efivar: {} = {}", bo.name, new_order);
+    debug!("old efivar: {} = {}", bo.name(), old_order);
+    debug!("set efivar: {} = {}", bo.name(), new_order);
     if new_order.is_empty() {
         delete_variable("BootOrder", dryrun)?;
     } else {
