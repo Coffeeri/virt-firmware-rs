@@ -92,8 +92,7 @@ impl EfiVarId {
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct EfiVar {
-    name: String,
-    guid: Guid,
+    id: EfiVarId,
     pub attr: EfiVarAttr,
     pub data: Vec<u8>,
     pub time: Option<EfiTime>,
@@ -107,8 +106,7 @@ impl EfiVar {
             None
         };
         Self {
-            guid: *guid,
-            name: name.into(),
+            id: EfiVarId::new(name.into(), *guid),
             attr,
             data,
             time,
@@ -123,8 +121,7 @@ impl EfiVar {
         time: Option<EfiTime>,
     ) -> Self {
         Self {
-            guid: *guid,
-            name: name.into(),
+            id: EfiVarId::new(name.into(), *guid),
             attr,
             data,
             time,
@@ -141,10 +138,14 @@ impl EfiVar {
     }
 
     pub fn name(&self) -> &str {
-        &self.name
+        self.id.name()
     }
 
     pub fn guid(&self) -> &Guid {
-        &self.guid
+        self.id.guid()
+    }
+
+    pub fn id(&self) -> &EfiVarId {
+        &self.id
     }
 }
