@@ -4,6 +4,7 @@ extern crate alloc;
 use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
+use core::ops::Deref;
 
 use bitfield_struct::bitfield;
 use uguid::Guid;
@@ -137,18 +138,6 @@ impl EfiVar {
         Self::new_with_vec(guid, name, attr, data)
     }
 
-    pub fn name(&self) -> &str {
-        self.id.name()
-    }
-
-    pub fn guid(&self) -> &Guid {
-        self.id.guid()
-    }
-
-    pub fn id(&self) -> &EfiVarId {
-        &self.id
-    }
-
     pub fn attr(&self) -> EfiVarAttr {
         self.attr
     }
@@ -159,5 +148,13 @@ impl EfiVar {
 
     pub fn time(&self) -> Option<&EfiTime> {
         self.time.as_ref()
+    }
+}
+
+impl Deref for EfiVar {
+    type Target = EfiVarId;
+
+    fn deref(&self) -> &EfiVarId {
+        &self.id
     }
 }
