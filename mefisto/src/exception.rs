@@ -1,5 +1,5 @@
 use log::{error, info};
-use x86_64::registers::control::Cr2;
+use x86_64::registers::control::{Cr0, Cr2, Cr4};
 use x86_64::structures::idt::{ExceptionVector, InterruptDescriptorTable, PageFaultErrorCode};
 use x86_64::VirtAddr;
 
@@ -36,6 +36,45 @@ pub struct StackFrame {
     pub ss: u64,
 }
 
+fn dumpregs(regs: *mut StackFrame) {
+    error!(
+        "rax 0x{:016x} rbx 0x{:016x} rcx 0x{:016x}",
+        unsafe { (*regs).rax },
+        unsafe { (*regs).rbx },
+        unsafe { (*regs).rcx },
+    );
+    error!(
+        "rdx 0x{:016x} rsi 0x{:016x} rdi 0x{:016x}",
+        unsafe { (*regs).rdx },
+        unsafe { (*regs).rsi },
+        unsafe { (*regs).rdi },
+    );
+    error!(
+        "rdp 0x{:016x} r8  0x{:016x} r9  0x{:016x}",
+        unsafe { (*regs).rbp },
+        unsafe { (*regs).r8 },
+        unsafe { (*regs).r9 },
+    );
+    error!(
+        "r10 0x{:016x} r11 0x{:016x} r12 0x{:016x}",
+        unsafe { (*regs).r10 },
+        unsafe { (*regs).r11 },
+        unsafe { (*regs).r12 },
+    );
+    error!(
+        "r13 0x{:016x} r14 0x{:016x} r15 0x{:016x}",
+        unsafe { (*regs).r13 },
+        unsafe { (*regs).r14 },
+        unsafe { (*regs).r15 },
+    );
+    error!(
+        "cr0 0x{:016x} cr4 0x{:016x}",
+        Cr0::read_raw(),
+        // Cr3::read_raw() ,
+        Cr4::read_raw(),
+    );
+}
+
 fn pagefault(ec: u64, rip: u64) {
     let cr2 = Cr2::read_raw();
     let pfec = PageFaultErrorCode::from_bits(ec).unwrap();
@@ -58,6 +97,7 @@ pub unsafe extern "C" fn exception_handler(regs: *mut StackFrame) {
         pagefault(ec, rip);
     }
 
+    dumpregs(regs);
     panic!("unhandled exception: {exception:?} (#{nr}) at rip=0x{rip:x}")
 }
 
