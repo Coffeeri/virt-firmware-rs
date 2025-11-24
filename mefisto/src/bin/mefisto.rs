@@ -17,6 +17,13 @@ use efiloader::EfiContext;
 use efiloader::MemoryMapper;
 use efiloader::{guid, Guid};
 
+use virtfw_libhw::fwcfg::x86::FwCfgX86;
+use virtfw_libhw::fwcfg::FwCfg;
+use virtfw_libhw::fwcfg::{acpi, smbios};
+use virtfw_libhw::pci::setup::PciSetup;
+use virtfw_libhw::qemuboards::{qemu_probe, QemuBoard};
+use virtfw_libhw::size::*;
+use virtfw_libhw::x86cpuid::cpu_phys_bits;
 use virtfw_mefisto::alloc::alloc_init;
 use virtfw_mefisto::efi::console::Console;
 use virtfw_mefisto::efi::loader;
@@ -25,13 +32,6 @@ use virtfw_mefisto::efi::rng;
 use virtfw_mefisto::exception::exception_init;
 use virtfw_mefisto::sercon::sercon_init;
 use virtfw_mefisto::{println, symrange};
-use virtfw_libhw::fwcfg::x86::FwCfgX86;
-use virtfw_libhw::fwcfg::FwCfg;
-use virtfw_libhw::fwcfg::{acpi, smbios};
-use virtfw_libhw::pci::setup::PciSetup;
-use virtfw_libhw::qemuboards::{qemu_probe, QemuBoard};
-use virtfw_libhw::size::*;
-use virtfw_libhw::x86cpuid::cpu_phys_bits;
 
 const META_BIOS_MAJOR: u8 = 25;
 const META_BIOS_MINOR: u8 = 10;
