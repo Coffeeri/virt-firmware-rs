@@ -97,10 +97,12 @@ pub unsafe extern "C" fn exception_handler(regs: *mut StackFrame) {
 
     if exception == ExceptionVector::Page {
         pagefault(ec, rip);
+    } else {
+        error!("exception: {exception:?} (#{nr}) at rip=0x{rip:x}")
     }
 
     dumpregs(regs);
-    panic!("unhandled exception: {exception:?} (#{nr}) at rip=0x{rip:x}")
+    panic!("unhandled exception")
 }
 
 static mut IDT: InterruptDescriptorTable = InterruptDescriptorTable::new();
