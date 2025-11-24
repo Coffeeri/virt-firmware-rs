@@ -1,5 +1,5 @@
 use log::{error, info};
-use x86_64::registers::control::{Cr0, Cr2, Cr4};
+use x86_64::registers::control::{Cr0, Cr2, Cr3, Cr4};
 use x86_64::structures::idt::{ExceptionVector, InterruptDescriptorTable, PageFaultErrorCode};
 use x86_64::VirtAddr;
 
@@ -67,10 +67,12 @@ fn dumpregs(regs: *mut StackFrame) {
         unsafe { (*regs).r14 },
         unsafe { (*regs).r15 },
     );
+
+    let (cr3, _) = Cr3::read_raw();
     error!(
-        "cr0 0x{:016x} cr4 0x{:016x}",
+        "cr0 0x{:016x} cr3 0x{:016x} cr4 0x{:016x}",
         Cr0::read_raw(),
-        // Cr3::read_raw() ,
+        cr3.start_address(),
         Cr4::read_raw(),
     );
 }
