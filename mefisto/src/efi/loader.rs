@@ -2,7 +2,7 @@ extern crate alloc;
 use alloc::boxed::Box;
 use alloc::vec::Vec;
 use core::mem::MaybeUninit;
-use log::{debug, info, trace};
+use log::{debug, info};
 
 use virtfw_libhw::fwcfg::x86::FwCfgX86;
 use virtfw_libhw::fwcfg::{
@@ -127,7 +127,7 @@ impl efiloader::FileLoader for &FwCfgFileLoader<'_> {
         offset: usize,
         size: usize,
     ) -> Result<(), &str> {
-        trace!("load range: {offset} +{size}");
+        debug!("load range: 0x{offset:x} +0x{size:x} to {:?}", loadbuffer);
         self.load_dma(loadbuffer, offset, size);
         Ok(())
     }
