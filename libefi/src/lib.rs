@@ -9,6 +9,7 @@ pub mod distro;
 pub mod efifile;
 pub mod efivar;
 pub mod guids;
+pub mod hob;
 pub mod nocasestr;
 #[cfg(feature = "sbdata")]
 pub mod sb;

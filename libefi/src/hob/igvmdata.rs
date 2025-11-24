@@ -1,9 +1,15 @@
+extern crate alloc;
+use alloc::vec::Vec;
+
 use core::mem::size_of;
 use log::debug;
 use uguid::{guid, Guid};
-use zerocopy::{Immutable, IntoBytes};
+use zerocopy::{FromBytes, Immutable, IntoBytes};
 
-use igvm_defs::PAGE_SIZE_4K;
+use crate::guids::RawGuid;
+use crate::hob::core::EfiHobHeader;
+
+const PAGE_SIZE_4K: usize = 4096;
 
 // edk2 = { 0x3dd177ff, 0xb632, 0x4e25, { 0xbe, 0xf3, 0x06, 0x50, 0x63, 0xd5, 0x5f, 0xc4 }}
 pub const EFI_IGVM_DATA_HOB_GUID: Guid = guid!("3dd177ff-b632-4e25-bef3-065063d55fc4");
@@ -20,28 +26,29 @@ pub enum EfiIgvmDataType {
 }
 
 #[repr(C)]
-#[derive(Debug, IntoBytes, Immutable)]
+#[derive(Debug, FromBytes, IntoBytes, Immutable)]
 pub struct EfiIgvmDataHob {
-    hob_type: u16,
-    hob_length: u16,
-    _reserved: u32,
-    guid_ext: [u8; 16],
+    hdr: EfiHobHeader,
+    guid_ext: RawGuid,
     address: u64,
     length: u64,
-    data_type: EfiIgvmDataType,
+    data_type: u32,
     data_flags: u32,
 }
 
 impl EfiIgvmDataHob {
     pub fn new(address: usize, length: usize, data_type: EfiIgvmDataType) -> Self {
-        Self {
+        let hdr = EfiHobHeader {
             hob_type: 0x0004, // EFI_HOB_TYPE_GUID_EXTENSION
             hob_length: size_of::<EfiIgvmDataHob>() as u16,
             _reserved: 0,
-            guid_ext: EFI_IGVM_DATA_HOB_GUID.to_bytes(),
+        };
+        Self {
+            hdr,
+            guid_ext: EFI_IGVM_DATA_HOB_GUID.into(),
             address: address as u64,
             length: length as u64,
-            data_type,
+            data_type: data_type as u32,
             data_flags: 0,
         }
     }
@@ -83,7 +90,7 @@ impl<'b> EfiIgvmDataList<'b> {
             measured,
         };
         self.data.push(data);
-        self.base += blob.len().next_multiple_of(PAGE_SIZE_4K as usize);
+        self.base += blob.len().next_multiple_of(PAGE_SIZE_4K);
     }
 
     pub fn hobs(&self) -> Vec<u8> {

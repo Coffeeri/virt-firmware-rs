@@ -12,9 +12,9 @@ use std::process::ExitCode;
 
 use igvm::IgvmFile;
 use virtfw_igvm_tools::builder::Builder;
-use virtfw_igvm_tools::efidata::{EfiIgvmDataList, EfiIgvmDataType};
 use virtfw_igvm_tools::inspect::inspect_igvm;
 use virtfw_igvm_tools::x86regs::flat32_mode_regs;
+use virtfw_libefi::hob::igvmdata::{EfiIgvmDataList, EfiIgvmDataType};
 
 const USE_FLAT32: bool = false;
 

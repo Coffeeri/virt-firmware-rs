@@ -5,6 +5,10 @@ pub const MIB: usize = 1 << 20;
 pub const GIB: usize = 1 << 30;
 pub const TIB: usize = 1 << 40;
 
+pub const PAGE_4K: usize = 4 * KIB;
+pub const PAGE_2M: usize = 2 * MIB;
+pub const PAGE_1G: usize = GIB;
+
 pub fn pretty_usize(size: usize) -> (usize, &'static str) {
     if size > 10 * TIB {
         (size / TIB, " TB")

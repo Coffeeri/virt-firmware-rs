@@ -15,6 +15,7 @@ use virtfw_libefi::arch::EfiArch;
 use virtfw_libefi::efivar::auth::esl_to_auth;
 use virtfw_libefi::efivar::sigdb::EfiSigDB;
 use virtfw_libefi::guids;
+use virtfw_libefi::hob::igvmdata::{EfiIgvmDataList, EfiIgvmDataType};
 use virtfw_libefi::sb::certs::profiles::SecureBootProfile;
 use virtfw_libefi::sb::certs::*;
 use virtfw_libefi::sb::dbx::*;
@@ -22,7 +23,6 @@ use virtfw_libefi::types::EfiTime;
 
 use igvm::IgvmFile;
 use virtfw_igvm_tools::builder::Builder;
-use virtfw_igvm_tools::efidata::{EfiIgvmDataList, EfiIgvmDataType};
 use virtfw_igvm_tools::inspect::{find_resetvector, inspect_igvm};
 use virtfw_igvm_tools::ovmfmeta::{OvmfMeta, OvmfRegionType};
 
