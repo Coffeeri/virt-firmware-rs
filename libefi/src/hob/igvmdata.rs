@@ -7,7 +7,7 @@ use uguid::{guid, Guid};
 use zerocopy::{FromBytes, Immutable, IntoBytes};
 
 use crate::guids::RawGuid;
-use crate::hob::core::EfiHobHeader;
+use crate::hob::core::{EfiHobHeader, EFI_HOB_TYPE_GUID_EXTENSION};
 
 const PAGE_SIZE_4K: usize = 4096;
 
@@ -28,18 +28,18 @@ pub enum EfiIgvmDataType {
 #[repr(C)]
 #[derive(Debug, FromBytes, IntoBytes, Immutable)]
 pub struct EfiIgvmDataHob {
-    hdr: EfiHobHeader,
-    guid_ext: RawGuid,
-    address: u64,
-    length: u64,
-    data_type: u32,
-    data_flags: u32,
+    pub hdr: EfiHobHeader,
+    pub guid_ext: RawGuid,
+    pub address: u64,
+    pub length: u64,
+    pub data_type: u32,
+    pub data_flags: u32,
 }
 
 impl EfiIgvmDataHob {
     pub fn new(address: usize, length: usize, data_type: EfiIgvmDataType) -> Self {
         let hdr = EfiHobHeader {
-            hob_type: 0x0004, // EFI_HOB_TYPE_GUID_EXTENSION
+            hob_type: EFI_HOB_TYPE_GUID_EXTENSION,
             hob_length: size_of::<EfiIgvmDataHob>() as u16,
             _reserved: 0,
         };
