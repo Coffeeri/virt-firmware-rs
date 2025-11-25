@@ -1,16 +1,17 @@
 # -*- Makefile -*-
 
 HOST_KERNEL := /boot/vmlinuz-$(shell uname -r)
+QEMU_DEVEL := /home/kraxel/projects/qemu/build/default/qemu-system-x86_64
 
 run-hello-bios32:
 	qemu-system-x86_64 -nographic -net none \
 		-bios bios-32/hello.bin
 
-run-hello-bios64:
+run-hello:
 	qemu-system-x86_64 -nographic -net none \
 		-bios target/x86_64-unknown-none/debug/hello.bin
 
-run-qemuinit-bios64:
+run-qemuinit:
 	qemu-system-x86_64 -nographic -net none -M q35 \
 		-bios target/x86_64-unknown-none/debug/qemuinit.bin \
 		\
@@ -25,7 +26,7 @@ run-qemuinit-bios64:
 		\
 		-device pci-serial,bus=pci0
 
-run-mefisto-bios64:
+run-mefisto:
 	qemu-system-x86_64 -nographic -net none \
 		-enable-kvm -no-reboot -M q35 -m 4G -cpu host \
 		-bios target/x86_64-unknown-none/debug/mefisto.bin \
@@ -40,3 +41,8 @@ run-mefisto-bios64:
 		\
 		-kernel $(HOST_KERNEL) \
 		-append "console=ttyS0 panic=1 loglevel=7"
+
+run-igvmtest:
+	$(QEMU_DEVEL) -nographic -net none \
+		-machine q35,igvm-cfg=igvm0 -m 4G -enable-kvm -cpu host \
+		-object igvm-cfg,id=igvm0,file=target/x86_64-unknown-none/debug/igvmtest.igvm
