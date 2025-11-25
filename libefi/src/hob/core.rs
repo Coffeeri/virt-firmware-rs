@@ -71,7 +71,7 @@ pub const EFI_RESOURCE_MAX_MEMORY_TYPE: u32 = 0x00000008;
 #[repr(C)]
 #[derive(Debug, FromBytes, IntoBytes)]
 pub struct EfiHobResourceDescriptor {
-    pub owner: [u8; 16], // guid
+    pub owner: RawGuid,
     pub res_type: u32,
     pub res_attr: u32,
     pub address: u64,
