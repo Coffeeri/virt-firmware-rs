@@ -14,16 +14,14 @@ use uefi::Guid;
 
 use virtfw_libefi::guids::{pretty_name, FdtHob, HandOffBlockListCfg, OvmfMemDebugLog};
 use virtfw_libefi::hob::core::{
-    EfiHobHeader, EfiHobMemoryAllocation, EFI_HOB_TYPE_END_OF_HOB_LIST,
+    EfiHobHeader, EfiHobMemoryAllocation, EfiHobResourceDescriptor, EFI_HOB_TYPE_END_OF_HOB_LIST,
     EFI_HOB_TYPE_GUID_EXTENSION, EFI_HOB_TYPE_MEMORY_ALLOCATION, EFI_HOB_TYPE_RESOURCE_DESCRIPTOR,
 };
-
-use crate::rawhobs::HobResourceDescriptor;
 
 #[derive(Debug)]
 pub enum Hob {
     MemoryAllocation(EfiHobMemoryAllocation),
-    ResourceDescriptor(HobResourceDescriptor),
+    ResourceDescriptor(EfiHobResourceDescriptor),
     Fdt(u64),
     MemLog(u64),
     OtherType { hob_type: u16 },
@@ -57,7 +55,7 @@ impl Hob {
                 Hob::MemoryAllocation(m.0)
             }
             EFI_HOB_TYPE_RESOURCE_DESCRIPTOR => {
-                let Ok(r) = HobResourceDescriptor::read_from_prefix(b) else {
+                let Ok(r) = EfiHobResourceDescriptor::read_from_prefix(b) else {
                     return Hob::Broken;
                 };
                 Hob::ResourceDescriptor(r.0)
