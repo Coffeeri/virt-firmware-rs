@@ -13,11 +13,12 @@ use uefi::table::cfg::ConfigTableEntry;
 use uefi::Guid;
 
 use virtfw_libefi::guids::{pretty_name, FdtHob, HandOffBlockListCfg, OvmfMemDebugLog};
-
-use crate::rawhobs::{
-    HobHeader, HobMemoryAllocation, HobResourceDescriptor, EFI_HOB_TYPE_END_OF_HOB_LIST,
-    EFI_HOB_TYPE_GUID_EXTENSION, EFI_HOB_TYPE_MEMORY_ALLOCATION, EFI_HOB_TYPE_RESOURCE_DESCRIPTOR,
+use virtfw_libefi::hob::core::{
+    EfiHobHeader, EFI_HOB_TYPE_END_OF_HOB_LIST, EFI_HOB_TYPE_GUID_EXTENSION,
+    EFI_HOB_TYPE_MEMORY_ALLOCATION, EFI_HOB_TYPE_RESOURCE_DESCRIPTOR,
 };
+
+use crate::rawhobs::{HobMemoryAllocation, HobResourceDescriptor};
 
 #[derive(Debug)]
 pub enum Hob {
@@ -47,7 +48,7 @@ impl Hob {
         }
     }
 
-    pub fn new(h: &HobHeader, b: &[u8]) -> Hob {
+    pub fn new(h: &EfiHobHeader, b: &[u8]) -> Hob {
         match h.hob_type {
             EFI_HOB_TYPE_MEMORY_ALLOCATION => {
                 let Ok(m) = HobMemoryAllocation::read_from_prefix(b) else {
@@ -126,7 +127,7 @@ impl Iterator for HobList {
     fn next(&mut self) -> Option<Hob> {
         let (h, b) = unsafe {
             let addr = self.address.add(self.offset);
-            let h: &HobHeader = &*(addr as *const HobHeader);
+            let h: &EfiHobHeader = &*(addr as *const EfiHobHeader);
             let b: &[u8] =
                 core::slice::from_raw_parts(addr.add(8) as *const u8, h.hob_length as usize - 8);
             (h, b)
