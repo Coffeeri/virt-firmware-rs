@@ -21,7 +21,21 @@ pub const EFI_HOB_TYPE_END_OF_HOB_LIST: u16 = 0xFFFF;
 pub struct EfiHobHeader {
     pub hob_type: u16,
     pub hob_length: u16,
-    pub _reserved: u32,
+    _reserved: u32,
+}
+
+impl EfiHobHeader {
+    pub fn new(hob_type: u16, hob_length: u16) -> Self {
+        Self {
+            hob_type,
+            hob_length,
+            _reserved: 0,
+        }
+    }
+
+    pub fn end_of_list() -> Self {
+        Self::new(EFI_HOB_TYPE_END_OF_HOB_LIST, size_of::<Self>() as u16)
+    }
 }
 
 #[repr(C)]

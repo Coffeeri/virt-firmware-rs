@@ -38,11 +38,10 @@ pub struct EfiIgvmDataHob {
 
 impl EfiIgvmDataHob {
     pub fn new(address: usize, length: usize, data_type: EfiIgvmDataType) -> Self {
-        let hdr = EfiHobHeader {
-            hob_type: EFI_HOB_TYPE_GUID_EXTENSION,
-            hob_length: size_of::<EfiIgvmDataHob>() as u16,
-            _reserved: 0,
-        };
+        let hdr = EfiHobHeader::new(
+            EFI_HOB_TYPE_GUID_EXTENSION,
+            size_of::<EfiIgvmDataHob>() as u16,
+        );
         Self {
             hdr,
             guid_ext: EFI_IGVM_DATA_HOB_GUID.into(),
@@ -99,8 +98,8 @@ impl<'b> EfiIgvmDataList<'b> {
             blob.extend_from_slice(d.hob.as_bytes());
         }
 
-        // EFI_HOB_TYPE_END_OF_HOB_LIST
-        blob.extend_from_slice(&[0xff, 0xff]);
+        let eol = EfiHobHeader::end_of_list();
+        blob.extend_from_slice(eol.as_bytes());
 
         blob
     }
