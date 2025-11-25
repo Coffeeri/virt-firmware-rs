@@ -13,6 +13,7 @@ use uefi::println;
 #[cfg(feature = "fdt")]
 use virtfw_efi_apps::fdt::print_node;
 use virtfw_efi_apps::{hobs, misc, qemu, rawhobs};
+use virtfw_libefi::hob::core::EfiHobMemoryAllocation;
 
 fn list_raw(hl: hobs::HobList) {
     println!("hand off blocks");
@@ -22,7 +23,7 @@ fn list_raw(hl: hobs::HobList) {
 }
 
 fn list_mem(hl: hobs::HobList) {
-    let mut ml: Vec<rawhobs::HobMemoryAllocation> = hl
+    let mut ml: Vec<EfiHobMemoryAllocation> = hl
         .filter_map(|h| match h {
             hobs::Hob::MemoryAllocation(m) => Some(m),
             _ => None,
