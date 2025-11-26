@@ -1,3 +1,6 @@
+# cargo audit
+IGNORE	:= --ignore RUSTSEC-2023-0071	# rsa timing sidechannel (no secret keys here)
+
 # variables
 ARCH	:= $(shell uname -m)
 PKGS	:= efi-tools igvm-tools varstore
@@ -38,8 +41,7 @@ update:
 	cargo update --verbose
 
 audit:
-	cargo install cargo-audit
-	cargo audit
+	cargo audit $(IGNORE)
 
 cargo-doc: $(patsubst %,doc-%,$(PKGS)) doc-libefi doc-libhw
 cargo-test: test-libefi test-varstore test-igvm-tools

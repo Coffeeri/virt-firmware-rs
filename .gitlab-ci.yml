@@ -53,9 +53,7 @@ release:
 audit:
   stage: build
   script:
-    - echo $PATH
-    - find /usr/local
-    - cargo audit
+    - make audit
 
 pkg-libhw:
   stage: package
