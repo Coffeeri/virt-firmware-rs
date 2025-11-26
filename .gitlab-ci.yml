@@ -50,6 +50,11 @@ release:
   script:
     - make install
 
+audit:
+  stage: build
+  script:
+    - cargo audit
+
 pkg-libhw:
   stage: package
   needs: []
