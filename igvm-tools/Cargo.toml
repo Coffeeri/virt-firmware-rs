@@ -28,4 +28,4 @@ sha2 = "0.10.9"
 object = "0.37"
 authenticode = { version = "0.5", optional = true, features = [ "object" ] }
 
-virtfw-libefi = { path = "../libefi", version = "0.5.0", features = [ "std", "sbdata", "x509" ] }
+virtfw-libefi = { workspace = true, features = [ "std", "sbdata", "x509" ] }
