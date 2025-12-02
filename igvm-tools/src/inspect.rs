@@ -139,6 +139,12 @@ pub fn inspect_directives(igvm: &IgvmFile) {
                     p.parameter_area_index, p.byte_offset
                 );
             }
+            IgvmDirectiveHeader::Madt(p) => {
+                println!(
+                    "Parameter/Madt: idx {}, offset 0x{:x}",
+                    p.parameter_area_index, p.byte_offset
+                );
+            }
 
             IgvmDirectiveHeader::ParameterInsert(p) => {
                 println!(
