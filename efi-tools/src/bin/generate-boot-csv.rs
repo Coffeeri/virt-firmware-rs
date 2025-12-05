@@ -83,7 +83,7 @@ fn main() -> ExitCode {
         Some(c) => c,
         None => std::fs::read_to_string("/etc/kernel/cmdline").unwrap_or("".into()),
     };
-    info!("cmdline: {}", cmdline);
+    info!("cmdline: {}", cmdline.trim());
 
     let mut csv = String::new();
     let esp_path = std::path::Path::new(&esp);
@@ -99,7 +99,11 @@ fn main() -> ExitCode {
         let title = uki.file_name().unwrap().to_str().unwrap();
         let line = format!(
             "{},{},\\{} {},{}\n",
-            shim_name, title, efi, cmdline, "Comment"
+            shim_name,
+            title,
+            efi,
+            cmdline.trim(),
+            "Comment"
         );
         csv.push_str(&line);
     }
