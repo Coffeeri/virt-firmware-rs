@@ -47,6 +47,11 @@ update:
 audit:
 	cargo audit $(IGNORE)
 
+.PHONY: tmt
+tmt:
+	tmt run --all --verbose \
+		report --how html
+
 cargo-doc: $(patsubst %,doc-%,$(PKGS)) doc-libefi doc-libhw
 cargo-test: test-libefi test-varstore test-igvm-tools
 cargo-build: $(patsubst %,build-%,$(PKGS))

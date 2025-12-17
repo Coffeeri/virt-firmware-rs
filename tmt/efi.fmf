@@ -1,0 +1,15 @@
+summary: tests for efi-tools
+framework: shell
+
+/bootcfg/help:
+    summary: print bootcfg help text
+    test: mini-bootcfg --help
+
+/bootcfg/show:
+    summary: show boot config
+    enabled: false
+    test: mini-bootcfg --show --verbose
+
+/list-sb-vars:
+    summary: print secure boot variables
+    test: list-sb-vars

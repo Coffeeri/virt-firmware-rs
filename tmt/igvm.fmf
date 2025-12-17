@@ -1,0 +1,43 @@
+summary: tests for igvm-tools
+framework: shell
+
+/inspect/help:
+    summary: print igvm-inspect help text
+    test: igvm-inspect --help
+
+/wrap/help:
+    summary: print igvm-wrap help text
+    test: igvm-wrap --help
+
+/wrap/ovmf:
+    summary: try wrap ovmf
+    require:
+      - edk2-ovmf
+    test: |
+      set -ex
+      igvm-wrap \
+        --input /usr/share/edk2/ovmf/OVMF_CODE.fd \
+        --vars /usr/share/edk2/ovmf/OVMF_VARS.fd \
+        --output test.igvm
+      igvm-inspect test.igvm
+
+/update/help:
+    summary: print igvm-update help text
+    test: igvm-update --help
+
+/update/vmlinuz:
+    summary: print igvm-update help text
+    require:
+      - edk2-ovmf
+      - kernel-core
+    test: |
+      set -ex
+      igvm-wrap \
+        --input /usr/share/edk2/ovmf/OVMF_CODE.fd \
+        --vars /usr/share/edk2/ovmf/OVMF_VARS.fd \
+        --output bare.igvm
+      igvm-update \
+        --input bare.igvm \
+        --kernel /lib/modules/*/vmlinuz \
+        --output test.igvm
+      igvm-inspect test.igvm

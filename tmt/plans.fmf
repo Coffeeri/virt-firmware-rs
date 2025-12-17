@@ -1,0 +1,13 @@
+summary: run virt-firmware-ts tmt tests
+provision:
+  hardware:
+    boot:
+      method: uefi
+prepare:
+  how: install
+  package:
+    - virt-firmware-rs
+discover:
+  how: fmf
+execute:
+  how: tmt

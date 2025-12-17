@@ -1,0 +1,24 @@
+summary: tests for virt-fw-vars-setup
+framework: shell
+require:
+  - jq
+  - virt-sb-certs
+
+/help:
+    summary: print help text
+    test: virt-fw-vars-setup --help
+
+/profile/all:
+    summary: check profile all
+    test: |
+      set -ex
+      virt-fw-vars-setup --profile all --output vars.json
+      jq . vars.json  # verify it is valid json
+
+/parse/x509:
+    summary: check x509 certificate parsing
+    test: |
+      set -ex
+      virt-fw-vars-setup --profile none --output vars.json \
+        --add-db-cert /usr/share/virt-sb-certs/redhat.com/rh-uefi-2024.pem
+      jq . vars.json  # verify it is valid json

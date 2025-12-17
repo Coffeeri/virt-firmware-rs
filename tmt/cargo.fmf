@@ -1,0 +1,12 @@
+framework: shell
+duration: 10m
+require:
+  - make
+  - cargo
+  - rustc
+  - openssl-devel
+  - systemd-devel
+
+/test:
+    summary: run standard rust tests via cargo test
+    test: make -C .. test
