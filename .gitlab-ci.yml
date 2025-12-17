@@ -3,9 +3,9 @@ image: registry.gitlab.com/kraxel/rpm-package-builder:rust
 
 workflow:
   rules:
-    - if: '$CI_PROJECT_NAMESPACE == "kraxel"'
-      when: always
-    - when: never
+    - if: $CI_PROJECT_NAMESPACE != "kraxel"
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "push"
 
 stages:
   - build
