@@ -1,6 +1,12 @@
 #image: registry.fedoraproject.org/fedora:latest
 image: registry.gitlab.com/kraxel/rpm-package-builder:rust
 
+workflow:
+  rules:
+    - if: '$CI_PROJECT_NAMESPACE == "kraxel"'
+      when: always
+    - when: never
+
 stages:
   - build
   - package
