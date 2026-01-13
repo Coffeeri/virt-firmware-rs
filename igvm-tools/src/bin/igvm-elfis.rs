@@ -220,10 +220,10 @@ fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
 
     if cfg.regions {
         info!("regions found");
-        println!("{:<12}  {:>8}  {:>8}  {:>6}", "Name", "VMA", "LMA", "Size");
-        println!("-----------------------------------------");
+        println!("{:<16}  {:>8}  {:>8}  {:>6}", "Name", "VMA", "LMA", "Size");
+        println!("--------------------------------------------");
         for r in &regions {
-            println!("{:<12}  {}  {}  {:6x}", r.name, r.vma(), r.lma(), r.size);
+            println!("{:<16}  {}  {}  {:6x}", r.name, r.vma(), r.lma(), r.size);
         }
     }
 
