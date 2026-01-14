@@ -4,6 +4,7 @@
 use alloc::string::String;
 use alloc::vec::Vec;
 use core::fmt::Display;
+use core::mem::size_of;
 use log::{debug, error};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
@@ -12,6 +13,7 @@ use uefi::{CString16, Error, Status};
 use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr, EfiVarId};
 use virtfw_libefi::guids::RawGuid;
 
+use crate::mm::core::MmCoreHeader;
 use crate::mm::util;
 use crate::store::EfiVarStore;
 
@@ -433,9 +435,10 @@ impl<'a> MmVariableRequest<'a> {
     }
 
     fn get_payload_size(&self) -> Vec<u8> {
-        let reply = MmGetPayloadSize {
-            payload_size: 64 * 1024, // qemu max
-        };
+        let mut payload_size = 64 * 1024; // qemu max
+        payload_size -= size_of::<MmCoreHeader>() as u64;
+        payload_size -= size_of::<MmVariableHeader>() as u64;
+        let reply = MmGetPayloadSize { payload_size };
         self.response(Status::SUCCESS, Some(reply.as_bytes()))
     }
 
