@@ -48,7 +48,9 @@ pub struct JsonEfiVariable {
     pub name: String,
     pub attr: u32,
     pub data: JsonHexString,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub time: Option<JsonHexString>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub digest: Option<JsonHexString>,
 }
 
