@@ -31,6 +31,7 @@ framework: shell
       - edk2-ovmf
       - kernel-core
     test: |
+      KERNEL=$(ls /lib/modules/*/vmlinuz | head -1)
       set -ex
       igvm-wrap \
         --input /usr/share/edk2/ovmf/OVMF_CODE.fd \
@@ -38,6 +39,6 @@ framework: shell
         --output bare.igvm
       igvm-update \
         --input bare.igvm \
-        --kernel /lib/modules/*/vmlinuz \
+        --kernel $KERNEL \
         --output test.igvm
       igvm-inspect test.igvm
