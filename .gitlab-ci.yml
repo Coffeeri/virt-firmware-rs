@@ -46,12 +46,12 @@ compile-aa64:
     paths:
       - target/aarch64-unknown-uefi/debug/*.efi
 
-tests:
+test-cargo:
   stage: build
   script:
     - make test
 
-tmt:
+test-tmt:
   stage: build
   script:
     - make install
