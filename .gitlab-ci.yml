@@ -53,10 +53,11 @@ test-cargo:
 
 test-tmt:
   stage: build
-  script:
-    - make install
-    - PATH="$HOME/.cargo/bin:$PATH"
+  before_script:
     - dnf install -y tmt
+  script:
+    - PATH="$HOME/.cargo/bin:$PATH"
+    - make install
     - tmt --feeling-safe run --all --verbose provision --how local report --how html
 
 release:
