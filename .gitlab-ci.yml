@@ -51,6 +51,14 @@ tests:
   script:
     - make test
 
+tmt:
+  stage: build
+  script:
+    - make install
+    - PATH="$HOME/.cargo/bin:$PATH"
+    - dnf install -y tmt
+    - tmt --feeling-safe run --all --verbose provision --how local report --how html
+
 release:
   stage: build
   script:
