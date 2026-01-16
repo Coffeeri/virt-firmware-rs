@@ -59,11 +59,13 @@ audit:
 
 test-cargo:
   stage: tests
+  needs: []
   script:
     - make test
 
 test-tmt:
   stage: tests
+  needs: []
   before_script:
     - dnf install -y tmt
   script:
