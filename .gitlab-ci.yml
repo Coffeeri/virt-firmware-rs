@@ -58,7 +58,9 @@ test-tmt:
   script:
     - PATH="$HOME/.cargo/bin:$PATH"
     - make install
-    - tmt --feeling-safe run --all --verbose provision --how local report --how html
+    - tmt --feeling-safe run --all --verbose
+      provision --how local
+      report --how html
 
 release:
   stage: build
