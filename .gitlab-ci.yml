@@ -9,6 +9,7 @@ workflow:
 
 stages:
   - build
+  - tests
   - package
   - publish
 
@@ -46,22 +47,6 @@ compile-aa64:
     paths:
       - target/aarch64-unknown-uefi/debug/*.efi
 
-test-cargo:
-  stage: build
-  script:
-    - make test
-
-test-tmt:
-  stage: build
-  before_script:
-    - dnf install -y tmt
-  script:
-    - PATH="$HOME/.cargo/bin:$PATH"
-    - make install
-    - tmt --feeling-safe run --all --verbose
-      provision --how local
-      report --how html
-
 release:
   stage: build
   script:
@@ -71,6 +56,22 @@ audit:
   stage: build
   script:
     - make audit
+
+test-cargo:
+  stage: tests
+  script:
+    - make test
+
+test-tmt:
+  stage: tests
+  before_script:
+    - dnf install -y tmt
+  script:
+    - PATH="$HOME/.cargo/bin:$PATH"
+    - make install
+    - tmt --feeling-safe run --all --verbose
+      provision --how local
+      report --how html
 
 pkg-libhw:
   stage: package
