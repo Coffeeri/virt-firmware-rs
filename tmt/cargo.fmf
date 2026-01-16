@@ -6,6 +6,11 @@ require:
   - rustc
   - openssl-devel
   - systemd-devel
+enabled: true
+adjust:
+  enabled: false
+  when: initiator == gitlab-ci
+  because: there is a gitlab ci job for that
 
 /test:
     summary: run standard rust tests via cargo test
