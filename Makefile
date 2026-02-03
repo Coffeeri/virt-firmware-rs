@@ -47,11 +47,6 @@ update:
 audit:
 	cargo audit $(IGNORE)
 
-.PHONY: tmt
-tmt:
-	tmt run --all --verbose \
-		report --how html
-
 cargo-doc: $(patsubst %,doc-%,$(PKGS)) doc-libefi doc-libhw
 cargo-test: test-libefi test-varstore test-igvm-tools
 cargo-build: $(patsubst %,build-%,$(PKGS))
@@ -128,3 +123,19 @@ package-%:
 # include makefiles with run-* convinience targets
 include scripts/Make.qemu.bare
 include scripts/Make.qemu.uefi
+
+# tmt + testing farm
+GIT_BRANCH	:= $(shell git branch --show-current)
+GIT_REMOTE	:= $(shell git config branch.$(GIT_BRANCH).remote)
+GIT_URL		:= $(shell git config remote.$(GIT_REMOTE).url)
+
+.PHONY: tmt
+tmt:
+	tmt run --all --verbose \
+		report --how html
+
+testing-farm-fedora:
+	testing-farm request \
+		--git-url $(GIT_URL) \
+		--git-ref $(GIT_BRANCH) \
+		--compose Fedora-43
