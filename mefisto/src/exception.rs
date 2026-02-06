@@ -134,43 +134,43 @@ pub fn exception_init() {
     #[allow(static_mut_refs)]
     unsafe {
         IDT.divide_error
-            .set_handler_addr(VirtAddr::new(stub_de as usize as u64));
+            .set_handler_addr(VirtAddr::new(stub_de as *const () as usize as u64));
         IDT.bound_range_exceeded
-            .set_handler_addr(VirtAddr::new(stub_br as usize as u64));
+            .set_handler_addr(VirtAddr::new(stub_br as *const () as usize as u64));
         IDT.invalid_opcode
-            .set_handler_addr(VirtAddr::new(stub_ud as usize as u64));
+            .set_handler_addr(VirtAddr::new(stub_ud as *const () as usize as u64));
         IDT.device_not_available
-            .set_handler_addr(VirtAddr::new(stub_nm as usize as u64));
+            .set_handler_addr(VirtAddr::new(stub_nm as *const () as usize as u64));
         IDT.double_fault
-            .set_handler_addr(VirtAddr::new(stub_df as usize as u64));
+            .set_handler_addr(VirtAddr::new(stub_df as *const () as usize as u64));
         IDT.invalid_tss
-            .set_handler_addr(VirtAddr::new(stub_ts as usize as u64));
+            .set_handler_addr(VirtAddr::new(stub_ts as *const () as usize as u64));
         IDT.segment_not_present
-            .set_handler_addr(VirtAddr::new(stub_np as usize as u64));
+            .set_handler_addr(VirtAddr::new(stub_np as *const () as usize as u64));
         IDT.stack_segment_fault
-            .set_handler_addr(VirtAddr::new(stub_ss as usize as u64));
+            .set_handler_addr(VirtAddr::new(stub_ss as *const () as usize as u64));
         IDT.general_protection_fault
-            .set_handler_addr(VirtAddr::new(stub_gp as usize as u64));
+            .set_handler_addr(VirtAddr::new(stub_gp as *const () as usize as u64));
         IDT.page_fault
-            .set_handler_addr(VirtAddr::new(stub_pf as usize as u64));
+            .set_handler_addr(VirtAddr::new(stub_pf as *const () as usize as u64));
         IDT.x87_floating_point
-            .set_handler_addr(VirtAddr::new(stub_mf as usize as u64));
+            .set_handler_addr(VirtAddr::new(stub_mf as *const () as usize as u64));
         IDT.alignment_check
-            .set_handler_addr(VirtAddr::new(stub_ac as usize as u64));
+            .set_handler_addr(VirtAddr::new(stub_ac as *const () as usize as u64));
         IDT.machine_check
-            .set_handler_addr(VirtAddr::new(stub_mc as usize as u64));
+            .set_handler_addr(VirtAddr::new(stub_mc as *const () as usize as u64));
         IDT.simd_floating_point
-            .set_handler_addr(VirtAddr::new(stub_xm as usize as u64));
+            .set_handler_addr(VirtAddr::new(stub_xm as *const () as usize as u64));
         IDT.virtualization
-            .set_handler_addr(VirtAddr::new(stub_ve as usize as u64));
+            .set_handler_addr(VirtAddr::new(stub_ve as *const () as usize as u64));
         IDT.cp_protection_exception
-            .set_handler_addr(VirtAddr::new(stub_cp as usize as u64));
+            .set_handler_addr(VirtAddr::new(stub_cp as *const () as usize as u64));
         IDT.hv_injection_exception
-            .set_handler_addr(VirtAddr::new(stub_hv as usize as u64));
+            .set_handler_addr(VirtAddr::new(stub_hv as *const () as usize as u64));
         IDT.vmm_communication_exception
-            .set_handler_addr(VirtAddr::new(stub_vc as usize as u64));
+            .set_handler_addr(VirtAddr::new(stub_vc as *const () as usize as u64));
         IDT.security_exception
-            .set_handler_addr(VirtAddr::new(stub_sx as usize as u64));
+            .set_handler_addr(VirtAddr::new(stub_sx as *const () as usize as u64));
         IDT.load();
     }
     info!("exception handlers installed");
