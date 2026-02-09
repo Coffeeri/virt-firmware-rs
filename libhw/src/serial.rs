@@ -5,32 +5,56 @@ use core::fmt::Write;
 use log::{Log, Metadata, Record};
 
 use crate::ioport::{inb, outb};
+use crate::mmio::{readb, writeb};
 
 pub const SERIAL0_BASE: u16 = 0x3f8;
 pub const SERIAL1_BASE: u16 = 0x2f8;
 
-pub struct SerialWriter {
-    pub iobase: u16,
+pub enum SerialWriter {
+    IoBase(u16),
+    MmioBase(u64),
 }
 
 impl SerialWriter {
-    pub const fn new(iobase: u16) -> SerialWriter {
-        SerialWriter { iobase }
+    pub const fn new_io(iobase: u16) -> SerialWriter {
+        SerialWriter::IoBase(iobase)
+    }
+
+    pub const fn new_mm(mmiobase: u64) -> SerialWriter {
+        SerialWriter::MmioBase(mmiobase)
+    }
+
+    fn send(&self, offset: u8, data: u8) {
+        match self {
+            SerialWriter::IoBase(iobase) => {
+                outb(iobase + offset as u16, data);
+            }
+            SerialWriter::MmioBase(mmiobase) => {
+                writeb(mmiobase + offset as u64, data);
+            }
+        }
+    }
+
+    fn recv(&self, offset: u8) -> u8 {
+        match self {
+            SerialWriter::IoBase(iobase) => inb(iobase + offset as u16),
+            SerialWriter::MmioBase(mmiobase) => readb(mmiobase + offset as u64),
+        }
     }
 
     pub fn init(&self) {
-        outb(self.iobase + 3, 0x03); // 8N1
-        outb(self.iobase + 1, 0); // no irq
+        self.send(3, 0x03); // 8N1
+        self.send(1, 0); // no irq
     }
 
     pub fn putc(&self, c: u8) {
         loop {
-            let lsr = inb(self.iobase + 5);
+            let lsr = self.recv(5);
             if lsr & 0x20 != 0 {
                 break;
             }
         }
-        outb(self.iobase, c);
+        self.send(0, c);
     }
 
     pub fn puts<B: AsRef<[u8]> + ?Sized>(&self, buf: &B) {

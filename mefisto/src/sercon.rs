@@ -4,7 +4,7 @@ use log::info;
 
 use virtfw_libhw::serial::{SerialWriter, SERIAL0_BASE};
 
-pub static SERCON: SerialWriter = SerialWriter::new(SERIAL0_BASE);
+pub static SERCON: SerialWriter = SerialWriter::new_io(SERIAL0_BASE);
 
 #[macro_export]
 macro_rules! print {
@@ -30,5 +30,5 @@ pub fn sercon_init(loglevel: log::LevelFilter) {
     SERCON.init();
     log::set_logger(&SERCON).unwrap();
     log::set_max_level(loglevel);
-    info!("serial console at 0x{:x}", SERCON.iobase);
+    info!("serial console at 0x{:x}", SERIAL0_BASE);
 }
