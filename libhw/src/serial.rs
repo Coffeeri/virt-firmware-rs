@@ -1,7 +1,7 @@
 //! simple serial port (16550) driver
 #![cfg(target_arch = "x86_64")]
 
-use core::fmt::Write;
+use core::fmt::{Display, Write};
 use log::{Log, Metadata, Record};
 
 use crate::ioport::{inb, outb};
@@ -66,6 +66,19 @@ impl SerialWriter {
     pub fn putsln<B: AsRef<[u8]> + ?Sized>(&self, buf: &B) {
         self.puts(buf);
         self.putc(b'\n');
+    }
+}
+
+impl Display for SerialWriter {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        match self {
+            SerialWriter::IoBase(iobase) => {
+                write!(f, "ioport 0x{:x}", iobase)
+            }
+            SerialWriter::MmioBase(mmiobase) => {
+                write!(f, "mmio 0x{:x}", mmiobase)
+            }
+        }
     }
 }
 
