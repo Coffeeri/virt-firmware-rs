@@ -31,11 +31,13 @@ void fwcfg_print_e820(void)
     }
 }
 
-void print_addr(const char *prefix, void *ptr)
+void print_range(const char *prefix, void *from, void *to)
 {
     puts(prefix);
     puts(": ");
-    putl((uint32_t)ptr);
+    putl((uint32_t)from);
+    puts(" - ");
+    putl(((uint32_t)to)-1);
     puts("\n");
 }
 
@@ -43,18 +45,10 @@ void print_romlayout(void)
 {
     puts("romlayout\n");
 
-    puts("  32-bit code\n");
-    print_addr("    .text   ", &section_text);
-    puts("  data\n");
-    print_addr("    .data   ", &section_data);
-    print_addr("    .rodata ", &section_rodata);
-    puts("  unused space\n");
-    print_addr("     <free> ", &section_end);
-    puts("  16-bit (at fixed addrs)\n");
-    print_addr("    .gdt    ", &section_gdt);
-    print_addr("    .gdtd   ", &section_gdtd);
-    print_addr("    .text16 ", &section_text16);
-    print_addr("    .entry16", &section_entry16);
+    print_range("    code    ", &copy_start, &data_start);
+    print_range("    data    ", &data_start, &copy_end);
+    print_range("    stack   ", &stack_start, &stack_end);
+    print_range("    flash   ", &copy_from, &flash_end);
 }
 
 void main(void)

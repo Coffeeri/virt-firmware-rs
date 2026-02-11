@@ -1,6 +1,20 @@
         .code32
         .section .text
 
+startram:
+        // setup stack @ 640k
+        mov	$stack_end, %esp
+
+        // jump to C code
+        call	main
+
+halt:
+        hlt
+        jmp     halt
+
+        .code32
+        .section .text32, "ax"
+
 start32x:
         // load our gdt
         lgdtl	0xffffff70
@@ -13,15 +27,16 @@ start32:
         mov	%ax, %es
         mov	%ax, %ss
 
-        // setup stack @ 640k
-        mov	$0xa0000, %esp
+        // copy 64-bit code + data to ram
+        mov     $copy_from, %esi
+        mov     $copy_start, %edi
+        mov     $copy_end, %ecx
+        sub     $copy_start, %ecx
+        rep     movsb
 
-        // jump to C code
-        call	main
-
-halt:
-        hlt
-        jmp     halt
+        // jump to ram
+        mov	$startram, %eax
+        jmp	%eax
 
         .section .gdt, "a"
 gdts:

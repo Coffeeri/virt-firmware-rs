@@ -1,62 +1,81 @@
+ROM_SIZE = 64k;
+STACK_SIZE = 1M;
+
+MEMORY
+{
+    lowram   : ORIGIN = 0, LENGTH = 640k
+    highram  : ORIGIN = 1M, LENGTH = 15M
+    flash    : ORIGIN = (4096M - ROM_SIZE), LENGTH = ROM_SIZE
+}
+
 SECTIONS
 {
-    /* 32-bit code */
-    . = 0xffff0000;
-    section_text = .;
-    .text : {
+    /* 32-bit code (in ram) */
+    .text 8M : ALIGN(4096) {
+        copy_start = .;
         *(.text)
         *(.text.*)
-    }
+    } > highram AT > flash
 
-    /* data */
-    . = ALIGN(4096);
-    section_data = .;
-    .data : {
-        *(.data)
-        *(.data.*)
-    }
-    .bss : {
-        *(.bss)
-        *(.bss.*)
-    }
+    copy_from = LOADADDR(.text);
 
-    . = ALIGN(4096);
-    section_rodata = .;
-    .rodata : {
+    /* r/o data */
+    .rodata : ALIGN(4096) {
+        data_start = .;
         *(.rodata)
         *(.rodata.*)
-    }
+    } > highram AT > flash
 
-    . = ALIGN(4096);
-    section_end = .;
+    /* global offsets */
+    .got : ALIGN(4096) {
+        *(.got)
+    } > highram AT > flash
+
+    /* data */
+    .data : ALIGN(4096) {
+        *(.data)
+        *(.data.*)
+    } > highram AT > flash
+
+    .bss : ALIGN(4096) {
+        *(.bss)
+        *(.bss.*)
+        . = ALIGN(4096);
+        copy_end = .;
+    } > highram AT > flash
+
+    /* stack */
+    .stack (NOLOAD) : ALIGN(STACK_SIZE) {
+        stack_start = .;
+        . += STACK_SIZE;
+        stack_end = .;
+    } > highram
+
+    /* 32-bit code (in flash) */
+    .text32 : ALIGN(4096) {
+        KEEP(*(.text32))
+    } > flash
 
     /* GDT */
-    . = 0xffffff00;
-    section_gdt = .;
-    .gdt : {
+    .gdt 0xffffff00 : {
         KEEP(*(.gdt))
-    }
+    } > flash
 
     /* GDT descriptor */
-    . = 0xffffff70;
-    section_gdtd = .;
-    .gdtd : {
+    .gdtd 0xffffff70 : {
         KEEP(*(.gdtd))
-    }
+    } > flash
 
     /* 16-bit code */
-    . = 0xffffff80;
-    section_text16 = .;
-    .text16 : {
+    .text16 0xffffff80 : {
         KEEP(*(.text16))
-    }
+    } > flash
 
     /* 16-bit cpu reset entry point */
-    . = 0xfffffff0;
-    section_entry16 = .;
-    .entry16 : {
-        KEEP(*(.entry))
-    }
+    .entry16 0xfffffff0 : {
+        KEEP(*(.entry16))
+        flash_end = .;
+    } > flash
 
     /* Discard unnecessary sections */
     /DISCARD/ : {

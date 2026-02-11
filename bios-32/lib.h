@@ -3,14 +3,14 @@
 #include <stdbool.h>
 
 // bios.lds
-extern void *section_text;
-extern void *section_data;
-extern void *section_rodata;
-extern void *section_end;
-extern void *section_text16;
-extern void *section_gdt;
-extern void *section_gdtd;
-extern void *section_entry16;
+
+extern void *copy_start;
+extern void *data_start;
+extern void *copy_end;
+extern void *stack_start;
+extern void *stack_end;
+extern void *copy_from;
+extern void *flash_end;
 
 // ioport.c
 
@@ -53,6 +53,7 @@ void fwcfg_readdir(const char *search, uint16_t *ret_item, uint32_t *ret_size);
 void fwcfg_hexdump(const char *file, uint32_t max);
 
 // pci.c
+
 void acpi_pm_init_pc(void);
 void acpi_pm_init_q35(void);
 void acpi_pm_poweroff(void);
