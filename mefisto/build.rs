@@ -17,6 +17,8 @@ fn main() -> ExitCode {
     println!("cargo::rustc-link-arg-bins=-no-pie");
     println!("cargo::rustc-link-arg-bins=-T{srcdir}/src/bios64.lds");
     println!("cargo:rerun-if-changed={srcdir}/src/bios64.lds");
+    println!("cargo:rerun-if-changed={srcdir}/src/entry64.S");
+    println!("cargo:rerun-if-changed={srcdir}/src/idt.S");
 
     ExitCode::from(0)
 }
