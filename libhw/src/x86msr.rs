@@ -12,3 +12,12 @@ pub fn rdmsr(msr: u32) -> u64 {
     }
     (eax as u64) | ((edx as u64) << 32)
 }
+
+pub fn wrmsr(msr: u32, val: u64) {
+    let eax = (val & 0xffffffff) as u32;
+    let edx = (val >> 32) as u32;
+
+    unsafe {
+        asm!("wrmsr", in("ecx") msr, in("eax") eax, in("edx") edx, options(att_syntax));
+    }
+}
