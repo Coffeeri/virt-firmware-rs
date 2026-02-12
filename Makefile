@@ -78,7 +78,7 @@ realclean: clean
 	rm -f Cargo.lock
 
 # cargo post-processing
-BIOS64	:= hello qemuinit igvmtest mefisto
+BIOS64	:= hello qemuinit igvmtest mefisto snptest
 BIOSELF	:= $(patsubst %,target/x86_64-unknown-none/debug/%,$(BIOS64))
 BIOSBIN	:= $(patsubst %,target/x86_64-unknown-none/debug/%.bin,$(BIOS64))
 IGVM	+= $(patsubst %,target/x86_64-unknown-none/debug/%.igvm,$(BIOS64))
