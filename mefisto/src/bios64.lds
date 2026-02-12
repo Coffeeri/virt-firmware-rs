@@ -25,16 +25,17 @@ SECTIONS
         KEEP(*(.stub))
     } > highram AT > flash
 
+    /* global offsets */
+    .got : ALIGN(4096) {
+        *(.got)
+        *(.got.*)
+    } > highram AT > flash
+
     /* r/o data */
     .rodata : ALIGN(4096) {
         data_start = .;
         *(.rodata)
         *(.rodata.*)
-    } > highram AT > flash
-
-    /* global offsets */
-    .got : ALIGN(4096) {
-        *(.got)
     } > highram AT > flash
 
     /* page tables */
