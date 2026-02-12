@@ -3,8 +3,8 @@
 //!
 use clap::{CommandFactory, Parser};
 use log::{debug, error, info};
-use object::elf::{FileHeader64, PT_LOAD, SHF_ALLOC};
-use object::read::elf::{ElfFile, ProgramHeader, SectionHeader};
+use object::elf::{PT_LOAD, SHF_ALLOC};
+use object::read::elf::{ElfFile, FileHeader, ProgramHeader, SectionHeader};
 use object::read::File;
 use object::{Endianness, Object, ObjectSection};
 use std::fs;
@@ -98,7 +98,7 @@ fn is_rom_addr(addr: &u64) -> bool {
     (0xff00_0000..0xffff_ffff).contains(addr)
 }
 
-fn parse_elf(elf: ElfFile<FileHeader64<Endianness>>) -> Option<Vec<Region>> {
+fn parse_elf<FH: FileHeader<Endian = Endianness>>(elf: ElfFile<FH>) -> Option<Vec<Region>> {
     let mut regions = Vec::new();
 
     debug!(
@@ -115,9 +115,9 @@ fn parse_elf(elf: ElfFile<FileHeader64<Endianness>>) -> Option<Vec<Region>> {
             return None;
         }
 
-        let vaddr = ph.p_vaddr(en);
-        let paddr = ph.p_paddr(en);
-        let memsz = ph.p_memsz(en);
+        let vaddr: u64 = ph.p_vaddr(en).into();
+        let paddr: u64 = ph.p_paddr(en).into();
+        let memsz: u64 = ph.p_memsz(en).into();
         debug!(
             "{:20} | {:8x} {:8x} {:6x} | {:<}",
             "PT_LOAD", vaddr, paddr, memsz, "-"
@@ -125,7 +125,7 @@ fn parse_elf(elf: ElfFile<FileHeader64<Endianness>>) -> Option<Vec<Region>> {
 
         for section in elf.sections() {
             let sh = section.elf_section_header();
-            let flags = sh.sh_flags(en);
+            let flags: u64 = sh.sh_flags(en).into();
             if flags & SHF_ALLOC as u64 == 0 {
                 // ignore debug info, symbol table etc.
                 continue;
@@ -211,12 +211,15 @@ fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
     info!("reading {}", input);
     let binary = fs::read(input)?;
     let object = File::parse(&*binary)?;
-    let File::Elf64(elf) = object else {
-        return Err("not an elf64 file".into());
-    };
 
     info!("parsing elf");
-    let regions = parse_elf(elf).unwrap();
+    let regions = match object {
+        File::Elf64(elf) => parse_elf(elf).unwrap(),
+        File::Elf32(elf) => parse_elf(elf).unwrap(),
+        _ => {
+            return Err("not an elf file".into());
+        }
+    };
 
     if cfg.regions {
         info!("regions found");
