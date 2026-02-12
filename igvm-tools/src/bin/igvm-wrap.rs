@@ -123,7 +123,7 @@ fn main() -> ExitCode {
                 real_mode_regs()
             };
             builder.add_snp_platform();
-            builder.add_snp_vmsa_context(&regs);
+            builder.add_snp_vmsa_context(&regs, false);
             if let Some(m) = ovmfmeta.as_ref() {
                 builder.add_ovmf_snp_pages(m);
             }

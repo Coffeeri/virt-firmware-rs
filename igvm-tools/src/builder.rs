@@ -82,8 +82,8 @@ impl Builder {
         self
     }
 
-    pub fn add_snp_vmsa_context(&mut self, regs: &[X86Register]) -> &mut Builder {
-        let features = SevFeatures::new().with_snp(true);
+    pub fn add_snp_vmsa_context(&mut self, regs: &[X86Register], debug: bool) -> &mut Builder {
+        let features = SevFeatures::new().with_snp(true).with_debug_swap(debug);
         let vmsa = vmsa_context(regs, features);
         let gpa = 0xFFFFFFFFF000;
         let ctx = IgvmDirectiveHeader::SnpVpContext {

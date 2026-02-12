@@ -2,22 +2,25 @@
 //! convert elf images into igvm
 //!
 use clap::{CommandFactory, Parser};
+use igvm_defs::IgvmPageDataType;
 use log::{debug, error, info};
 use object::elf::{PT_LOAD, SHF_ALLOC};
 use object::read::elf::{ElfFile, FileHeader, ProgramHeader, SectionHeader};
-use object::read::File;
+use object::read::{File, ObjectSymbol};
 use object::{Endianness, Object, ObjectSection};
 use std::fs;
 use std::process::ExitCode;
 
 use igvm::IgvmFile;
-use virtfw_igvm_tools::builder::Builder;
+use virtfw_igvm_tools::builder::{Builder, SEV_SNP_COMPAT};
 use virtfw_igvm_tools::inspect::inspect_igvm;
 use virtfw_igvm_tools::x86regs::flat32_mode_regs;
 use virtfw_libefi::hob::igvmdata::{EfiIgvmDataList, EfiIgvmDataType};
 
 const USE_FLAT32: bool = false;
 
+const SNP_CPUID: &str = ".snp.cpuid";
+const SNP_SECRETS: &str = ".snp.secrets";
 const IGVM_PARAM_MEMMAP: &str = ".igvm.memmap";
 const IGVM_DATA_HOB: &str = ".igvm.datahobs";
 
@@ -33,6 +36,10 @@ struct Args {
     /// inspect generated igvm
     #[arg(long)]
     inspect: bool,
+
+    /// enable debug-swap sev feature
+    #[arg(long)]
+    snp_debug: bool,
 
     /// input elf image
     #[arg(short, long, value_name = "ELF", required_unless_present = "manpage")]
@@ -98,7 +105,9 @@ fn is_rom_addr(addr: &u64) -> bool {
     (0xff00_0000..0xffff_ffff).contains(addr)
 }
 
-fn parse_elf<FH: FileHeader<Endian = Endianness>>(elf: ElfFile<FH>) -> Option<Vec<Region>> {
+fn parse_elf<'e, FH: FileHeader<Endian = Endianness>>(
+    elf: &'e ElfFile<'e, FH>,
+) -> Option<Vec<Region<'e>>> {
     let mut regions = Vec::new();
 
     debug!(
@@ -206,6 +215,17 @@ fn igvm_add_kernel(builder: &mut Builder, hobs_region: &Region, kernel_blob: Opt
     }
 }
 
+fn entry_addr(object: &object::File, symbol: &str) -> Option<u64> {
+    let addr = object
+        .symbols()
+        .find(|s| s.name().unwrap_or("") == symbol)
+        .map(|s| s.address());
+    if let Some(a) = addr {
+        info!("entry: symbol {} -> address 0x{:x}", symbol, a);
+    }
+    addr
+}
+
 fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
     let input = cfg.input.as_ref().unwrap();
     info!("reading {}", input);
@@ -213,7 +233,7 @@ fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
     let object = File::parse(&*binary)?;
 
     info!("parsing elf");
-    let regions = match object {
+    let regions = match &object {
         File::Elf64(elf) => parse_elf(elf).unwrap(),
         File::Elf32(elf) => parse_elf(elf).unwrap(),
         _ => {
@@ -233,6 +253,14 @@ fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
     info!("building igvm");
     let mut builder = Builder::new();
     builder.add_native_platform();
+
+    let snp = regions.iter().any(|r| r.name == SNP_SECRETS);
+    if snp {
+        let entry = entry_addr(&object, "entry_snp");
+        let regs = flat32_mode_regs(entry);
+        builder.add_snp_platform();
+        builder.add_snp_vmsa_context(&regs, cfg.snp_debug);
+    }
 
     if USE_FLAT32 {
         let regs = flat32_mode_regs(None);
@@ -275,7 +303,27 @@ fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
         .filter(|r| r.vma.is_some())
         .filter(|r| !r.is_igvm_param())
     {
-        builder.add_empty_normal_pages(r.vma.unwrap() as usize, r.size as usize);
+        match r.name {
+            SNP_CPUID => {
+                builder.add_empty_pages(
+                    r.vma.unwrap() as usize,
+                    r.size as usize,
+                    SEV_SNP_COMPAT,
+                    IgvmPageDataType::CPUID_DATA,
+                );
+            }
+            SNP_SECRETS => {
+                builder.add_empty_pages(
+                    r.vma.unwrap() as usize,
+                    r.size as usize,
+                    SEV_SNP_COMPAT,
+                    IgvmPageDataType::SECRETS,
+                );
+            }
+            _ => {
+                builder.add_empty_normal_pages(r.vma.unwrap() as usize, r.size as usize);
+            }
+        }
     }
 
     // IGVM parameters
