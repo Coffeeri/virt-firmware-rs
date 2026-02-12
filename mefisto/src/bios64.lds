@@ -56,6 +56,14 @@ SECTIONS
         copy_end = .;
     } > highram AT > flash
 
+    /* snp special pages*/
+    .snp.cpuid (NOLOAD) : ALIGN(4096) {
+        *(.snp.cpuid)
+    } > highram
+    .snp.secrets (NOLOAD) : ALIGN(4096) {
+        *(.snp.secrets)
+    } > highram
+
     /* igvm parameters */
     .igvm.memmap (NOLOAD) : ALIGN(4096) {
         *(.igvm.memmap)
