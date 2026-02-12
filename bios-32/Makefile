@@ -9,6 +9,7 @@ endif
 AS	:= $(CC)
 LD	:= $(CC)
 OBJCOPY	:= objcopy
+ELFIS	:= ../target/debug/igvm-elfis
 
 COMMON	:= -m32 -ffreestanding -nostdlib
 ASFLAGS	:= $(COMMON)
@@ -17,6 +18,7 @@ CFLAGS	+= -mno-mmx -mno-sse -fpic
 LDFLAGS	:= $(COMMON) -Wl,-melf_i386 -Wl,--script=bios32.lds
 
 TARGETS	:= hello.bin info.bin vmfwupdate.bin
+TARGETS	+= hello.igvm info.igvm vmfwupdate.igvm
 
 # build targets
 all: build
@@ -28,7 +30,7 @@ info.elf: info.o entry32.o fwcfg.o pci.o output.o ioport.o
 vmfwupdate.elf: vmfwupdate.o entry32.o fwcfg.o pci.o output.o ioport.o
 
 clean:
-	rm -f *.o *.elf *.bin
+	rm -f *.o *.elf *.bin *.igvm
 
 # test targets
 run-hello: hello.bin
@@ -47,3 +49,6 @@ run-vmfwupdate: vmfwupdate.bin
 
 %.bin: %.elf
 	$(OBJCOPY) -O binary $< $@
+
+%.igvm: %.elf
+	$(ELFIS) --input $< --output $@

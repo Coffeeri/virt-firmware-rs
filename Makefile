@@ -79,7 +79,7 @@ $(BIOSELF): build-mefisto
 	target/debug/igvm-elfis --input $< --output $@
 
 # non-cargo subdirs
-build-bios-32:
+build-bios-32: build-igvm-tools
 	make -C bios-32 build
 
 clean-bios-32:
