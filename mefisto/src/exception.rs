@@ -3,6 +3,8 @@ use x86_64::registers::control::{Cr0, Cr2, Cr3, Cr4};
 use x86_64::structures::idt::{ExceptionVector, InterruptDescriptorTable, PageFaultErrorCode};
 use x86_64::VirtAddr;
 
+use crate::snp::vc::handle_vc;
+
 #[repr(C)]
 pub struct StackFrame {
     // stub in idt.S
@@ -87,10 +89,17 @@ pub unsafe extern "C" fn exception_handler(c_regs: *mut StackFrame) {
     let nr = regs.exception_number;
     let exception = ExceptionVector::try_from(nr as u8).unwrap();
 
-    if exception == ExceptionVector::Page {
-        pagefault(regs);
-    } else {
-        error!("exception: {exception:?} (#{nr}) at rip=0x{:x}", regs.rip)
+    match exception {
+        ExceptionVector::Page => {
+            pagefault(regs);
+        }
+        ExceptionVector::VmmCommunication => {
+            handle_vc(regs);
+            return;
+        }
+        _ => {
+            error!("exception: {exception:?} (#{nr}) at rip=0x{:x}", regs.rip)
+        }
     }
 
     dumpregs(regs);
