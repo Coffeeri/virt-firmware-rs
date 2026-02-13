@@ -235,7 +235,7 @@ fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
     builder.add_native_platform();
 
     if USE_FLAT32 {
-        let regs = flat32_mode_regs();
+        let regs = flat32_mode_regs(None);
         builder.add_native_context(&regs);
     }
 

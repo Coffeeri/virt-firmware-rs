@@ -238,7 +238,7 @@ pub fn real_mode_regs() -> Vec<X86Register> {
     regs
 }
 
-pub fn flat32_mode_regs() -> Vec<X86Register> {
+pub fn flat32_mode_regs(rip: Option<u64>) -> Vec<X86Register> {
     let cr0 = ControlRegister0::reset_fast().with_pe(true).into();
     let code = SegmentRegister {
         base: 0,
@@ -260,7 +260,7 @@ pub fn flat32_mode_regs() -> Vec<X86Register> {
     };
     let mut regs = vec![
         X86Register::Cr0(cr0),
-        X86Register::Rip(0xfffffff0),
+        X86Register::Rip(rip.unwrap_or(0xfffffff0)),
         X86Register::Cs(code),
         X86Register::Ss(data),
         X86Register::Ds(data),

@@ -13,7 +13,7 @@ fn test_real_mode() {
 #[test]
 fn test_flat32_mode() {
     let features = SevFeatures::new();
-    let regs = flat32_mode_regs();
+    let regs = flat32_mode_regs(None);
     let _ = native_context(&regs);
     let _ = vmsa_context(&regs, features);
 }

@@ -108,7 +108,7 @@ fn main() -> ExitCode {
         if !cfg.no_native {
             builder.add_native_platform();
             if cfg.flat32 {
-                let regs = flat32_mode_regs();
+                let regs = flat32_mode_regs(None);
                 builder.add_native_context(&regs);
             } else {
                 // nothing to do, this is the default
@@ -118,7 +118,7 @@ fn main() -> ExitCode {
         // sev-snp
         if cfg.snp {
             let regs = if cfg.flat32 {
-                flat32_mode_regs()
+                flat32_mode_regs(None)
             } else {
                 real_mode_regs()
             };
