@@ -23,12 +23,12 @@ pub fn format_compat(igvm: &IgvmFile, compat: u32) -> String {
 pub fn format_entry(efer: u64, cr0: u64, cs: u16, rip: u64) -> String {
     let lma = u64::from(ExtFeatureEnableReg::new().with_lma(true));
     if (efer & lma) != 0 {
-        return format!("lm64, rip {rip:x}");
+        return format!("lm64, rip 0x{rip:x}");
     }
 
     let pe = u64::from(ControlRegister0::new().with_pe(true));
     if (cr0 & pe) != 0 {
-        return format!("pm32, eip {rip:x}");
+        return format!("pm32, eip 0x{rip:x}");
     }
 
     format!("rm16, cs:ip {cs:x}:{rip:x}")
