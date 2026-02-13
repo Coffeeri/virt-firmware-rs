@@ -5,7 +5,9 @@ start64:
         // setup stack
         mov	$stack_end, %rsp
 
-        // jump to C code
+        // jump to C/rust code
+        xor	%rdi, %rdi
+        mov	%ebp, %edi
         call	main
 
 halt:
@@ -16,6 +18,8 @@ halt:
         .section .text32, "ax"
 
 start32x:
+        mov	$32, %ebp	// startup via 32-bit mode
+
         // load our gdt
         lgdtl	0xffffff70
         ljmpl	$8, $start32
@@ -26,6 +30,9 @@ start32:
         mov	%ax, %ds
         mov	%ax, %es
         mov	%ax, %ss
+
+        // setup stack
+        mov	$stack_end, %esp
 
         // copy 64-bit code + data to ram
         mov     $copy_from, %esi
@@ -132,6 +139,7 @@ start16:
         lgdtl	%cs:0xff70
         mov	$1, %eax	// protected mode
         mov	%eax, %cr0
+        mov	$16, %ebp	// startup via 16-bit mode
         ljmpl	$8, $start32
 
         .section .entry16, "ax"
