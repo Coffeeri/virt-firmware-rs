@@ -46,6 +46,12 @@ start32:
         sub     $copy_start, %ecx
         rep     movsb
 
+        // SNP init
+        cmp	$5, %ebp
+        jne	no_snp
+        call    init_snp
+no_snp:
+
         // setup paging
         mov	$pg4, %eax
         mov	%eax, %cr3
@@ -73,6 +79,7 @@ start32:
 
         .section .pgtable, "aw"
         .align 4096
+        .global pg2
 pg4:
         // level 4 page directory
         .long   pg3 + 0x23 // present, rw, accessed

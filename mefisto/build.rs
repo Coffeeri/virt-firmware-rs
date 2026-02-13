@@ -13,12 +13,14 @@ fn main() -> ExitCode {
 
     cc::Build::new().file("src/entry64.S").compile("entry64");
     cc::Build::new().file("src/idt.S").compile("idt");
+    cc::Build::new().file("src/snp.S").compile("snp");
 
     println!("cargo::rustc-link-arg-bins=-no-pie");
     println!("cargo::rustc-link-arg-bins=-T{srcdir}/src/bios64.lds");
     println!("cargo:rerun-if-changed={srcdir}/src/bios64.lds");
     println!("cargo:rerun-if-changed={srcdir}/src/entry64.S");
     println!("cargo:rerun-if-changed={srcdir}/src/idt.S");
+    println!("cargo:rerun-if-changed={srcdir}/src/snp.S");
 
     ExitCode::from(0)
 }
