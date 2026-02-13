@@ -17,9 +17,14 @@ halt:
         .code32
         .section .text32, "ax"
 
+entry_snp:
+        mov	$5, %ebp	// startup via igvm snp context
+        jmp	loadgdt32
+
 start32x:
         mov	$32, %ebp	// startup via 32-bit mode
 
+loadgdt32:
         // load our gdt
         lgdtl	0xffffff70
         ljmpl	$8, $start32
