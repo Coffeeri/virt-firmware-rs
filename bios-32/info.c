@@ -51,12 +51,19 @@ void print_romlayout(void)
     print_range("    flash   ", &copy_from, &flash_end);
 }
 
-void main(void)
+__attribute__((regparm(1)))
+void main(uint32_t boot_mode)
 {
     serial_init();
+
+    puts("boot mode: ");
+    putl(boot_mode);
+    puts("\n---\n");
+
     print_romlayout();
     puts("---\n");
     pci_init_info(true);
+    puts("---\n");
 
     if (fwcfg_detect()) {
         puts("---\n");
