@@ -1,18 +1,32 @@
 # cargo audit
 IGNORE	:= --ignore RUSTSEC-2023-0071	# rsa timing sidechannel (no secret keys here)
 
+# rust targets
+SYSROOT	:= $(shell rustc --print sysroot)
+RUSTLIB	:= $(SYSROOT)/lib/rustlib
+TARGETS	:= $(patsubst $(RUSTLIB)/%,%,$(wildcard $(RUSTLIB)/*-*-*))
+
+# cross compiler (used by cc crate)
+ifneq ($(shell which x86_64-linux-gnu-gcc),)
+export CC_x86_64_unknown_none := x86_64-linux-gnu-gcc
+endif
+
 # variables
 ARCH	:= $(shell uname -m)
 PKGS	:= efi-tools igvm-tools varstore
 BIOS32	:=
 POST64	:=
 
-ifeq ($(ARCH),x86_64)
-PKGS	+= mefisto efi-apps
-BIOS32	+= build-bios-32
+ifneq ($(filter x86_64-unknown-none,$(TARGETS)),)
+PKGS	+= mefisto
 BIOS32	+= build-none-libefi
 BIOS32	+= build-none-varstore
 POST64	+= cargo-post
+endif
+
+ifeq ($(ARCH),x86_64)
+PKGS	+= efi-apps
+BIOS32	+= build-bios-32
 endif
 
 ifeq ($(ARCH),aarch64)
@@ -21,7 +35,7 @@ endif
 
 # target specific variables
 doc-mefisto build-mefisto clippy-mefisto clippy-fix-mefisto release-mefisto package-mefisto : \
-	TARGET := --target $(ARCH)-unknown-none --features efiloader
+	TARGET := --target x86_64-unknown-none --features efiloader
 doc-efi-apps build-efi-apps clippy-efi-apps clippy-fix-efi-apps release-efi-apps package-efi-apps : \
 	TARGET := --target $(ARCH)-unknown-uefi --features fdt
 doc-efi-tools build-efi-tools clippy-efi-tools clippy-fix-efi-tools release-efi-tools package-efi-tools : \
@@ -103,7 +117,7 @@ build-%:
 	cargo build --package virtfw-$* $(TARGET)
 
 build-none-%:
-	cargo build --package virtfw-$* --target $(ARCH)-unknown-none
+	cargo build --package virtfw-$* --target x86_64-unknown-none
 
 clippy-%:
 	cargo clippy --package virtfw-$* $(TARGET)
