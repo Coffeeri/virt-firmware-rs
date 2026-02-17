@@ -132,6 +132,7 @@ impl MemoryMapper {
         range: &Range<usize>,
         set: PageTableFlags,
         clr: PageTableFlags,
+        encrypted: Option<bool>,
     ) -> Result<(), &str> {
         trace!(
             "update: range=0x{:x}-0x{:x} set={set:?} clr={clr:?}",
@@ -157,6 +158,9 @@ impl MemoryMapper {
             let mut newflags = entry.flags();
             newflags.insert(set);
             newflags.remove(clr);
+            if let Some(enc) = encrypted {
+                newflags.set_encrypted(enc);
+            }
             entry.set_flags(newflags);
 
             if end as usize == range.end {
@@ -172,7 +176,12 @@ impl MemoryMapper {
     // for guard pages
     pub fn unmap_page(&self, addr: usize) {
         let end = addr + PGSIZE_4K as usize;
-        let _ = self.update_range(&(addr..end), PageTableFlags::empty(), PageTableFlags::all());
+        let _ = self.update_range(
+            &(addr..end),
+            PageTableFlags::empty(),
+            PageTableFlags::all(),
+            None,
+        );
     }
 
     pub fn map_range(&self, range: &Range<usize>) {
@@ -250,7 +259,7 @@ impl Default for MemoryMapper {
 impl efiloader::MemoryMapper for MemoryMapper {
     fn remap_range(&self, range: &Range<usize>, set: u64, clr: u64) -> Result<(), &str> {
         let (s, c) = Self::efi_to_flags(set, clr);
-        self.update_range(range, s, c)
+        self.update_range(range, s, c, None)
     }
 
     fn query_range(&self, range: &Range<usize>) -> Option<u64> {
