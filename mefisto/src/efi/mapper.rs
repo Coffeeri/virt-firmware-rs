@@ -184,6 +184,21 @@ impl MemoryMapper {
         );
     }
 
+    // for encrypted pages
+    pub fn share_range(&self, range: &Range<usize>) {
+        let _ = self.update_range(
+            range,
+            PageTableFlags::empty(),
+            PageTableFlags::empty(),
+            Some(false),
+        );
+    }
+
+    pub fn share_page(&self, addr: usize) {
+        let end = addr + PGSIZE_4K as usize;
+        self.share_range(&(addr..end));
+    }
+
     pub fn map_range(&self, range: &Range<usize>) {
         let mut virt = VirtAddr::new(range.start as u64);
         if !virt.is_aligned(PGSIZE_1G) {
