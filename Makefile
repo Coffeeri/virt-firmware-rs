@@ -143,9 +143,15 @@ GIT_BRANCH	:= $(shell git branch --show-current)
 GIT_REMOTE	:= $(shell git config branch.$(GIT_BRANCH).remote)
 GIT_URL		:= $(shell git config remote.$(GIT_REMOTE).url)
 
-.PHONY: tmt
+.PHONY: tmt tmt-snp
 tmt:
 	tmt run --all --verbose \
+		report --how html
+
+tmt-snp:
+	tmt --feeling-safe --context snp=yes \
+		run --all --verbose \
+		provision --how local \
 		report --how html
 
 testing-farm-fedora:

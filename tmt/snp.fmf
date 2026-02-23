@@ -1,0 +1,61 @@
+summary: sev-snp tests
+framework: shell
+enabled: false
+adjust:
+  enabled: true
+  when: snp == yes
+require:
+  - edk2-ovmf
+  - kernel-core
+  - python3
+  - qemu-system-x86-core
+  - systemd-ukify
+
+/0create:
+    summary: wrap ovmf as igvm
+    test: |
+      KERNEL=$(ls /lib/modules/*/vmlinuz | head -1)
+      set -ex
+      ukify build \
+        --linux $KERNEL \
+        --cmdline "console=ttyS0 panic=1" \
+        --output snp.uki.efi
+      igvm-wrap \
+        --input /usr/share/edk2/ovmf/OVMF.stateless.fd \
+        --no-params --no-native --snp \
+        --output snp.bare.igvm
+      igvm-update \
+        --input snp.bare.igvm \
+        --kernel snp.uki.efi \
+        --output snp.uki.nosb.igvm
+      igvm-update \
+        --input snp.bare.igvm \
+        --kernel snp.uki.efi \
+        --add-hash-sha256 \
+        --output snp.uki.sb.sha256.igvm
+
+/1boot/bare:
+    summary: boot bare ovmf
+    test: |
+      python boot-test-igvm-qemu.py \
+        --igvm snp.bare.igvm \
+        --expect BdsDxe \
+        --snp
+
+/1boot/uki/nosb:
+    summary: boot ovmf + uki, no secure boot
+    test: |
+      python boot-test-igvm-qemu.py \
+        --igvm snp.uki.nosb.igvm \
+        --expect "Cannot open root device" \
+        --timeout 20 \
+        --snp
+
+/1boot/uki/sb/sha256:
+    summary: boot ovmf + uki, secure boot via sha256 hash
+    test: |
+      python boot-test-igvm-qemu.py \
+        --igvm snp.uki.sb.sha256.igvm \
+        --expect "Cannot open root device" \
+        --timeout 20 \
+        --snp
