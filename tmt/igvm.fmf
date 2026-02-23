@@ -9,8 +9,8 @@ framework: shell
     summary: print igvm-wrap help text
     test: igvm-wrap --help
 
-/wrap/ovmf:
-    summary: try wrap ovmf
+/wrap/ovmf/0create:
+    summary: wrap ovmf as igvm
     require:
       - edk2-ovmf
     test: |
@@ -18,27 +18,55 @@ framework: shell
       igvm-wrap \
         --input /usr/share/edk2/ovmf/OVMF_CODE.fd \
         --vars /usr/share/edk2/ovmf/OVMF_VARS.fd \
+        --no-params \
         --output test.igvm
       igvm-inspect test.igvm
+
+/wrap/ovmf/1boot:
+    summary: boot igvm ovmf
+    require:
+      - python3
+      - qemu-system-x86-core
+    test: |
+      python boot-test-igvm-qemu.py \
+        --igvm test.igvm \
+        --expect BdsDxe
 
 /update/help:
     summary: print igvm-update help text
     test: igvm-update --help
 
-/update/vmlinuz:
+/update/vmlinuz/0create:
     summary: create ovmf+kernel igvm bundle
     require:
       - edk2-ovmf
       - kernel-core
+      - systemd-ukify
     test: |
       KERNEL=$(ls /lib/modules/*/vmlinuz | head -1)
       set -ex
+      ukify build \
+        --linux $KERNEL \
+        --cmdline "console=ttyS0 panic=1" \
+        --output uki.efi
       igvm-wrap \
         --input /usr/share/edk2/ovmf/OVMF_CODE.fd \
         --vars /usr/share/edk2/ovmf/OVMF_VARS.fd \
+        --no-params \
         --output bare.igvm
       igvm-update \
         --input bare.igvm \
-        --kernel $KERNEL \
-        --output test.igvm
-      igvm-inspect test.igvm
+        --kernel uki.efi \
+        --output test.uki.igvm
+      igvm-inspect test.uki.igvm
+
+/update/vmlinuz/1boot:
+    summary: boot ovmf+kernel igvm bundle
+    require:
+      - python3
+      - qemu-system-x86-core
+    test: |
+      python boot-test-igvm-qemu.py \
+        --igvm test.uki.igvm \
+        --expect "Cannot open root device" \
+        --timeout 20

@@ -4,9 +4,14 @@ provision:
     boot:
       method: uefi
 prepare:
-  how: install
-  package:
-    - virt-firmware-rs
+  - name: kvm support check
+    how: shell
+    script:
+      - ls -l /dev/kvm
+  - name: install virt-firmware-rs
+    how: install
+    package:
+      - virt-firmware-rs
 discover:
   how: fmf
 execute:
