@@ -7,20 +7,23 @@ import subprocess
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--igvm', dest = 'igvm',
-                        type = str, required = True,
+                        type = str, required = True, metavar = 'FIRMWARE',
                         help = 'set firmware image (required)')
     parser.add_argument('--expect', dest = 'expect',
-                        type = str, required = True,
+                        type = str, required = True, metavar = 'MATCH',
                         help = 'set expected guest output (required)')
-    parser.add_argument('--timeout', dest = 'timeout',
-                        type = str, default = '10',
-                        help = 'set timeout (default: 10)')
     parser.add_argument('--kernel', dest = 'kernel',
-                        type = str,
+                        type = str, metavar = 'EFI',
                         help = 'set kernel image (optional)')
     parser.add_argument('--append', dest = 'append',
-                        type = str,
+                        type = str, metavar = 'ARGS',
                         help = 'set kernel command line (optional)')
+    parser.add_argument('--timeout', dest = 'timeout',
+                        type = str, default = '10', metavar = 'SECS',
+                        help = 'set timeout (default: 10)')
+    parser.add_argument('--snp', dest = 'snp',
+                         default = False, action = 'store_true',
+                        help = 'boot in sev-snp mode')
     options = parser.parse_args()
 
     cmdline = [ 'timeout', '--foreground', options.timeout,
@@ -34,6 +37,9 @@ def main():
         cmdline += [ '-kernel', options.kernel ]
         if options.append:
             cmdline += [ '-append', options.append ]
+    if options.snp:
+        cmdline += [ '-object', 'sev-snp-guest,id=snp0,reduced-phys-bits=1,cbitpos=51' ]
+        cmdline += [ '-machine', 'confidential-guest-support=snp0' ]
     print(cmdline)
 
     rc = subprocess.run(cmdline, capture_output = True, check = False)
