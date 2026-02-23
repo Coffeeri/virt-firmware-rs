@@ -3,6 +3,8 @@ provision:
   hardware:
     boot:
       method: uefi
+    virtualization:
+      is-supported: true
 prepare:
   - name: kvm support check
     how: shell
