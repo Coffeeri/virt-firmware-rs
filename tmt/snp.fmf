@@ -28,11 +28,13 @@ require:
       igvm-update \
         --input snp.bare.igvm \
         --kernel snp.uki.efi \
+        --inspect \
         --output snp.uki.nosb.igvm
       igvm-update \
         --input snp.bare.igvm \
         --kernel snp.uki.efi \
         --add-hash-sha256 \
+        --inspect \
         --output snp.uki.sb.sha256.igvm
 
 /1boot/bare:
