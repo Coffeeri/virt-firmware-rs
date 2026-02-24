@@ -1,8 +1,19 @@
 #!/usr/bin/python3
 import os
+import re
 import sys
 import argparse
 import subprocess
+
+zapterm1 = re.compile(r'\x1b\[[0-9;:=?!]*[HJhlmnpt]')
+zapterm2 = re.compile(r'\x1b\][0-9]*')
+zapterm3 = re.compile(r'[\x07\r]')
+
+def zapterm(line):
+    line = zapterm1.sub('', line)
+    line = zapterm2.sub('', line)
+    line = zapterm3.sub('', line)
+    return line
 
 def main():
     parser = argparse.ArgumentParser()
@@ -19,8 +30,8 @@ def main():
                         type = str, metavar = 'ARGS',
                         help = 'set kernel command line (optional)')
     parser.add_argument('--timeout', dest = 'timeout',
-                        type = str, default = '10', metavar = 'SECS',
-                        help = 'set timeout (default: 10)')
+                        type = str, default = '20', metavar = 'SECS',
+                        help = 'set timeout (default: 20)')
     parser.add_argument('--snp', dest = 'snp',
                          default = False, action = 'store_true',
                         help = 'boot in sev-snp mode')
@@ -32,7 +43,9 @@ def main():
                 '-machine', 'q35,igvm-cfg=fw.igvm',
                 '-m', '1G',
                 '-nographic', '-no-reboot',
-                '-object', f'igvm-cfg,id=fw.igvm,file={options.igvm}' ]
+                '-object', f'igvm-cfg,id=fw.igvm,file={options.igvm}',
+                '-chardev', 'file,id=fw.log,path=firmware.log',
+                '-device', 'isa-debugcon,iobase=0x402,chardev=fw.log' ]
     if options.kernel:
         cmdline += [ '-kernel', options.kernel ]
         if options.append:
@@ -45,12 +58,17 @@ def main():
     rc = subprocess.run(cmdline, capture_output = True, check = False)
     if len(rc.stderr):
         print('=== stderr ===')
-        print(rc.stderr.decode())
+        print(zapterm(rc.stderr.decode()))
     if len(rc.stdout):
         print('=== stdout ===')
-        print(rc.stdout.decode())
+        print(zapterm(rc.stdout.decode()))
 
     if not options.expect in rc.stdout.decode():
+        with open('firmware.log') as f:
+            print('=== firmware.log (tail) ===')
+            lines = f.read().splitlines();
+            for l in lines[ -30 : ]:
+                print(l.strip())
         print(f'=== FAIL ("{options.expect}" not found) ===')
         return 1
     else:
