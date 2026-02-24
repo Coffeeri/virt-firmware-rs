@@ -144,15 +144,19 @@ GIT_REMOTE	:= $(shell git config branch.$(GIT_BRANCH).remote)
 GIT_URL		:= $(shell git config remote.$(GIT_REMOTE).url)
 
 .PHONY: tmt tmt-igvm tmt-snp
+# default tests
 tmt:
 	tmt run --all --verbose \
 		report --how html
 
+# igvm boot tests (needs kvm)
 tmt-igvm:
-	tmt run --all --verbose \
+	tmt --context kvm=yes \
+		run --all --verbose \
 		test --filter 'tag:igvm' \
 		report --how html
 
+# snp boot tests (needs sev-snp host)
 tmt-snp:
 	tmt --feeling-safe --context snp=yes \
 		run --all --verbose \
@@ -160,6 +164,7 @@ tmt-snp:
 		provision --how local \
 		report --how html
 
+# fedora gating tests
 testing-farm-fedora:
 	testing-farm request \
 		--git-url $(GIT_URL) \

@@ -8,8 +8,14 @@ provision:
 prepare:
   - name: kvm support check
     how: shell
+    when: kvm == yes
     script:
       - ls -l /dev/kvm
+  - name: sev-snp support check (incomplete)
+    how: shell
+    when: snp == yes
+    script:
+      - ls -l /dev/sev
   - name: install virt-firmware-rs
     how: install
     package:

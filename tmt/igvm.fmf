@@ -25,6 +25,10 @@ tag: igvm
 
 /wrap/ovmf/1boot:
     summary: boot igvm ovmf
+    enabled: false
+    adjust:
+      enabled: true
+      when: kvm == yes
     require:
       - python3
       - qemu-system-x86-core
@@ -63,6 +67,10 @@ tag: igvm
 
 /update/vmlinuz/1boot:
     summary: boot ovmf+kernel igvm bundle
+    enabled: false
+    adjust:
+      enabled: true
+      when: kvm == yes
     require:
       - python3
       - qemu-system-x86-core
