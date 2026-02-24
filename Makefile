@@ -143,14 +143,20 @@ GIT_BRANCH	:= $(shell git branch --show-current)
 GIT_REMOTE	:= $(shell git config branch.$(GIT_BRANCH).remote)
 GIT_URL		:= $(shell git config remote.$(GIT_REMOTE).url)
 
-.PHONY: tmt tmt-snp
+.PHONY: tmt tmt-igvm tmt-snp
 tmt:
 	tmt run --all --verbose \
+		report --how html
+
+tmt-igvm:
+	tmt run --all --verbose \
+		test --filter 'tag:igvm' \
 		report --how html
 
 tmt-snp:
 	tmt --feeling-safe --context snp=yes \
 		run --all --verbose \
+		test --filter 'tag:snp' \
 		provision --how local \
 		report --how html
 

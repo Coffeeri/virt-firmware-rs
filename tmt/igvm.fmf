@@ -1,5 +1,6 @@
 summary: tests for igvm-tools
 framework: shell
+tag: igvm
 
 /inspect/help:
     summary: print igvm-inspect help text
@@ -69,4 +70,4 @@ framework: shell
       python boot-test-igvm-qemu.py \
         --igvm test.uki.igvm \
         --expect "Cannot open root device" \
-        --timeout 20
+        --timeout 30

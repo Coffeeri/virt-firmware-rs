@@ -1,6 +1,7 @@
 summary: sev-snp tests
 framework: shell
 enabled: false
+tag: snp
 adjust:
   enabled: true
   when: snp == yes
