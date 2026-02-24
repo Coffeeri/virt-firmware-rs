@@ -192,6 +192,7 @@ fn igvm_add_kernel(
         info!("add efidata hoblist");
         debug!("hobarea: {hobarea}");
         let hobs_blob = hoblist.hobs();
+        builder.remove_page(hobarea.memory.0);
         builder.add_data_pages(hobarea.memory.0, &hobs_blob);
     }
 
