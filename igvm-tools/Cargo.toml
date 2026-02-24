@@ -12,6 +12,7 @@ edition.workspace = true
 
 [features]
 authenticode = [ "dep:authenticode" ]
+default = [ "authenticode" ]
 
 [dependencies]
 bitfield-struct.workspace = true
