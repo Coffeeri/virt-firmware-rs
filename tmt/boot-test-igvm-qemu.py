@@ -2,6 +2,7 @@
 import os
 import re
 import sys
+import yaml
 import argparse
 import subprocess
 
@@ -43,37 +44,61 @@ def main():
                 '-machine', 'q35,igvm-cfg=fw.igvm',
                 '-m', '1G',
                 '-nographic', '-no-reboot',
-                '-object', f'igvm-cfg,id=fw.igvm,file={options.igvm}',
-                '-chardev', 'file,id=fw.log,path=firmware.log',
-                '-device', 'isa-debugcon,iobase=0x402,chardev=fw.log' ]
+                '-object', f'igvm-cfg,id=fw.igvm,file={options.igvm}' ]
+
+    result = { 'name': '/boot/in/qemu' }
+    tmtdata = os.environ.get('TMT_TEST_DATA');
+    if tmtdata:
+        result['log'] = [ 'firmware.log' ]
+        cmdline += [ '-chardev', f'file,id=fw.log,path={tmtdata}/firmware.log' ]
+        cmdline += [ '-device', 'isa-debugcon,iobase=0x402,chardev=fw.log' ]
+
     if options.kernel:
         cmdline += [ '-kernel', options.kernel ]
         if options.append:
             cmdline += [ '-append', options.append ]
+
     if options.snp:
         cmdline += [ '-object', 'sev-snp-guest,id=snp0,reduced-phys-bits=1,cbitpos=51' ]
         cmdline += [ '-machine', 'confidential-guest-support=snp0' ]
-    print(cmdline)
 
+    print(cmdline)
     rc = subprocess.run(cmdline, capture_output = True, check = False)
+
     if len(rc.stderr):
-        print('=== stderr ===')
-        print(zapterm(rc.stderr.decode()))
+        if tmtdata:
+            with open(f'{tmtdata}/stderr.log', 'w') as l:
+                l.write(rc.stderr.decode())
+            result['log'].append('stderr.log')
+        else:
+            print('=== stderr ===')
+            print(zapterm(rc.stderr.decode()))
+
     if len(rc.stdout):
-        print('=== stdout ===')
-        print(zapterm(rc.stdout.decode()))
+        if tmtdata:
+            with open(f'{tmtdata}/stdout.log', 'w') as l:
+                l.write(rc.stdout.decode())
+            result['log'].append('stdout.log')
+        else:
+            print('=== stdout ===')
+            print(zapterm(rc.stdout.decode()))
 
     if not options.expect in rc.stdout.decode():
-        with open('firmware.log') as f:
-            print('=== firmware.log (tail) ===')
-            lines = f.read().splitlines();
-            for l in lines[ -30 : ]:
-                print(l.strip())
+        exitcode = 1
+        result['result'] = 'fail'
         print(f'=== FAIL ("{options.expect}" not found) ===')
-        return 1
     else:
+        exitcode = 0
+        result['result'] = 'pass'
         print('=== PASS ===')
-        return 0
+
+    if tmtdata:
+        results = [ result, ]
+        y = yaml.dump(results)
+        with open(f'{tmtdata}/tmt-report-results.yaml', 'a') as r:
+            r.write(y)
+
+    return exitcode
 
 if __name__ == '__main__':
     sys.exit(main())
