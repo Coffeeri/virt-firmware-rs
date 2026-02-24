@@ -229,6 +229,16 @@ impl Builder {
         self
     }
 
+    pub fn remove_page(&mut self, base: usize) {
+        self.directives.retain(|d| {
+            if let IgvmDirectiveHeader::PageData { gpa, .. } = d {
+                *gpa as usize != base
+            } else {
+                true
+            }
+        })
+    }
+
     pub fn add_data_pages(&mut self, base: usize, data: &[u8]) -> &mut Builder {
         let flags = IgvmPageDataFlags::new();
         self.add_data_pages_flags(base, data, flags)
