@@ -36,36 +36,26 @@ pub struct StackFrame {
     pub ss: u64,
 }
 
-fn dumpregs(regs: *mut StackFrame) {
+fn dumpregs(regs: &StackFrame) {
     error!(
         "rax 0x{:016x} rbx 0x{:016x} rcx 0x{:016x}",
-        unsafe { (*regs).rax },
-        unsafe { (*regs).rbx },
-        unsafe { (*regs).rcx },
+        regs.rax, regs.rbx, regs.rcx,
     );
     error!(
         "rdx 0x{:016x} rsi 0x{:016x} rdi 0x{:016x}",
-        unsafe { (*regs).rdx },
-        unsafe { (*regs).rsi },
-        unsafe { (*regs).rdi },
+        regs.rdx, regs.rsi, regs.rdi,
     );
     error!(
         "rdp 0x{:016x} r8  0x{:016x} r9  0x{:016x}",
-        unsafe { (*regs).rbp },
-        unsafe { (*regs).r8 },
-        unsafe { (*regs).r9 },
+        regs.rbp, regs.r8, regs.r9,
     );
     error!(
         "r10 0x{:016x} r11 0x{:016x} r12 0x{:016x}",
-        unsafe { (*regs).r10 },
-        unsafe { (*regs).r11 },
-        unsafe { (*regs).r12 },
+        regs.r10, regs.r11, regs.r12,
     );
     error!(
         "r13 0x{:016x} r14 0x{:016x} r15 0x{:016x}",
-        unsafe { (*regs).r13 },
-        unsafe { (*regs).r14 },
-        unsafe { (*regs).r15 },
+        regs.r13, regs.r14, regs.r15,
     );
 
     let (cr3, _) = Cr3::read_raw();
@@ -77,10 +67,13 @@ fn dumpregs(regs: *mut StackFrame) {
     );
 }
 
-fn pagefault(ec: u64, rip: u64) {
+fn pagefault(regs: &StackFrame) {
     let cr2 = Cr2::read_raw();
-    let pfec = PageFaultErrorCode::from_bits(ec).unwrap();
-    error!("page fault: rip=0x{rip:x} cr2=0x{cr2:x} code=0x{ec:x}");
+    let pfec = PageFaultErrorCode::from_bits(regs.error_code).unwrap();
+    error!(
+        "page fault: rip=0x{:x} cr2=0x{cr2:x} code=0x{:x}",
+        regs.rip, regs.error_code
+    );
     error!("page fault: {pfec:?}");
 }
 
@@ -89,16 +82,15 @@ fn pagefault(ec: u64, rip: u64) {
 /// This function is called from exception handler asm stubs which
 /// pass a pointer to a `StackFrame` structure.
 #[no_mangle]
-pub unsafe extern "C" fn exception_handler(regs: *mut StackFrame) {
-    let nr = unsafe { (*regs).exception_number };
-    let ec = unsafe { (*regs).error_code };
-    let rip = unsafe { (*regs).rip };
+pub unsafe extern "C" fn exception_handler(c_regs: *mut StackFrame) {
+    let regs = unsafe { &mut *c_regs };
+    let nr = regs.exception_number;
     let exception = ExceptionVector::try_from(nr as u8).unwrap();
 
     if exception == ExceptionVector::Page {
-        pagefault(ec, rip);
+        pagefault(regs);
     } else {
-        error!("exception: {exception:?} (#{nr}) at rip=0x{rip:x}")
+        error!("exception: {exception:?} (#{nr}) at rip=0x{:x}", regs.rip)
     }
 
     dumpregs(regs);
