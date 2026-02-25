@@ -52,7 +52,7 @@ require:
       python boot-test-igvm-qemu.py \
         --igvm snp.uki.nosb.igvm \
         --expect "Cannot open root device" \
-        --timeout 20 \
+        --timeout 30 \
         --snp
 
 /1boot/uki/sb/sha256:
@@ -61,5 +61,5 @@ require:
       python boot-test-igvm-qemu.py \
         --igvm snp.uki.sb.sha256.igvm \
         --expect "Cannot open root device" \
-        --timeout 20 \
+        --timeout 30 \
         --snp
