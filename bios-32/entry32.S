@@ -2,7 +2,7 @@
         .section .text
 
 startram:
-        // setup stack @ 640k
+        // setup stack
         mov	$stack_end, %esp
 
         // jump to C code
