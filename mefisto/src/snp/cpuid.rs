@@ -1,4 +1,5 @@
 use bitfield_struct::bitfield;
+use core::cmp::min;
 use core::fmt::{Display, Formatter, Result};
 
 #[repr(C)]
@@ -44,20 +45,24 @@ pub static CPUID: CpuidPage = unsafe { core::mem::zeroed() };
 // like virtfw_libhw::x86cpuid::cpuid
 // but using cpuid page
 pub fn snp_cpuid(func: u32, subfn: u32) -> (u32, u32, u32, u32) {
+    let count = min(CPUID.count as usize, CPUID.entries.len());
+
     // search with func + subfn first
-    for i in 0..CPUID.count {
-        let e = &CPUID.entries[i as usize];
+    for i in 0..count {
+        let e = &CPUID.entries[i];
         if e.eax_in == func && e.ecx_in == subfn {
             return (e.eax, e.ebx, e.ecx, e.edx);
         }
     }
+
     // failing that try func alone
-    for i in 0..CPUID.count {
-        let e = &CPUID.entries[i as usize];
+    for i in 0..count {
+        let e = &CPUID.entries[i];
         if e.eax_in == func {
             return (e.eax, e.ebx, e.ecx, e.edx);
         }
     }
+
     // 404
     (0, 0, 0, 0)
 }
