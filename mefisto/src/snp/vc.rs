@@ -6,7 +6,7 @@ use crate::snp::cpuid::snp_cpuid;
 use crate::snp::ghcb::msr_ghcb_terminate;
 use crate::snp::ghcb::GHCB;
 
-pub static GHCB: Mutex<GHCB> = unsafe { core::mem::zeroed() };
+pub static GHCB: Mutex<GHCB> = Mutex::new(unsafe { core::mem::zeroed() });
 
 // vc debug logging (using SERCON would trigger recursive #vc)
 
