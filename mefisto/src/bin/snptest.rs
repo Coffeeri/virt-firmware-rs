@@ -96,5 +96,4 @@ fn main(boot_mode: u64) {
     }
 
     qemu_try_poweroff();
-    panic!("Oops, poweroff failed.");
 }
