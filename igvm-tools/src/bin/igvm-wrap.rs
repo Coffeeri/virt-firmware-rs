@@ -127,6 +127,7 @@ fn main() -> ExitCode {
             if let Some(m) = ovmfmeta.as_ref() {
                 builder.add_ovmf_snp_pages(m);
             }
+            builder.add_snp_policy(None);
         }
 
         // parameters
