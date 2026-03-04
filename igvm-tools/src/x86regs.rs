@@ -239,7 +239,10 @@ pub fn real_mode_regs() -> Vec<X86Register> {
 }
 
 pub fn flat32_mode_regs(rip: Option<u64>) -> Vec<X86Register> {
-    let cr0 = ControlRegister0::reset_fast().with_pe(true).into();
+    let cr0 = ControlRegister0::reset_fast()
+        .with_pe(true)
+        .with_ne(true)
+        .into();
     let code = SegmentRegister {
         base: 0,
         limit: 0xffffffff,
