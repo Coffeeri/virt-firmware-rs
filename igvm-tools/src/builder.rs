@@ -6,7 +6,7 @@ use igvm::{
     IgvmPlatformHeader, IgvmRevision,
 };
 use igvm_defs::{
-    IgvmPageDataFlags, IgvmPageDataType, IgvmPlatformType, IGVM_VHS_PARAMETER,
+    IgvmPageDataFlags, IgvmPageDataType, IgvmPlatformType, SnpPolicy, IGVM_VHS_PARAMETER,
     IGVM_VHS_PARAMETER_INSERT, IGVM_VHS_SUPPORTED_PLATFORM, PAGE_SIZE_4K,
 };
 
@@ -93,6 +93,16 @@ impl Builder {
             vmsa: Box::new(vmsa),
         };
         self.directives.push(ctx);
+        self
+    }
+
+    pub fn add_snp_policy(&mut self, snp_policy: Option<SnpPolicy>) -> &mut Builder {
+        let default_policy = SnpPolicy::new().with_reserved_must_be_one(1).with_smt(1);
+        let policy = IgvmInitializationHeader::GuestPolicy {
+            policy: snp_policy.unwrap_or(default_policy).into(),
+            compatibility_mask: SEV_SNP_COMPAT,
+        };
+        self.initializations.push(policy);
         self
     }
 
