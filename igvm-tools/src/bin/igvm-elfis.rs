@@ -252,6 +252,7 @@ fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
 
     let snp = regions.iter().any(|r| r.name == SNP_SECRETS);
     if snp {
+        info!("sev-snp is supported (secrets page present)");
         let entry = entry_addr(&object, "entry_snp");
         let regs = flat32_mode_regs(entry);
         builder.add_snp_platform();
