@@ -28,11 +28,11 @@ const IGVM_DATA_HOB: &str = ".igvm.datahobs";
           long_about = None)]
 struct Args {
     /// boot firmware in real mode (default)
-    #[arg(long, help_heading = "IGVM build options")]
+    #[arg(long, help_heading = "IGVM build options", conflicts_with = "flat32")]
     real16: bool,
 
     /// boot firmware in protected mode
-    #[arg(long, help_heading = "IGVM build options")]
+    #[arg(long, help_heading = "IGVM build options", conflicts_with = "real16")]
     flat32: bool,
 
     /// list regions in elf image
