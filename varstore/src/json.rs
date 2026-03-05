@@ -17,7 +17,7 @@ use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr, EfiVarId};
 use virtfw_libefi::guids;
 use virtfw_libefi::types::EfiTime;
 
-use crate::store::EfiVarStore;
+use crate::store::{EfiVarStore, VariableEntry};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct JsonHexString(String);
@@ -90,6 +90,12 @@ impl From<&EfiVar> for JsonEfiVariable {
             time: v.time().map(|t| JsonHexString::from(t.as_bytes())),
             digest: None,
         }
+    }
+}
+
+impl From<&VariableEntry> for JsonEfiVariable {
+    fn from(e: &VariableEntry) -> Self {
+        JsonEfiVariable::from(&e.var)
     }
 }
 

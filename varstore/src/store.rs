@@ -35,6 +35,24 @@ impl EfiVarStoreConfig {
     }
 }
 
+pub(crate) struct VariableEntry {
+    pub(crate) var: EfiVar,
+}
+
+impl VariableEntry {
+    pub(crate) fn new(var: EfiVar) -> Self {
+        Self { var }
+    }
+}
+
+impl Deref for VariableEntry {
+    type Target = EfiVar;
+
+    fn deref(&self) -> &EfiVar {
+        &self.var
+    }
+}
+
 pub struct EfiVarStore {
     // boot phases
     pub(crate) end_of_dxe: bool,
@@ -42,7 +60,7 @@ pub struct EfiVarStore {
     exit_boot_service: bool,
 
     // efi variables
-    pub(crate) variables: Vec<EfiVar>,
+    pub(crate) variables: Vec<VariableEntry>,
 
     // variable Policies
     pub(crate) policy_locked: bool,
@@ -75,7 +93,7 @@ impl EfiVarStore {
     }
 
     fn get_position(&self, id: &EfiVarId) -> Option<usize> {
-        self.variables.iter().position(|v| v.deref() == id)
+        self.variables.iter().position(|v| v.deref().deref() == id)
     }
 
     pub(crate) fn get_unchecked(&self, id: &EfiVarId) -> Option<&EfiVar> {
@@ -85,18 +103,19 @@ impl EfiVarStore {
 
     pub(crate) fn set_unchecked(&mut self, variable: EfiVar) {
         let index = self.get_position(variable.deref());
+        let entry = VariableEntry::new(variable);
         if let Some(i) = index {
             // replace
             if false {
-                self.variables[i] = variable;
+                self.variables[i] = entry;
             } else {
                 // qemu compatible ordering
                 self.variables.remove(i);
-                self.variables.push(variable);
+                self.variables.push(entry);
             }
         } else {
             // append
-            self.variables.push(variable);
+            self.variables.push(entry);
         }
     }
 
