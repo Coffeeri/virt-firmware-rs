@@ -17,35 +17,43 @@ use virtfw_igvm_tools::x86regs::{flat32_mode_regs, real_mode_regs};
           long_about = None)]
 struct Args {
     /// enable native platform (default)
-    #[arg(long, help_heading = "IGVM build options")]
+    #[arg(
+        long,
+        help_heading = "IGVM build options",
+        conflicts_with = "no_native"
+    )]
     native: bool,
 
     /// disable native platform
-    #[arg(long, help_heading = "IGVM build options")]
+    #[arg(long, help_heading = "IGVM build options", conflicts_with = "native")]
     no_native: bool,
 
     /// enable sev-snp platform
-    #[arg(long, help_heading = "IGVM build options")]
+    #[arg(long, help_heading = "IGVM build options", conflicts_with = "no_snp")]
     snp: bool,
 
     /// disable sev-snp platform (default)
-    #[arg(long, help_heading = "IGVM build options")]
+    #[arg(long, help_heading = "IGVM build options", conflicts_with = "snp")]
     no_snp: bool,
 
     /// generate parameters (default)
-    #[arg(long, help_heading = "IGVM build options")]
+    #[arg(
+        long,
+        help_heading = "IGVM build options",
+        conflicts_with = "no_params"
+    )]
     params: bool,
 
     /// do not generate parameters
-    #[arg(long, help_heading = "IGVM build options")]
+    #[arg(long, help_heading = "IGVM build options", conflicts_with = "params")]
     no_params: bool,
 
     /// boot firmware in real mode (default)
-    #[arg(long, help_heading = "IGVM build options")]
+    #[arg(long, help_heading = "IGVM build options", conflicts_with = "flat32")]
     real16: bool,
 
     /// boot firmware in protected mode
-    #[arg(long, help_heading = "IGVM build options")]
+    #[arg(long, help_heading = "IGVM build options", conflicts_with = "real16")]
     flat32: bool,
 
     /// print ovmf metadata
