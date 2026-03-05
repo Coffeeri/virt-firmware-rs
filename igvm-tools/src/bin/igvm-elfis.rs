@@ -30,11 +30,11 @@ const IGVM_DATA_HOB: &str = ".igvm.datahobs";
           long_about = None)]
 struct Args {
     /// list regions in elf image
-    #[arg(long)]
+    #[arg(long, help_heading = "Print informations")]
     regions: bool,
 
     /// inspect generated igvm
-    #[arg(long)]
+    #[arg(long, help_heading = "Print informations")]
     inspect: bool,
 
     /// enable debug-swap sev feature
