@@ -16,45 +16,45 @@ use virtfw_igvm_tools::x86regs::{flat32_mode_regs, real_mode_regs};
           about = "wrap classic native firmware image as igvm",
           long_about = None)]
 struct Args {
-    /// print ovmf metadata
-    #[arg(long)]
-    meta: bool,
-
-    /// inspect generated igvm
-    #[arg(long)]
-    inspect: bool,
-
     /// enable native platform (default)
-    #[arg(long)]
+    #[arg(long, help_heading = "IGVM build options")]
     native: bool,
 
     /// disable native platform
-    #[arg(long)]
+    #[arg(long, help_heading = "IGVM build options")]
     no_native: bool,
 
     /// enable sev-snp platform
-    #[arg(long)]
+    #[arg(long, help_heading = "IGVM build options")]
     snp: bool,
 
     /// disable sev-snp platform (default)
-    #[arg(long)]
+    #[arg(long, help_heading = "IGVM build options")]
     no_snp: bool,
 
     /// generate parameters (default)
-    #[arg(long)]
+    #[arg(long, help_heading = "IGVM build options")]
     params: bool,
 
     /// do not generate parameters
-    #[arg(long)]
+    #[arg(long, help_heading = "IGVM build options")]
     no_params: bool,
 
     /// boot firmware in real mode (default)
-    #[arg(long)]
+    #[arg(long, help_heading = "IGVM build options")]
     real16: bool,
 
     /// boot firmware in protected mode
-    #[arg(long)]
+    #[arg(long, help_heading = "IGVM build options")]
     flat32: bool,
+
+    /// print ovmf metadata
+    #[arg(long, help_heading = "Print informations")]
+    meta: bool,
+
+    /// inspect generated igvm
+    #[arg(long, help_heading = "Print informations")]
+    inspect: bool,
 
     /// input firmware image
     #[arg(short, long, value_name = "CODE")]
