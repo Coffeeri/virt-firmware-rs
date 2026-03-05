@@ -17,8 +17,6 @@ use virtfw_igvm_tools::inspect::inspect_igvm;
 use virtfw_igvm_tools::x86regs::flat32_mode_regs;
 use virtfw_libefi::hob::igvmdata::{EfiIgvmDataList, EfiIgvmDataType};
 
-const USE_FLAT32: bool = false;
-
 const SNP_CPUID: &str = ".snp.cpuid";
 const SNP_SECRETS: &str = ".snp.secrets";
 const IGVM_PARAM_MEMMAP: &str = ".igvm.memmap";
@@ -29,6 +27,14 @@ const IGVM_DATA_HOB: &str = ".igvm.datahobs";
           about = "convert elf images into igvm",
           long_about = None)]
 struct Args {
+    /// boot firmware in real mode (default)
+    #[arg(long, help_heading = "IGVM build options")]
+    real16: bool,
+
+    /// boot firmware in protected mode
+    #[arg(long, help_heading = "IGVM build options")]
+    flat32: bool,
+
     /// list regions in elf image
     #[arg(long, help_heading = "Print informations")]
     regions: bool,
@@ -51,6 +57,22 @@ struct Args {
 
     #[arg(long, hide = true)]
     manpage: bool,
+}
+
+impl Args {
+    fn evaluate_bool(enable: bool, disable: bool, default: bool) -> bool {
+        if enable {
+            true
+        } else if disable {
+            false
+        } else {
+            default
+        }
+    }
+
+    fn get_flat32(&self) -> bool {
+        Args::evaluate_bool(self.flat32, self.real16, false)
+    }
 }
 
 struct Region<'r> {
@@ -259,7 +281,7 @@ fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
         builder.add_snp_vmsa_context(&regs, false);
     }
 
-    if USE_FLAT32 {
+    if cfg.get_flat32() {
         let regs = flat32_mode_regs(None);
         builder.add_native_context(&regs);
     }
@@ -282,7 +304,7 @@ fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
             let offset = (r.lma.unwrap() - base) as usize;
             rom[offset..offset + r.data.len()].copy_from_slice(r.data)
         }
-        if !USE_FLAT32 {
+        if !cfg.get_flat32() {
             builder.add_firmware_1m(&rom);
         }
         builder.add_firmware_4g(&rom);
