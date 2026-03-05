@@ -250,10 +250,15 @@ fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
     let binary = fs::read(input)?;
     let object = File::parse(&*binary)?;
 
-    info!("parsing elf");
     let regions = match &object {
-        File::Elf64(elf) => parse_elf(elf).unwrap(),
-        File::Elf32(elf) => parse_elf(elf).unwrap(),
+        File::Elf64(elf) => {
+            info!("parsing elf64");
+            parse_elf(elf).unwrap()
+        }
+        File::Elf32(elf) => {
+            info!("parsing elf32");
+            parse_elf(elf).unwrap()
+        }
         _ => {
             return Err("not an elf file".into());
         }
