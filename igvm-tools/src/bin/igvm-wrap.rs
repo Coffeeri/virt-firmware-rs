@@ -24,6 +24,10 @@ struct Args {
     #[arg(long)]
     inspect: bool,
 
+    /// enable native platform (default)
+    #[arg(long)]
+    native: bool,
+
     /// disable native platform
     #[arg(long)]
     no_native: bool,
@@ -32,9 +36,21 @@ struct Args {
     #[arg(long)]
     snp: bool,
 
+    /// disable sev-snp platform (default)
+    #[arg(long)]
+    no_snp: bool,
+
+    /// generate parameters (default)
+    #[arg(long)]
+    params: bool,
+
     /// do not generate parameters
     #[arg(long)]
     no_params: bool,
+
+    /// boot firmware in real mode (default)
+    #[arg(long)]
+    real16: bool,
 
     /// boot firmware in protected mode
     #[arg(long)]
@@ -56,6 +72,34 @@ struct Args {
     manpage: bool,
 }
 
+impl Args {
+    fn evaluate_bool(enable: bool, disable: bool, default: bool) -> bool {
+        if enable {
+            true
+        } else if disable {
+            false
+        } else {
+            default
+        }
+    }
+
+    fn get_native(&self) -> bool {
+        Args::evaluate_bool(self.native, self.no_native, true)
+    }
+
+    fn get_snp(&self) -> bool {
+        Args::evaluate_bool(self.snp, self.no_snp, false)
+    }
+
+    fn get_params(&self) -> bool {
+        Args::evaluate_bool(self.params, self.no_params, true)
+    }
+
+    fn get_flat32(&self) -> bool {
+        Args::evaluate_bool(self.flat32, self.real16, false)
+    }
+}
+
 fn main() -> ExitCode {
     let cfg = Args::parse();
 
@@ -71,11 +115,11 @@ fn main() -> ExitCode {
         .init()
         .unwrap();
 
-    if let Some(infile) = cfg.input {
+    if let Some(ref infile) = cfg.input {
         info!("reading {}", &infile);
 
         // code
-        let firmware_res = fs::read(&infile);
+        let firmware_res = fs::read(infile);
         if let Err(e) = firmware_res {
             error!("read {}: {}", &infile, e);
             return ExitCode::from(1);
@@ -90,9 +134,9 @@ fn main() -> ExitCode {
         }
 
         // vars
-        let uefivars = if let Some(varsfile) = cfg.vars {
+        let uefivars = if let Some(ref varsfile) = cfg.vars {
             info!("reading {}", &varsfile);
-            let uefivars_res = fs::read(&varsfile);
+            let uefivars_res = fs::read(varsfile);
             if let Err(e) = uefivars_res {
                 error!("read {}: {}", &varsfile, e);
                 return ExitCode::from(1);
@@ -105,9 +149,9 @@ fn main() -> ExitCode {
         let mut builder = Builder::new();
 
         // native
-        if !cfg.no_native {
+        if cfg.get_native() {
             builder.add_native_platform();
-            if cfg.flat32 {
+            if cfg.get_flat32() {
                 let regs = flat32_mode_regs(None);
                 builder.add_native_context(&regs);
             } else {
@@ -116,8 +160,8 @@ fn main() -> ExitCode {
         }
 
         // sev-snp
-        if cfg.snp {
-            let regs = if cfg.flat32 {
+        if cfg.get_snp() {
+            let regs = if cfg.get_flat32() {
                 flat32_mode_regs(None)
             } else {
                 real_mode_regs()
@@ -132,13 +176,13 @@ fn main() -> ExitCode {
 
         // parameters
         if let Some(m) = ovmfmeta.as_ref() {
-            if !cfg.no_params {
+            if cfg.get_params() {
                 builder.add_ovmf_igvm_params(m);
             }
         }
 
         // firmware code
-        if !cfg.flat32 {
+        if !cfg.get_flat32() {
             builder.add_firmware_1m(&firmware);
         }
         builder.add_firmware_4g(&firmware);
