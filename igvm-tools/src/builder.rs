@@ -1,4 +1,4 @@
-use std::cmp::min;
+use std::cmp::{min, Ordering};
 
 use igvm::snp_defs::SevFeatures;
 use igvm::{
@@ -282,12 +282,28 @@ impl Builder {
         self
     }
 
+    fn sort_pages(a: &IgvmDirectiveHeader, b: &IgvmDirectiveHeader) -> Ordering {
+        let a_gpa = if let IgvmDirectiveHeader::PageData { gpa, .. } = a {
+            gpa
+        } else {
+            &0
+        };
+        let b_gpa = if let IgvmDirectiveHeader::PageData { gpa, .. } = b {
+            gpa
+        } else {
+            &0
+        };
+        a_gpa.cmp(b_gpa)
+    }
+
     pub fn finalize(&self) -> Result<IgvmFile, igvm::Error> {
+        let mut directives = self.directives.clone();
+        directives.sort_by(Self::sort_pages);
         IgvmFile::new(
             self.revision,
             self.platforms.clone(),
             self.initializations.clone(),
-            self.directives.clone(),
+            directives,
         )
     }
 }
