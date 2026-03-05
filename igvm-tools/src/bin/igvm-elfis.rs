@@ -284,6 +284,7 @@ fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
         let regs = flat32_mode_regs(entry);
         builder.add_snp_platform();
         builder.add_snp_vmsa_context(&regs, false);
+        builder.add_snp_policy(None);
     }
 
     if cfg.get_flat32() {
