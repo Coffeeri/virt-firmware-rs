@@ -37,10 +37,6 @@ struct Args {
     #[arg(long, help_heading = "Print informations")]
     inspect: bool,
 
-    /// enable debug-swap sev feature
-    #[arg(long)]
-    snp_debug: bool,
-
     /// input elf image
     #[arg(short, long, value_name = "ELF", required_unless_present = "manpage")]
     input: Option<String>,
@@ -259,7 +255,7 @@ fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
         let entry = entry_addr(&object, "entry_snp");
         let regs = flat32_mode_regs(entry);
         builder.add_snp_platform();
-        builder.add_snp_vmsa_context(&regs, cfg.snp_debug);
+        builder.add_snp_vmsa_context(&regs, false);
     }
 
     if USE_FLAT32 {
