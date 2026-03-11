@@ -171,7 +171,7 @@ fn igvm_add_kernel(
     }
     if let Some(b) = kernel_blob {
         info!("add kernel efi binary");
-        hoblist.add(b, EfiIgvmDataType::Kernel, false);
+        hoblist.add(b, EfiIgvmDataType::Kernel, true);
     }
 
     let resetvector = igvm
@@ -192,15 +192,17 @@ fn igvm_add_kernel(
         info!("add efidata hoblist");
         debug!("hobarea: {hobarea}");
         let hobs_blob = hoblist.hobs();
-        builder.remove_page(hobarea.memory.0);
+        builder.remove_page_data_in_range(hobarea.memory.0, hobarea.memory.1);
         builder.add_data_pages(hobarea.memory.0, &hobs_blob);
     }
 
     // add data
     for (addr, blob) in hoblist.blobs(true) {
+        builder.remove_page_data_in_range(addr, blob.len());
         builder.add_data_pages(addr, blob);
     }
     for (addr, blob) in hoblist.blobs(false) {
+        builder.remove_page_data_in_range(addr, blob.len());
         builder.add_data_pages_unmeasured(addr, blob);
     }
 

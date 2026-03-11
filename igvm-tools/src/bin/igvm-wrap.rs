@@ -2,14 +2,16 @@
 //! wrap classic native firmware image as igvm
 //!
 use clap::{CommandFactory, Parser};
-use log::{error, info};
+use log::{error, info, warn};
 use std::fs;
 use std::process::ExitCode;
+
+const MAX_VCPUS: u32 = 1024;
 
 use virtfw_igvm_tools::builder::Builder;
 use virtfw_igvm_tools::inspect::inspect_igvm;
 use virtfw_igvm_tools::ovmfmeta::OvmfMeta;
-use virtfw_igvm_tools::x86regs::{flat32_mode_regs, real_mode_regs};
+use virtfw_igvm_tools::x86regs::{flat32_mode_regs, real_mode_regs_at};
 
 #[derive(Parser, Debug)]
 #[command(version, author, name = "igvm-wrap",
@@ -55,6 +57,11 @@ struct Args {
     /// boot firmware in protected mode
     #[arg(long, help_heading = "IGVM build options", conflicts_with = "real16")]
     flat32: bool,
+
+    /// number of vCPUs (default 1)
+    #[arg(long, default_value = "1", help_heading = "IGVM build options",
+          value_parser = clap::value_parser!(u32).range(1..=MAX_VCPUS as i64))]
+    smp: u32,
 
     /// print ovmf metadata
     #[arg(long, help_heading = "Print informations")]
@@ -154,6 +161,10 @@ fn main() -> ExitCode {
             None
         };
 
+        if cfg.smp > 1 && !cfg.get_snp() {
+            warn!("--smp has no effect without --snp; only native platform configured");
+        }
+
         let mut builder = Builder::new();
 
         // native
@@ -169,13 +180,33 @@ fn main() -> ExitCode {
 
         // sev-snp
         if cfg.get_snp() {
-            let regs = if cfg.get_flat32() {
+            let bsp_regs = if cfg.get_flat32() {
                 flat32_mode_regs(None)
             } else {
-                real_mode_regs()
+                real_mode_regs_at(0xFFFFFFF0)
             };
             builder.add_snp_platform();
-            builder.add_snp_vmsa_context(&regs, false);
+
+            // BSP (vp0) gets the standard reset vector
+            builder.add_snp_vmsa_context_vp(&bsp_regs, false, 0);
+
+            // APs (vp1+) always start in real mode at the SEV-ES reset address from OVMF metadata
+            if cfg.smp > 1 {
+                let ap_reset_addr = match ovmfmeta.as_ref().and_then(|m| m.sev_reset_addr) {
+                    Some(addr) => addr,
+                    None => {
+                        error!("OVMF firmware does not contain SEV-ES reset address (needed for --smp > 1)");
+                        return ExitCode::from(1);
+                    }
+                };
+                info!("AP reset address: 0x{:08x}", ap_reset_addr);
+                let ap_regs = real_mode_regs_at(ap_reset_addr);
+                for vp in 1..cfg.smp {
+                    let vp_index = vp as u16;
+                    builder.add_snp_vmsa_context_vp(&ap_regs, false, vp_index);
+                }
+            }
+
             if let Some(m) = ovmfmeta.as_ref() {
                 builder.add_ovmf_snp_pages(m);
             }
