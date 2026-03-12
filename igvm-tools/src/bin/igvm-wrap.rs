@@ -119,6 +119,7 @@ fn main() -> ExitCode {
 
     stderrlog::new()
         .module(module_path!())
+        .module("virtfw_igvm_tools::builder")
         .verbosity(stderrlog::LogLevelNum::Debug)
         .init()
         .unwrap();
@@ -198,6 +199,12 @@ fn main() -> ExitCode {
         // uefi vars
         if let Some(v) = uefivars {
             builder.add_uefivars(&v, firmware.len());
+        }
+
+        // sanity checks
+        if let Err(e) = builder.verify() {
+            error!("verify: {e}");
+            return ExitCode::from(1);
         }
 
         let igvm_res = builder.finalize();
