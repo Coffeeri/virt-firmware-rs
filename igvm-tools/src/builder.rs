@@ -212,6 +212,7 @@ impl Builder {
                 _ => {}
             }
         }
+        self.remove_page(area.memory.0);
         self.add_igvm_param_insert(0, area.memory.0 as u64);
 
         self
