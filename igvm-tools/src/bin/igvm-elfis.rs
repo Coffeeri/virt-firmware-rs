@@ -390,6 +390,9 @@ fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
         igvm_add_kernel(&mut builder, region, kernel_blob.as_deref());
     }
 
+    // sanity checks
+    builder.verify()?;
+
     // constructing igvm is complete
     let igvm = builder.finalize()?;
     Ok(igvm)
