@@ -3,23 +3,22 @@
 #![no_main]
 use core::mem::size_of;
 use core::mem::MaybeUninit;
-use zerocopy::FromBytes;
 
 use igvm_defs::{IGVM_VHS_MEMORY_MAP_ENTRY, PAGE_SIZE_4K};
 
-use virtfw_libefi::hob::core::EFI_HOB_TYPE_GUID_EXTENSION;
 use virtfw_libefi::hob::igvmdata::EfiIgvmDataHob;
 use virtfw_libhw::qemuboards::qemu_try_poweroff;
 use virtfw_mefisto::println;
 use virtfw_mefisto::sercon::sercon_init;
 
 const MEMORY_MAP_MAX: usize = PAGE_SIZE_4K as usize / size_of::<IGVM_VHS_MEMORY_MAP_ENTRY>();
+const DATA_HOBS_MAX: usize = PAGE_SIZE_4K as usize / size_of::<EfiIgvmDataHob>();
 
 #[link_section = ".igvm.memmap"]
 static MEMORY_MAP: MaybeUninit<[IGVM_VHS_MEMORY_MAP_ENTRY; MEMORY_MAP_MAX]> = MaybeUninit::uninit();
 
 #[link_section = ".igvm.datahobs"]
-static DATA_HOBS: MaybeUninit<[u8; PAGE_SIZE_4K as usize]> = MaybeUninit::uninit();
+static DATA_HOBS: MaybeUninit<[EfiIgvmDataHob; DATA_HOBS_MAX]> = MaybeUninit::uninit();
 
 fn print_memory_map() {
     let mmap = unsafe { MEMORY_MAP.assume_init_ref() };
@@ -39,21 +38,16 @@ fn print_memory_map() {
 
 fn print_data_hobs() {
     let hobs = unsafe { DATA_HOBS.assume_init_ref() };
-    let mut left: &[u8] = hobs;
 
     println!("igvm efi data hobs");
-    while left.len() > size_of::<EfiIgvmDataHob>() {
-        let (hob, r) = EfiIgvmDataHob::read_from_prefix(left).unwrap();
-        if (hob.hdr.hob_type != EFI_HOB_TYPE_GUID_EXTENSION)
-            || (hob.hdr.hob_length != size_of::<EfiIgvmDataHob>() as u16)
-        {
+    for hob in hobs {
+        if !hob.is_valid() {
             break;
         }
         println!(
             "  address 0x{:x}, length 0x{:x}, type 0x{:x}",
             hob.address, hob.length, hob.data_type
         );
-        left = r;
     }
     println!("");
 }
