@@ -1,4 +1,5 @@
 use std::cmp::{min, Ordering};
+use std::collections::HashSet;
 
 use igvm::snp_defs::SevFeatures;
 use igvm::{
@@ -294,6 +295,39 @@ impl Builder {
             &0
         };
         a_gpa.cmp(b_gpa)
+    }
+
+    fn check_pages(&self) -> Result<(), String> {
+        let mut pages = HashSet::new();
+        for d in &self.directives {
+            let page = match d {
+                IgvmDirectiveHeader::PageData {
+                    gpa,
+                    compatibility_mask,
+                    ..
+                } => Some((*gpa, *compatibility_mask)),
+                IgvmDirectiveHeader::ParameterInsert(pi) => Some((pi.gpa, pi.compatibility_mask)),
+                _ => None,
+            };
+            if let Some((gpa, compat)) = page {
+                for bit in [NATIVE_COMPAT, SEV_SNP_COMPAT] {
+                    if compat & bit != 0 {
+                        let entry = (gpa, bit);
+                        if pages.contains(&entry) {
+                            let err = format!("duplicate at gpa {:x}", gpa);
+                            return Err(err);
+                        }
+                        pages.insert(entry);
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+
+    pub fn verify(&self) -> Result<(), String> {
+        self.check_pages()?;
+        Ok(())
     }
 
     pub fn finalize(&self) -> Result<IgvmFile, igvm::Error> {
