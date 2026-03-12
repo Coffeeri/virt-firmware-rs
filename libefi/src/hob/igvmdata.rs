@@ -51,6 +51,19 @@ impl EfiIgvmDataHob {
             data_flags: 0,
         }
     }
+
+    pub fn is_valid(&self) -> bool {
+        if self.hdr.hob_type != EFI_HOB_TYPE_GUID_EXTENSION {
+            return false;
+        }
+        if self.hdr.hob_length != size_of::<EfiIgvmDataHob>() as u16 {
+            return false;
+        }
+        if self.guid_ext != EFI_IGVM_DATA_HOB_GUID.into() {
+            return false;
+        }
+        true
+    }
 }
 
 pub struct EfiIgvmData<'b> {

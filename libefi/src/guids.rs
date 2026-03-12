@@ -113,7 +113,7 @@ pub fn pretty_name(guid: &Guid) -> String {
 
 // workaround for uguid::Guid not having zerocopy support
 #[repr(C, packed)]
-#[derive(Debug, Clone, Copy, FromBytes, IntoBytes, KnownLayout, Immutable)]
+#[derive(Debug, Clone, Copy, FromBytes, IntoBytes, KnownLayout, Immutable, PartialEq)]
 pub struct RawGuid {
     bytes: [u8; 16],
 }
