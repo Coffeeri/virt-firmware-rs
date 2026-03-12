@@ -222,6 +222,7 @@ fn igvm_add_kernel(builder: &mut Builder, hobs_region: &Region, kernel_blob: Opt
     let addr = hobs_region.vma.unwrap() as usize;
     info!("add efi data: hoblist at 0x{addr:x}");
     let hobs_blob = hoblist.hobs();
+    builder.remove_page(addr);
     builder.add_data_pages(addr, &hobs_blob);
 
     // add data pages
@@ -330,20 +331,24 @@ fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
     {
         match r.name {
             SNP_CPUID => {
-                builder.add_empty_pages(
-                    r.vma.unwrap() as usize,
-                    r.size as usize,
-                    SEV_SNP_COMPAT,
-                    IgvmPageDataType::CPUID_DATA,
-                );
+                if snp {
+                    builder.add_empty_pages(
+                        r.vma.unwrap() as usize,
+                        r.size as usize,
+                        SEV_SNP_COMPAT,
+                        IgvmPageDataType::CPUID_DATA,
+                    );
+                }
             }
             SNP_SECRETS => {
-                builder.add_empty_pages(
-                    r.vma.unwrap() as usize,
-                    r.size as usize,
-                    SEV_SNP_COMPAT,
-                    IgvmPageDataType::SECRETS,
-                );
+                if snp {
+                    builder.add_empty_pages(
+                        r.vma.unwrap() as usize,
+                        r.size as usize,
+                        SEV_SNP_COMPAT,
+                        IgvmPageDataType::SECRETS,
+                    );
+                }
             }
             _ => {
                 builder.add_empty_normal_pages(r.vma.unwrap() as usize, r.size as usize);
