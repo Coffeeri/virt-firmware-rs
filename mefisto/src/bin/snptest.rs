@@ -2,11 +2,9 @@
 #![no_std]
 #![no_main]
 
-use core::mem::MaybeUninit;
 use x86_64::structures::mem_encrypt::{enable_memory_encryption, MemoryEncryptionConfiguration};
 
 use virtfw_libhw::qemuboards::qemu_try_poweroff;
-use virtfw_libhw::size::PAGE_4K;
 use virtfw_libhw::x86cpuid::cpuid;
 use virtfw_mefisto::alloc::alloc_init;
 use virtfw_mefisto::efi::mapper::MemoryMapper;
@@ -15,10 +13,8 @@ use virtfw_mefisto::println;
 use virtfw_mefisto::sercon::sercon_init;
 use virtfw_mefisto::snp::cpuid::{CpuidSevEax, CpuidSevEbx, CPUID};
 use virtfw_mefisto::snp::ghcb::{msr_ghcb_page_state, msr_ghcb_sev_info, msr_ghcb_vmm_features};
+use virtfw_mefisto::snp::secrets::SECRETS;
 use virtfw_mefisto::snp::vc::GHCB;
-
-#[link_section = ".snp.secrets"]
-pub static mut SECRETS: [MaybeUninit<u8>; PAGE_4K] = [MaybeUninit::uninit(); PAGE_4K];
 
 fn snp_init(mapper: &MemoryMapper) {
     // setup paging
