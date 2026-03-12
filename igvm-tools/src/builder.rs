@@ -287,16 +287,33 @@ impl Builder {
     }
 
     fn sort_pages(a: &IgvmDirectiveHeader, b: &IgvmDirectiveHeader) -> Ordering {
-        let a_gpa = if let IgvmDirectiveHeader::PageData { gpa, .. } = a {
-            gpa
+        let (a_gpa, a_compat) = if let IgvmDirectiveHeader::PageData {
+            gpa,
+            compatibility_mask,
+            ..
+        } = a
+        {
+            (gpa, compatibility_mask)
         } else {
-            &0
+            (&0, &0)
         };
-        let b_gpa = if let IgvmDirectiveHeader::PageData { gpa, .. } = b {
-            gpa
+        let (b_gpa, b_compat) = if let IgvmDirectiveHeader::PageData {
+            gpa,
+            compatibility_mask,
+            ..
+        } = b
+        {
+            (gpa, compatibility_mask)
         } else {
-            &0
+            (&0, &0)
         };
+
+        // group sorted pages by compatibility mask
+        let compat = a_compat.cmp(b_compat);
+        if compat != Ordering::Equal {
+            return compat;
+        }
+
         a_gpa.cmp(b_gpa)
     }
 
