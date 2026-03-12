@@ -204,6 +204,9 @@ fn igvm_add_kernel(
         builder.add_data_pages_unmeasured(addr, blob);
     }
 
+    // sanity checks
+    builder.verify().expect("verify updated igvm");
+
     // build updated igvm
     builder.finalize().expect("build updated igvm")
 }
