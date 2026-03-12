@@ -142,7 +142,9 @@ impl Builder {
     pub fn add_ovmf_snp_pages(&mut self, ovmfmeta: &OvmfMeta) -> &mut Builder {
         for r in &ovmfmeta.regions {
             let itype = match r.etype {
-                OvmfRegionType::SevMemory => Some(IgvmPageDataType::NORMAL),
+                OvmfRegionType::SevMemory
+                | OvmfRegionType::SevSvsmCca
+                | OvmfRegionType::SevHashes => Some(IgvmPageDataType::NORMAL),
                 OvmfRegionType::SevSecrets => Some(IgvmPageDataType::SECRETS),
                 OvmfRegionType::SevCpuid => Some(IgvmPageDataType::CPUID_DATA),
                 _ => None,
