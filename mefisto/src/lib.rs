@@ -1,6 +1,7 @@
 #![no_std]
 #[cfg(feature = "alloc")]
 pub mod alloc;
+pub mod bootmode;
 #[cfg(feature = "efiloader")]
 pub mod efi;
 pub mod exception;

@@ -7,6 +7,7 @@ use x86_64::structures::mem_encrypt::{enable_memory_encryption, MemoryEncryption
 use virtfw_libhw::qemuboards::qemu_try_poweroff;
 use virtfw_libhw::x86cpuid::cpuid;
 use virtfw_mefisto::alloc::alloc_init;
+use virtfw_mefisto::bootmode::BootMode;
 use virtfw_mefisto::efi::mapper::MemoryMapper;
 use virtfw_mefisto::exception::exception_init;
 use virtfw_mefisto::println;
@@ -55,12 +56,13 @@ fn snp_dump_cpuid() {
 }
 
 #[no_mangle]
-fn main(boot_mode: u64) {
+fn main(bm: u64) {
     exception_init();
     alloc_init();
     let mapper = MemoryMapper::new();
 
-    if boot_mode == 5 {
+    let boot_mode: BootMode = bm.into();
+    if boot_mode == BootMode::IgvmSNP {
         snp_init(&mapper);
     }
 
@@ -69,7 +71,7 @@ fn main(boot_mode: u64) {
     println!("Hello world!");
     println!("");
 
-    println!("boot mode    : {boot_mode}");
+    println!("boot mode    : {boot_mode:?}");
     println!("ghcb page    : {:x}", GHCB.lock().gpa());
 
     let addr = core::ptr::addr_of!(CPUID) as usize;
@@ -79,7 +81,7 @@ fn main(boot_mode: u64) {
     println!("secrets page : {addr:x}");
     println!("");
 
-    if boot_mode == 5 {
+    if boot_mode == BootMode::IgvmSNP {
         snp_info_ghcb();
         snp_info_cpuid();
 
