@@ -15,7 +15,7 @@ const PAGE_SIZE_4K: usize = 4096;
 pub const EFI_IGVM_DATA_HOB_GUID: Guid = guid!("3dd177ff-b632-4e25-bef3-065063d55fc4");
 
 #[repr(u32)]
-#[derive(Debug, IntoBytes, Immutable)]
+#[derive(Debug, IntoBytes, Immutable, Clone, Copy)]
 pub enum EfiIgvmDataType {
     Pk = 0x100,
     Kek = 0x101,
@@ -26,7 +26,7 @@ pub enum EfiIgvmDataType {
 }
 
 #[repr(C)]
-#[derive(Debug, FromBytes, IntoBytes, Immutable)]
+#[derive(Debug, FromBytes, IntoBytes, Immutable, Clone)]
 pub struct EfiIgvmDataHob {
     pub hdr: EfiHobHeader,
     pub guid_ext: RawGuid,
