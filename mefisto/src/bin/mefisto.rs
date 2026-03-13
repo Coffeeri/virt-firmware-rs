@@ -17,6 +17,8 @@ use efiloader::EfiContext;
 use efiloader::MemoryMapper;
 use efiloader::{guid, Guid};
 
+use igvm_defs::{MemoryMapEntryType, IGVM_VHS_MEMORY_MAP_ENTRY};
+
 use virtfw_libhw::fwcfg::x86::FwCfgX86;
 use virtfw_libhw::fwcfg::FwCfg;
 use virtfw_libhw::fwcfg::{acpi, smbios};
@@ -62,6 +64,7 @@ const RSDP_GUID: Guid = guid!(
 
 const BS_POOL_SIZE: usize = MIB;
 const RT_POOL_SIZE: usize = MIB;
+const MEMORY_MAP_MAX: usize = PAGE_4K / size_of::<IGVM_VHS_MEMORY_MAP_ENTRY>();
 
 static CONSOLE: Console = Console::new();
 static FWCFG: FwCfgX86 = FwCfgX86::new();
@@ -72,12 +75,48 @@ static mut RT_POOL: [MaybeUninit<u8>; RT_POOL_SIZE] = [MaybeUninit::uninit(); RT
 #[link_section = ".pool.bs"]
 static mut BS_POOL: [MaybeUninit<u8>; BS_POOL_SIZE] = [MaybeUninit::uninit(); BS_POOL_SIZE];
 
+#[link_section = ".igvm.memmap"]
+static MEMORY_MAP: MaybeUninit<[IGVM_VHS_MEMORY_MAP_ENTRY; MEMORY_MAP_MAX]> = MaybeUninit::uninit();
+
 fn print_range(prefix: &str, range: &Range<usize>) {
     let (value, unit) = pretty_range(range);
     info!(
         "  {prefix:16} :  0x{:08x} - 0x{:08x}  [{value}{unit}]",
         range.start, range.end,
     );
+}
+
+fn memory_detect_igvm() -> Option<Vec<(Range<usize>, EfiMemoryType)>> {
+    let mmap = unsafe { MEMORY_MAP.assume_init_ref() };
+    let mut memory = Vec::new();
+
+    for m in mmap {
+        if m.number_of_pages == 0 || m.reserved != 0 {
+            break;
+        }
+        let base = m.starting_gpa_page_number as usize * PAGE_4K;
+        let size = m.number_of_pages as usize * PAGE_4K;
+        let range = base..base + size;
+        match m.entry_type {
+            MemoryMapEntryType::MEMORY => {
+                print_range("igvm/memory", &range);
+                memory.push((range, EfiConventionalMemory));
+            }
+            MemoryMapEntryType::PLATFORM_RESERVED => {
+                print_range("igvm/reserved", &range);
+                memory.push((range, EfiReservedEfiMemoryType));
+            }
+            _ => {
+                print_range("igvm/*UNKNOWN*", &range);
+            }
+        }
+    }
+
+    if memory.is_empty() {
+        None
+    } else {
+        Some(memory)
+    }
 }
 
 fn memory_detect_fwcfg(fwcfg: &FwCfgX86) -> Vec<(Range<usize>, EfiMemoryType)> {
@@ -106,6 +145,13 @@ fn memory_detect_fwcfg(fwcfg: &FwCfgX86) -> Vec<(Range<usize>, EfiMemoryType)> {
         }
     }
     memory
+}
+
+fn memory_detect(fwcfg: &FwCfgX86) -> Vec<(Range<usize>, EfiMemoryType)> {
+    if let Some(m) = memory_detect_igvm() {
+        return m;
+    }
+    memory_detect_fwcfg(fwcfg)
 }
 
 fn memory_phys_init(
@@ -287,7 +333,7 @@ fn main() {
     let mapper = mapper::MemoryMapper::new();
     let memmap = MemoryMap::new();
 
-    let memory = memory_detect_fwcfg(&FWCFG);
+    let memory = memory_detect(&FWCFG);
     memory_phys_init(&memmap, &mapper, &memory);
     memory_virt_init(&memmap, &mapper);
     let lowmem = memory_below_4g_max(&memory);
