@@ -19,6 +19,7 @@ use efiloader::{guid, Guid};
 
 use igvm_defs::{MemoryMapEntryType, IGVM_VHS_MEMORY_MAP_ENTRY};
 
+use virtfw_libefi::hob::igvmdata::EfiIgvmDataType;
 use virtfw_libhw::fwcfg::x86::FwCfgX86;
 use virtfw_libhw::fwcfg::FwCfg;
 use virtfw_libhw::fwcfg::{acpi, smbios};
@@ -375,25 +376,40 @@ fn main() {
         efi.install_configtable(&RSDP_GUID, rsdp);
     }
 
+    // kernel via igvm
+    if let Some(igvmkernel) = loader::IgvmFileLoader::new(EfiIgvmDataType::Kernel) {
+        info!("igvm: loading kernel image");
+        if let Some(mut li) = efi.load_image(&igvmkernel) {
+            info!("igvm: starting kernel image");
+            let ret = li.start_image();
+            error!("igvm: image exited, return code: {ret:?}");
+        } else {
+            error!("igvm: image load failed");
+        }
+    }
+
+    // kernel via fwcfg (qemu direct kernel boot)
     let loader = loader::FwCfgLoader::new(&FWCFG);
     let kload = loader.kernel_loader();
     let iload = loader.initrd_loader();
     let cmdline = loader.cmdline();
 
     if let Some(i) = iload {
-        info!("setup initrd loader");
+        info!("fwcfg: setup initrd loader");
         efi.set_initrd_loader(i);
     }
     if let Some(k) = kload {
-        info!("loading kernel image");
+        info!("fwcfg: loading kernel image");
         if let Some(mut li) = efi.load_image(&k) {
             li.set_load_options(cmdline);
-            info!("starting kernel image");
+            info!("fwcfg: starting kernel image");
             let ret = li.start_image();
-            info!("image exited, return code: {ret:?}");
+            error!("fwcfg: image exited, return code: {ret:?}");
+        } else {
+            error!("fwcfg: image load failed");
         }
     } else {
-        error!("no kernel found in fwcfg");
+        error!("fwcfg: no kernel found");
     }
 
     if let Some(b) = board {
