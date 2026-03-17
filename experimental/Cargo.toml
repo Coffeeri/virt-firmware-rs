@@ -1,0 +1,23 @@
+[package]
+name = "virtfw-experimental"
+version = "0.0.1"
+publish = false
+description = "playground for experimental code"
+#readme = "README.md"
+
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+edition.workspace = true
+
+[dependencies]
+clap.workspace = true
+clap_mangen.workspace = true
+log.workspace = true
+stderrlog.workspace = true
+uguid.workspace = true
+zerocopy.workspace = true
+
+rust-lzma = "0.6"
+
+virtfw-libefi = { workspace = true }
