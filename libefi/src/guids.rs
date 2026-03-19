@@ -56,6 +56,20 @@ pub const PcdDatabase: Guid = guid!("9b3ada4f-ae56-4c24-8dea-f03b7558ae50");
 pub const SecPlatformInformation2: Guid = guid!("9e9f374b-8f16-4230-9824-5846ee766a97");
 pub const OvmfMemDebugLog: Guid = guid!("95305139-b20f-4723-8425-627c888ff121");
 
+// firmware volumes
+pub const Ffs: Guid = guid!("8c8ce578-8a3d-4f1c-9935-896185c32dd3");
+pub const NvData: Guid = guid!("fff12b8d-7696-4c8b-a985-2747075b4f50");
+pub const FvMainCompact: Guid = guid!("9e21fd93-9c72-4c15-8c4b-e77f1db2d792");
+pub const SecMain: Guid = guid!("df1ccef6-f301-4a63-9661-fc6030dcc880");
+pub const ResetVector: Guid = guid!("1ba0062e-c779-4582-8566-336ae8f78f09");
+pub const LzmaCompress: Guid = guid!("ee4e5898-3914-4259-9d6e-dc7bd79403cf");
+
+pub const OvmfMainFv: Guid = guid!("48db5e17-707c-472d-91cd-1613e7ef51b0");
+pub const OvmfPeiFv: Guid = guid!("6938079b-b503-4e3d-9d24-b28337a25806");
+pub const OvmfDxeFv: Guid = guid!("7cb8bdc9-f8eb-4f34-aaea-3ee4af6516a1");
+pub const OvmfNccFv: Guid = guid!("ae047c6d-bce9-426c-ae03-a68e3b8a0488");
+pub const OvmfSecFv: Guid = guid!("763bed0d-de9f-48f5-81f1-3e90e1b1a015");
+
 /// Translate GUIDs to names.  Return None for unknown GUIDs.
 pub fn try_pretty_name(guid: &Guid) -> Option<&'static str> {
     match *guid {
@@ -97,6 +111,19 @@ pub fn try_pretty_name(guid: &Guid) -> Option<&'static str> {
         OvmfPkgPlatformInfo => Some("OvmfPkgPlatformInfo"),
         PcdDatabase => Some("PcdDatabase"),
         SecPlatformInformation2 => Some("SecPlatformInformation2"),
+
+        Ffs => Some("Ffs"),
+        NvData => Some("NvData"),
+        FvMainCompact => Some("FvMainCompact"),
+        SecMain => Some("SecMain"),
+        ResetVector => Some("ResetVector"),
+        LzmaCompress => Some("LzmaCompress"),
+
+        OvmfMainFv => Some("OvmfMainFv"),
+        OvmfPeiFv => Some("OvmfPeiFv"),
+        OvmfDxeFv => Some("OvmfDxeFv"),
+        OvmfNccFv => Some("OvmfNccFv"),
+        OvmfSecFv => Some("OvmfSecFv"),
 
         _ => None,
     }
