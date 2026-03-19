@@ -3,6 +3,7 @@ resolver = "2"
 members = [
 	"efi-apps",
 	"efi-tools",
+	"experimental",
 	"igvm-tools",
 	"libhw",
 	"libefi",

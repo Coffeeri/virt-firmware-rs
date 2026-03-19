@@ -13,7 +13,7 @@ endif
 
 # variables
 ARCH	:= $(shell uname -m)
-PKGS	:= efi-tools igvm-tools varstore
+PKGS	:= efi-tools experimental igvm-tools varstore
 BIOS32	:=
 POST64	:=
 
