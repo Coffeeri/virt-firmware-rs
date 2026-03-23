@@ -96,11 +96,12 @@ struct Args {
 }
 
 fn loginit() {
-    stderrlog::new()
-        .module(module_path!())
-        .verbosity(stderrlog::LogLevelNum::Info)
-        .init()
-        .unwrap();
+    let levelfilter = log::LevelFilter::Info;
+    env_logger::Builder::from_default_env()
+        .filter_module(module_path!(), levelfilter)
+        .format_timestamp(None)
+        .format_target(false)
+        .init();
 }
 
 fn cert_is_pem(data: &[u8]) -> bool {
