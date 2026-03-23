@@ -26,17 +26,17 @@ struct Args {
 fn main() -> ExitCode {
     let cfg = Args::parse();
 
-    let loglevel = if cfg.debug {
-        stderrlog::LogLevelNum::Debug
+    let levelfilter = if cfg.debug {
+        log::LevelFilter::Debug
     } else {
-        stderrlog::LogLevelNum::Info
+        log::LevelFilter::Info
     };
-    stderrlog::new()
-        .module(module_path!())
-        .module("libefi")
-        .verbosity(loglevel)
-        .init()
-        .unwrap();
+    env_logger::Builder::from_default_env()
+        .filter_module(module_path!(), levelfilter)
+        .filter_module("libefi", levelfilter)
+        .format_timestamp(None)
+        .format_target(false)
+        .init();
 
     let bootcfg = bootcfg::BootConfig::new();
     let menulist = bootcfg.index_list();

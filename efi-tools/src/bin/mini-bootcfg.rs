@@ -3,7 +3,6 @@ use log::{debug, error, info, warn};
 use std::io;
 use std::io::Cursor;
 use std::process::ExitCode;
-use std::str::FromStr;
 
 use virtfw_libefi::bootcfg::BootConfig;
 use virtfw_libefi::distro::LinuxOsInfo;
@@ -26,8 +25,8 @@ use virtfw_efi_tools::shimcsv::write_boot_csv;
 #[command(version, name = "mini-bootcfg", about = "show and manage uefi boot entries", long_about = None)]
 struct Args {
     /// set loglevel
-    #[arg(short, long, value_name = "LEVEL")]
-    loglevel: Option<String>,
+    #[arg(short, long, value_name = "LEVEL", default_value = "info")]
+    loglevel: log::Level,
 
     /// print boot configuration
     #[arg(short, long)]
@@ -428,22 +427,13 @@ fn read_efi_var_str(name: &str) -> Option<String> {
 fn main() -> ExitCode {
     let cfg = Args::parse();
 
-    let deflevel = stderrlog::LogLevelNum::Info;
-    let loglevel = if let Some(s) = cfg.loglevel.as_ref() {
-        if let Ok(l) = log::Level::from_str(s) {
-            stderrlog::LogLevelNum::from(l)
-        } else {
-            deflevel
-        }
-    } else {
-        deflevel
-    };
-    stderrlog::new()
-        .module(module_path!())
-        .module("libefi")
-        .verbosity(loglevel)
-        .init()
-        .unwrap();
+    let levelfilter = cfg.loglevel.to_level_filter();
+    env_logger::Builder::from_default_env()
+        .filter_module(module_path!(), levelfilter)
+        .filter_module("libefi", levelfilter)
+        .format_timestamp(None)
+        .format_target(false)
+        .init();
 
     let dryrun = cfg.dry_run;
     let verbose = cfg.verbose;

@@ -52,11 +52,11 @@ fn print_sigdb(name: &str, guid: &Guid) {
 }
 
 fn loginit() {
-    stderrlog::new()
-        .module(module_path!())
-        .verbosity(stderrlog::LogLevelNum::Debug)
-        .init()
-        .unwrap();
+    env_logger::Builder::from_default_env()
+        .filter_module(module_path!(), log::LevelFilter::Debug)
+        .format_timestamp(None)
+        .format_target(false)
+        .init();
 }
 
 fn main() {

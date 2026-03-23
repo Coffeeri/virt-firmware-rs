@@ -6,7 +6,6 @@ use clap::Parser;
 use log::{debug, error, info};
 use std::path::PathBuf;
 use std::process::ExitCode;
-use std::str::FromStr;
 
 use virtfw_efi_tools::shimcsv::write_boot_csv;
 use virtfw_libefi::arch::EfiArch;
@@ -17,8 +16,8 @@ use virtfw_libefi::arch::EfiArch;
           long_about = None)]
 struct Args {
     /// set loglevel
-    #[arg(short, long, value_name = "LEVEL")]
-    loglevel: Option<String>,
+    #[arg(short, long, value_name = "LEVEL", default_value = "info")]
+    loglevel: log::Level,
 
     /// set efi system partition location
     #[arg(long, value_name = "ESP")]
@@ -36,21 +35,12 @@ struct Args {
 fn main() -> ExitCode {
     let args = Args::parse();
 
-    let deflevel = stderrlog::LogLevelNum::Info;
-    let loglevel = if let Some(s) = args.loglevel {
-        if let Ok(l) = log::Level::from_str(&s) {
-            stderrlog::LogLevelNum::from(l)
-        } else {
-            deflevel
-        }
-    } else {
-        deflevel
-    };
-    stderrlog::new()
-        .module(module_path!())
-        .verbosity(loglevel)
-        .init()
-        .unwrap();
+    let levelfilter = args.loglevel.to_level_filter();
+    env_logger::Builder::from_default_env()
+        .filter_module(module_path!(), levelfilter)
+        .format_timestamp(None)
+        .format_target(false)
+        .init();
 
     let esp = args.esp.unwrap_or("/efi".to_string());
     let arch = EfiArch::native();
