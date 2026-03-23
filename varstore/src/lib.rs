@@ -3,6 +3,7 @@
 extern crate alloc;
 pub mod authvar;
 pub mod enroll;
+pub mod fs;
 #[cfg(feature = "json")]
 pub mod json;
 pub mod mm;

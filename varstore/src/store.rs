@@ -37,11 +37,17 @@ impl EfiVarStoreConfig {
 
 pub(crate) struct VariableEntry {
     pub(crate) var: EfiVar,
+    pub(crate) inode: Option<u32>,
+    pub(crate) modified: bool,
 }
 
 impl VariableEntry {
-    pub(crate) fn new(var: EfiVar) -> Self {
-        Self { var }
+    pub(crate) fn new(var: EfiVar, inode: Option<u32>, modified: bool) -> Self {
+        Self {
+            var,
+            inode,
+            modified,
+        }
     }
 }
 
@@ -50,6 +56,45 @@ impl Deref for VariableEntry {
 
     fn deref(&self) -> &EfiVar {
         &self.var
+    }
+}
+
+#[derive(Clone)]
+pub struct EfiVarStoreChanges {
+    pub variable_added: bool,
+    pub variable_updated: bool,
+    pub variable_removed: bool,
+}
+
+impl EfiVarStoreChanges {
+    const fn new() -> Self {
+        Self {
+            variable_added: false,
+            variable_updated: false,
+            variable_removed: false,
+        }
+    }
+
+    pub fn is_unchanged(&self) -> bool {
+        !self.variable_added && !self.variable_updated && !self.variable_removed
+    }
+
+    pub(crate) fn add(&mut self) {
+        self.variable_added = true;
+    }
+
+    pub(crate) fn update(&mut self) {
+        self.variable_updated = true;
+    }
+
+    pub(crate) fn remove(&mut self) {
+        self.variable_removed = true;
+    }
+
+    pub(crate) fn clear(&mut self) {
+        self.variable_added = false;
+        self.variable_updated = false;
+        self.variable_removed = false;
     }
 }
 
@@ -65,6 +110,9 @@ pub struct EfiVarStore {
     // variable Policies
     pub(crate) policy_locked: bool,
     pub(crate) policies: Vec<VariablePolicyEntry>,
+
+    // persistance
+    pub(crate) modified: EfiVarStoreChanges,
 
     // configuration
     pub(crate) config: EfiVarStoreConfig,
@@ -84,6 +132,7 @@ impl EfiVarStore {
             policy_locked: false,
             policies,
 
+            modified: EfiVarStoreChanges::new(),
             config: EfiVarStoreConfig::new(),
         }
     }
@@ -92,7 +141,7 @@ impl EfiVarStore {
         self.config = config
     }
 
-    fn get_position(&self, id: &EfiVarId) -> Option<usize> {
+    pub(crate) fn get_position(&self, id: &EfiVarId) -> Option<usize> {
         self.variables.iter().position(|v| v.deref().deref() == id)
     }
 
@@ -102,20 +151,30 @@ impl EfiVarStore {
     }
 
     pub(crate) fn set_unchecked(&mut self, variable: EfiVar) {
+        let nv = variable.attr().non_volatile();
         let index = self.get_position(variable.deref());
-        let entry = VariableEntry::new(variable);
         if let Some(i) = index {
             // replace
             if false {
-                self.variables[i] = entry;
+                self.variables[i].var = variable;
+                self.variables[i].modified = nv;
             } else {
                 // qemu compatible ordering
+                let inode = self.variables[i].inode;
+                let entry = VariableEntry::new(variable, inode, nv);
                 self.variables.remove(i);
                 self.variables.push(entry);
             }
+            if nv {
+                self.modified.update()
+            }
         } else {
             // append
+            let entry = VariableEntry::new(variable, None, nv);
             self.variables.push(entry);
+            if nv {
+                self.modified.add()
+            }
         }
     }
 
@@ -125,8 +184,12 @@ impl EfiVarStore {
     }
 
     pub(crate) fn delete_unchecked(&mut self, new: EfiVar) {
+        let nv = new.attr().non_volatile();
         self.variables
             .retain(|v| v.name() != new.name() || v.guid() != new.guid());
+        if nv {
+            self.modified.remove()
+        }
     }
 
     pub fn check_old_new(&self, old: &EfiVar, new: &EfiVar) -> Result<(), Error<&'static str>> {
