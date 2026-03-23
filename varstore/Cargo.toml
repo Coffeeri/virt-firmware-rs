@@ -1,6 +1,6 @@
 [package]
 name = "virtfw-varstore"
-version = "0.6.1"
+version = "0.6.2"
 publish = true
 description = "efi variable store"
 readme = "README.md"
