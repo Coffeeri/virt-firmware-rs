@@ -61,11 +61,11 @@ fn main() -> ExitCode {
         return 0.into();
     }
 
-    stderrlog::new()
-        .module(module_path!())
-        .verbosity(stderrlog::LogLevelNum::Debug)
-        .init()
-        .unwrap();
+    env_logger::Builder::from_default_env()
+        .filter_module(module_path!(), log::LevelFilter::Debug)
+        .format_timestamp(None)
+        .format_target(false)
+        .init();
 
     for arg in &cfg.files {
         parse_file(&cfg, arg);
