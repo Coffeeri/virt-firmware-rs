@@ -7,7 +7,6 @@ use alloc::string::String;
 use alloc::vec::Vec;
 
 use uefi::prelude::*;
-use uefi::proto::device_path::text::{AllowShortcuts, DisplayOnly};
 use uefi::proto::device_path::DevicePath;
 use uefi::proto::loaded_image::LoadedImage;
 use uefi::{print, println};
@@ -50,7 +49,5 @@ pub fn print_handle_devpath(prefix: &str, handle: &Handle) {
         println!("{}no device path for handle", prefix);
         return;
     };
-    if let Ok(string) = dp.to_string(DisplayOnly(true), AllowShortcuts(true)) {
-        println!("{}{}", prefix, string);
-    }
+    println!("{}{}", prefix, dp);
 }
