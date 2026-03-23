@@ -102,18 +102,18 @@ fn print_pcap(filename: &str) -> std::io::Result<()> {
 fn main() -> ExitCode {
     let cfg = Args::parse();
 
-    let loglevel = if cfg.debug {
-        stderrlog::LogLevelNum::Debug
+    let levelfilter = if cfg.debug {
+        log::LevelFilter::Debug
     } else {
-        stderrlog::LogLevelNum::Info
+        log::LevelFilter::Info
     };
-    stderrlog::new()
-        .module(module_path!())
-        .module("virtfw_libefi")
-        .module("virtfw_varstore")
-        .verbosity(loglevel)
-        .init()
-        .unwrap();
+    env_logger::Builder::from_default_env()
+        .filter_module(module_path!(), levelfilter)
+        .filter_module("virtfw_libefi", levelfilter)
+        .filter_module("virtfw_varstore", levelfilter)
+        .format_timestamp(None)
+        .format_target(false)
+        .init();
 
     if let Some(pcap) = cfg.pcap {
         if cfg.print {

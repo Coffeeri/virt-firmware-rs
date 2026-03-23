@@ -29,8 +29,8 @@ udev = [ "virtfw-libefi/udev" ]
 [dependencies]
 byteorder.workspace = true
 clap.workspace = true
+env_logger.workspace = true
 log.workspace = true
-stderrlog.workspace = true
 uguid.workspace = true
 
 dialoguer = "0.12"

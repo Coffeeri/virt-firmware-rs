@@ -117,12 +117,13 @@ fn main() -> ExitCode {
         return 0.into();
     }
 
-    stderrlog::new()
-        .module(module_path!())
-        .module("virtfw_igvm_tools::builder")
-        .verbosity(stderrlog::LogLevelNum::Debug)
-        .init()
-        .unwrap();
+    let levelfilter = log::LevelFilter::Debug;
+    env_logger::Builder::from_default_env()
+        .filter_module(module_path!(), levelfilter)
+        .filter_module("virtfw_igvm_tools::builder", levelfilter)
+        .format_timestamp(None)
+        .format_target(false)
+        .init();
 
     if let Some(ref infile) = cfg.input {
         info!("reading {}", &infile);

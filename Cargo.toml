@@ -23,6 +23,7 @@ bitfield-struct = { version = "0.12" }
 byteorder = { version = "1", default-features = false }
 clap = { version = "4.5.4", features = [ "derive", "wrap_help" ] }
 clap_mangen = { version = "0.2.30" }
+env_logger = { version = "0.11" }
 der = { version = "0.7.10" }
 fdt = { version = "0.1" }
 igvm = { version = "0.4" }
@@ -30,7 +31,6 @@ igvm_defs = { version = "0.4" }
 log = { version = "0.4", default-features = false }
 serde = { version = "1", default-features = false, features = [ "alloc", "derive" ] }
 serde_json = { version = "1", default-features = false, features = [ "alloc" ]  }
-stderrlog = { version = "0.6" }
 uefi = { version = "0.37" }
 uefi-raw = { version = "0.14" }
 uguid = { version = "2" }

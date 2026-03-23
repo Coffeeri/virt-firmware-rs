@@ -412,11 +412,11 @@ fn main() -> ExitCode {
         return 0.into();
     }
 
-    stderrlog::new()
-        .module(module_path!())
-        .verbosity(stderrlog::LogLevelNum::Info)
-        .init()
-        .unwrap();
+    env_logger::Builder::from_default_env()
+        .filter_module(module_path!(), log::LevelFilter::Info)
+        .format_timestamp(None)
+        .format_target(false)
+        .init();
 
     let igvm = match process(&cfg) {
         Err(e) => {

@@ -18,12 +18,12 @@ default = [ "authenticode" ]
 bitfield-struct.workspace = true
 clap.workspace = true
 clap_mangen.workspace = true
+env_logger.workspace = true
 igvm.workspace = true
 igvm_defs.workspace = true
 log.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-stderrlog.workspace = true
 uguid.workspace = true
 zerocopy.workspace = true
 

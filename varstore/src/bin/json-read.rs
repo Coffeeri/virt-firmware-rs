@@ -4,13 +4,14 @@ use virtfw_libefi::efivar::types::EfiVar;
 use virtfw_varstore::json::JsonEfiVarStore;
 
 fn loginit() {
-    stderrlog::new()
-        .module(module_path!())
-        .module("virtfw_libefi")
-        .module("virtfw_varstore")
-        .verbosity(stderrlog::LogLevelNum::Debug)
-        .init()
-        .unwrap();
+    let levelfilter = log::LevelFilter::Debug;
+    env_logger::Builder::from_default_env()
+        .filter_module(module_path!(), levelfilter)
+        .filter_module("virtfw_libefi", levelfilter)
+        .filter_module("virtfw_varstore", levelfilter)
+        .format_timestamp(None)
+        .format_target(false)
+        .init();
 }
 
 fn main() {
