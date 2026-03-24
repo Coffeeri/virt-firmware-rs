@@ -1324,6 +1324,7 @@ dependencies = [
  "clap",
  "clap_mangen",
  "env_logger",
+ "hex",
  "log",
  "rust-lzma",
  "serde",

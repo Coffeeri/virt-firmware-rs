@@ -14,6 +14,7 @@ edition.workspace = true
 clap.workspace = true
 clap_mangen.workspace = true
 env_logger.workspace = true
+hex.workspace = true
 log.workspace = true
 serde.workspace = true
 serde_json.workspace = true
