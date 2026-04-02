@@ -166,6 +166,7 @@ impl fmt::Display for OvmfRegion {
 pub struct OvmfMeta<'f> {
     firmware: &'f [u8],
     pub regions: Vec<OvmfRegion>,
+    pub sev_reset_addr: Option<u32>,
 }
 
 impl OvmfMeta<'_> {
@@ -184,6 +185,7 @@ impl OvmfMeta<'_> {
             OVMF_META_SEV_RESET => {
                 let (addr, _) = u32::read_from_prefix(blk).ok()?;
                 debug!("  sev reset: 0x{addr:x}");
+                self.sev_reset_addr = Some(addr);
             }
             OVMF_META_SEV_SECRET => {
                 let (addr, r) = u32::read_from_prefix(blk).ok()?;
@@ -255,6 +257,7 @@ impl OvmfMeta<'_> {
         let mut ovmfmeta = OvmfMeta {
             firmware,
             regions: Vec::new(),
+            sev_reset_addr: None,
         };
 
         let s = firmware.len().checked_sub(0x20)?;

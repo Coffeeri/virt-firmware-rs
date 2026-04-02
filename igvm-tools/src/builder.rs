@@ -84,13 +84,17 @@ impl Builder {
     }
 
     pub fn add_snp_vmsa_context(&mut self, regs: &[X86Register], debug: bool) -> &mut Builder {
+        self.add_snp_vmsa_context_vp(regs, debug, 0)
+    }
+
+    pub fn add_snp_vmsa_context_vp(&mut self, regs: &[X86Register], debug: bool, vp_index: u16) -> &mut Builder {
         let features = SevFeatures::new().with_snp(true).with_debug_swap(debug);
         let vmsa = vmsa_context(regs, features);
         let gpa = 0xFFFFFFFFF000;
         let ctx = IgvmDirectiveHeader::SnpVpContext {
             gpa,
             compatibility_mask: SEV_SNP_COMPAT,
-            vp_index: 0,
+            vp_index,
             vmsa: Box::new(vmsa),
         };
         self.directives.push(ctx);
@@ -140,6 +144,16 @@ impl Builder {
     }
 
     pub fn add_ovmf_snp_pages(&mut self, ovmfmeta: &OvmfMeta) -> &mut Builder {
+        // Collect IgvmParamArea GPAs — these are covered by ParameterInsert
+        // directives (emitted by add_ovmf_igvm_params) and must not get
+        // duplicate PageData entries.
+        let mut param_gpas: Vec<(usize, usize)> = Vec::new();
+        for r in &ovmfmeta.regions {
+            if r.etype == OvmfRegionType::IgvmParamArea {
+                param_gpas.push((r.memory.0, r.memory.1));
+            }
+        }
+
         for r in &ovmfmeta.regions {
             let itype = match r.etype {
                 OvmfRegionType::SevMemory
@@ -150,7 +164,17 @@ impl Builder {
                 _ => None,
             };
             if let Some(t) = itype {
-                self.add_empty_pages(r.memory.0, r.memory.1, SEV_SNP_COMPAT, t);
+                let psize = PAGE_SIZE_4K as usize;
+                let pages = r.memory.1.div_ceil(psize);
+                for pg in 0..pages {
+                    let gpa = r.memory.0 + pg * psize;
+                    let overlaps = param_gpas.iter().any(|&(base, size)| {
+                        gpa >= base && gpa < base + size
+                    });
+                    if !overlaps {
+                        self.add_empty_pages(gpa, psize, SEV_SNP_COMPAT, t);
+                    }
+                }
             }
         }
         self
@@ -251,6 +275,28 @@ impl Builder {
                 true
             }
         })
+    }
+
+    pub fn remove_page_data_in_range(&mut self, base: usize, size: usize) -> &mut Builder {
+        if size == 0 {
+            return self;
+        }
+        let before = self.directives.len();
+        self.directives.retain(|d| {
+            if let IgvmDirectiveHeader::PageData { gpa, .. } = d {
+                let page_gpa = *gpa as usize;
+                if page_gpa >= base && page_gpa < base + size {
+                    return false;
+                }
+            }
+            true
+        });
+        let removed = before - self.directives.len();
+        if removed > 0 {
+            log::debug!("remove_page_data_in_range: removed {} page(s) in 0x{:x}..0x{:x}",
+                        removed, base, base + size);
+        }
+        self
     }
 
     pub fn add_data_pages(&mut self, base: usize, data: &[u8]) -> &mut Builder {

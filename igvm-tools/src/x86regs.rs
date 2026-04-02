@@ -202,10 +202,10 @@ fn common_regs() -> Vec<X86Register> {
     ]
 }
 
-pub fn real_mode_regs() -> Vec<X86Register> {
+pub fn real_mode_regs_at(reset_addr: u32) -> Vec<X86Register> {
     let cr0 = ControlRegister0::reset_fast().into();
     let code = SegmentRegister {
-        base: 0xffff0000,
+        base: (reset_addr & 0xffff0000) as u64,
         limit: 0xffff,
         selector: 0xf000,
         attributes: SegmentAttributes::code16().into(),
@@ -224,7 +224,7 @@ pub fn real_mode_regs() -> Vec<X86Register> {
     };
     let mut regs = vec![
         X86Register::Cr0(cr0),
-        X86Register::Rip(0xfff0),
+        X86Register::Rip((reset_addr & 0xffff) as u64),
         X86Register::Cs(code),
         X86Register::Ss(data),
         X86Register::Ds(data),
