@@ -1,8 +1,12 @@
 summary: run virt-firmware-ts tmt tests
 provision:
+  how: virtual
   hardware:
     boot:
       method: uefi
+    memory: '>= 4 GB'
+    cpu:
+      processors: ">= 2"
     virtualization:
       is-supported: true
 prepare:

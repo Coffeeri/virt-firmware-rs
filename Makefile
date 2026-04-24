@@ -167,6 +167,7 @@ tmt-snp:
 # fedora gating tests
 testing-farm-fedora:
 	testing-farm request \
+		--context kvm=yes \
 		--git-url $(GIT_URL) \
 		--git-ref $(GIT_BRANCH) \
 		--compose Fedora-43
