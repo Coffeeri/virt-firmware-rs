@@ -167,11 +167,11 @@ fn igvm_add_kernel(
     }
     if let Some(b) = shim_blob {
         info!("add shim efi binary");
-        hoblist.add(b, EfiIgvmDataType::Shim, false);
+        hoblist.add(b, EfiIgvmDataType::Shim, !secureboot);
     }
     if let Some(b) = kernel_blob {
         info!("add kernel efi binary");
-        hoblist.add(b, EfiIgvmDataType::Kernel, false);
+        hoblist.add(b, EfiIgvmDataType::Kernel, !secureboot);
     }
 
     let resetvector = igvm
