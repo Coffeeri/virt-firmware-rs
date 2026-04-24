@@ -170,4 +170,5 @@ testing-farm-fedora:
 		--context kvm=yes \
 		--git-url $(GIT_URL) \
 		--git-ref $(GIT_BRANCH) \
+		--plan plans \
 		--compose Fedora-43
