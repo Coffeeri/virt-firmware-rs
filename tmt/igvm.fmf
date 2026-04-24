@@ -1,6 +1,13 @@
 summary: tests for igvm-tools
 framework: shell
 tag: igvm
+require:
+  - edk2-ovmf
+  - kernel-core
+  - python3
+  - python3-pyyaml
+  - qemu-system-x86-core
+  - systemd-ukify
 
 /inspect/help:
     summary: print igvm-inspect help text
@@ -12,8 +19,6 @@ tag: igvm
 
 /wrap/ovmf/0create:
     summary: wrap ovmf as igvm
-    require:
-      - edk2-ovmf
     test: |
       set -ex
       igvm-wrap \
@@ -29,10 +34,6 @@ tag: igvm
     adjust:
       enabled: true
       when: kvm == yes
-    require:
-      - python3
-      - python3-pyyaml
-      - qemu-system-x86-core
     test: |
       python boot-test-igvm-qemu.py \
         --igvm test.igvm \
@@ -44,10 +45,6 @@ tag: igvm
 
 /update/vmlinuz/0create:
     summary: create ovmf+kernel igvm bundle
-    require:
-      - edk2-ovmf
-      - kernel-core
-      - systemd-ukify
     test: |
       KERNEL=$(ls /lib/modules/*/vmlinuz | head -1)
       set -ex
@@ -72,10 +69,6 @@ tag: igvm
     adjust:
       enabled: true
       when: kvm == yes
-    require:
-      - python3
-      - python3-pyyaml
-      - qemu-system-x86-core
     test: |
       python boot-test-igvm-qemu.py \
         --igvm test.uki.igvm \
