@@ -151,8 +151,7 @@ tmt:
 
 # igvm boot tests (needs kvm)
 tmt-igvm:
-	tmt --context kvm=yes \
-		run --all --verbose \
+	tmt run --all --verbose \
 		test --filter 'tag:igvm' \
 		report --how html
 
@@ -167,7 +166,6 @@ tmt-snp:
 # fedora gating tests
 testing-farm-fedora:
 	testing-farm request \
-		--context kvm=yes \
 		--git-url $(GIT_URL) \
 		--git-ref $(GIT_BRANCH) \
 		--plan plans \
