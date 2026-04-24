@@ -17,7 +17,7 @@ def zapterm(line):
     line = zapterm3.sub('', line)
     return line
 
-def now(self):
+def now():
     tz = datetime.timezone.utc
     ts = datetime.datetime.now(tz)
     return ts.isoformat()
