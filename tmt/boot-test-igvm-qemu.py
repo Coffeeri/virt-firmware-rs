@@ -4,6 +4,7 @@ import re
 import sys
 import yaml
 import argparse
+import datetime
 import subprocess
 
 zapterm1 = re.compile(r'\x1b\[[0-9;:=?!]*[HJhlmnpt]')
@@ -15,6 +16,11 @@ def zapterm(line):
     line = zapterm2.sub('', line)
     line = zapterm3.sub('', line)
     return line
+
+def now(self):
+    tz = datetime.timezone.utc
+    ts = datetime.datetime.now(tz)
+    return ts.isoformat()
 
 def main():
     parser = argparse.ArgumentParser()
@@ -46,7 +52,8 @@ def main():
                 '-nographic', '-no-reboot',
                 '-object', f'igvm-cfg,id=fw.igvm,file={options.igvm}' ]
 
-    result = { 'name': '/boot/in/qemu' }
+    result = { 'name' : '/boot/in/qemu',
+               'start-time' : now() }
     tmtdata = os.environ.get('TMT_TEST_DATA');
     if tmtdata:
         result['log'] = [ 'firmware.log' ]
@@ -93,6 +100,7 @@ def main():
         print('=== PASS ===')
 
     if tmtdata:
+        result['end-time'] = now()
         results = [ result, ]
         y = yaml.dump(results)
         with open(f'{tmtdata}/tmt-report-results.yaml', 'a') as r:
