@@ -76,6 +76,7 @@ impl SecureBootProfile {
                 sigdb.add_x509_from_der(&MicrosoftVendor, MICROSOFT_DB_WINDOWS_2023);
                 sigdb.add_x509_from_der(&MicrosoftVendor, MICROSOFT_DB_UEFI_2011);
                 sigdb.add_x509_from_der(&MicrosoftVendor, MICROSOFT_DB_UEFI_2023);
+                sigdb.add_x509_from_der(&MicrosoftVendor, MICROSOFT_DB_UEFI_ROM_2023);
             }
 
             #[cfg(feature = "sbtest")]
