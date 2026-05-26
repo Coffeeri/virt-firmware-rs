@@ -143,10 +143,16 @@ GIT_BRANCH	:= $(shell git branch --show-current)
 GIT_REMOTE	:= $(shell git config branch.$(GIT_BRANCH).remote)
 GIT_URL		:= $(shell git config remote.$(GIT_REMOTE).url)
 
-.PHONY: tmt tmt-igvm tmt-snp
+.PHONY: tmt tmt-fips tmt-igvm tmt-snp
 # default tests
 tmt:
 	tmt run --all --verbose \
+		report --how html
+
+tmt-fips:
+	tmt --context fips=yes \
+		run --all --verbose \
+		provision --how virtual --image centos-stream-10 \
 		report --how html
 
 # igvm boot tests (needs kvm)
