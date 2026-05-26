@@ -143,23 +143,34 @@ GIT_BRANCH	:= $(shell git branch --show-current)
 GIT_REMOTE	:= $(shell git config branch.$(GIT_BRANCH).remote)
 GIT_URL		:= $(shell git config remote.$(GIT_REMOTE).url)
 
+ARCH		:= $(shell uname -m)
+DISTRO_NAME	:= $(shell grep ^ID= /etc/os-release | tr -d '"' | cut -d= -f2)
+DISTRO_VERSION	:= $(shell grep ^VERSION_ID= /etc/os-release | tr -d '"' | cut -d= -f2)
+DISTRO		:= $(DISTRO_NAME)-$(DISTRO_VERSION)
+
+HAVE_TERMINAL	:= $(shell test -t 0 && echo yes || echo no)
+TMT_REPORT	:= --how html
+ifeq ($(HAVE_TERMINAL),yes)
+TMT_REPORT	+= --open
+endif
+
 .PHONY: tmt tmt-fips tmt-igvm tmt-snp
 # default tests
 tmt:
 	tmt run --all --verbose \
-		report --how html
+		report $(TMT_REPORT)
 
 tmt-fips:
 	tmt --context fips=yes \
 		run --all --verbose \
 		provision --how virtual --image centos-stream-10 \
-		report --how html
+		report $(TMT_REPORT)
 
 # igvm boot tests (needs kvm)
 tmt-igvm:
 	tmt run --all --verbose \
 		test --filter 'tag:igvm' \
-		report --how html
+		report $(TMT_REPORT)
 
 # snp boot tests (needs sev-snp host)
 tmt-snp:
@@ -167,7 +178,7 @@ tmt-snp:
 		run --all --verbose \
 		test --filter 'tag:snp' \
 		provision --how local \
-		report --how html
+		report $(TMT_REPORT)
 
 # fedora gating tests
 tf-fedora:
