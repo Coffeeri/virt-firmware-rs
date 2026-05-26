@@ -157,24 +157,26 @@ endif
 .PHONY: tmt tmt-fips tmt-igvm tmt-snp
 # default tests
 tmt:
-	tmt run --all --verbose \
+	tmt --context distro=$(DISTRO) \
+		run --all --verbose \
 		report $(TMT_REPORT)
 
 tmt-fips:
-	tmt --context fips=yes \
+	tmt --context distro=centos-10 --context fips=yes \
 		run --all --verbose \
 		provision --how virtual --image centos-stream-10 \
 		report $(TMT_REPORT)
 
 # igvm boot tests (needs kvm)
 tmt-igvm:
-	tmt run --all --verbose \
+	tmt --context distro=$(DISTRO) \
+		run --all --verbose \
 		test --filter 'tag:igvm' \
 		report $(TMT_REPORT)
 
 # snp boot tests (needs sev-snp host)
 tmt-snp:
-	tmt --feeling-safe --context snp=yes \
+	tmt --feeling-safe --context distro=$(DISTRO) --context snp=yes \
 		run --all --verbose \
 		test --filter 'tag:snp' \
 		provision --how local \
@@ -186,4 +188,5 @@ tf-fedora:
 		--git-url $(GIT_URL) \
 		--git-ref $(GIT_BRANCH) \
 		--plan plans \
-		--compose Fedora-43
+		--compose Fedora-44 \
+		--context distro=fedora-44
