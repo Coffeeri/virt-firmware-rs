@@ -170,7 +170,7 @@ tmt-snp:
 		report --how html
 
 # fedora gating tests
-testing-farm-fedora:
+tf-fedora:
 	testing-farm request \
 		--git-url $(GIT_URL) \
 		--git-ref $(GIT_BRANCH) \
