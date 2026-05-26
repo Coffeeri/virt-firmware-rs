@@ -22,6 +22,16 @@ prepare:
     when: snp == yes
     script:
       - ls -l /dev/sev
+  - name: install packages for centos/rhel
+    when: distro == rhel or distro == centos
+    how: install
+    package:
+      - qemu-kvm-core
+  - name: install packages for fedora
+    when: distro == fedora
+    how: install
+    package:
+      - qemu-system-x86-core
   - name: install virt-firmware-rs
     how: install
     package:

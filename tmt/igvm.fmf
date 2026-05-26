@@ -6,7 +6,6 @@ require:
   - kernel-core
   - python3
   - python3-pyyaml
-  - qemu-system-x86-core
   - systemd-ukify
 
 /inspect/help:
