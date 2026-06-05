@@ -10,7 +10,7 @@ require:
   - kernel-core
   - python3
   - python3-pyyaml
-  - qemu-system-x86-core
+  - python3-virt-firmware
   - systemd-ukify
 
 /0create:

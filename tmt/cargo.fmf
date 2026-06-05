@@ -1,17 +1,11 @@
+summary: run standard rust tests via cargo test
 framework: shell
-duration: 10m
+test: make -C .. test
 require:
   - make
   - cargo
   - rustc
   - openssl-devel
   - systemd-devel
-enabled: true
-adjust:
-  enabled: false
-  when: initiator == gitlab-ci
-  because: there is a gitlab ci job for that
-
-/test:
-    summary: run standard rust tests via cargo test
-    test: make -C .. test
+duration: 10m
+enabled: false

@@ -7,6 +7,8 @@ import argparse
 import datetime
 import subprocess
 
+from virt.qemutest.autoconf import find_qemu_binary
+
 zapterm1 = re.compile(r'\x1b\[[0-9;:=?!]*[HJhlmnpt]')
 zapterm2 = re.compile(r'\x1b\][0-9]*')
 zapterm3 = re.compile(r'[\x07\r]')
@@ -45,7 +47,7 @@ def main():
     options = parser.parse_args()
 
     cmdline = [ 'timeout', '--foreground', options.timeout,
-                'qemu-system-x86_64',
+                find_qemu_binary(),
                 '-enable-kvm',
                 '-machine', 'q35,igvm-cfg=fw.igvm',
                 '-m', '1G',

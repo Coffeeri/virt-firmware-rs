@@ -143,30 +143,52 @@ GIT_BRANCH	:= $(shell git branch --show-current)
 GIT_REMOTE	:= $(shell git config branch.$(GIT_BRANCH).remote)
 GIT_URL		:= $(shell git config remote.$(GIT_REMOTE).url)
 
-.PHONY: tmt tmt-igvm tmt-snp
-# default tests
+ARCH		:= $(shell uname -m)
+DISTRO_NAME	:= $(shell grep ^ID= /etc/os-release | tr -d '"' | cut -d= -f2)
+DISTRO_VERSION	:= $(shell grep ^VERSION_ID= /etc/os-release | tr -d '"' | cut -d= -f2)
+DISTRO		:= $(DISTRO_NAME)-$(DISTRO_VERSION)
+
+HAVE_TERMINAL	:= $(shell test -t 0 && echo yes || echo no)
+TMT_REPORT	:= --how html
+ifeq ($(HAVE_TERMINAL),yes)
+TMT_REPORT	+= --open
+endif
+
+.PHONY: tmt tmt-fips tmt-igvm tmt-snp
+# default tests (in VM)
 tmt:
-	tmt run --all --verbose \
-		report --how html
+	cd tmt; tmt --context distro=$(DISTRO) \
+		run --all --verbose \
+		report $(TMT_REPORT)
 
-# igvm boot tests (needs kvm)
-tmt-igvm:
-	tmt run --all --verbose \
-		test --filter 'tag:igvm' \
-		report --how html
+# fips mode tests (in centos stream -VM)
+tmt-fips:
+	cd tmt; tmt --context distro=centos-10 --context fips=yes \
+		run --all --verbose \
+		provision --how virtual --image centos-stream-10 \
+		report $(TMT_REPORT)
 
-# snp boot tests (needs sev-snp host)
-tmt-snp:
-	tmt --feeling-safe --context snp=yes \
+# default tests (local)
+tmt-local:
+	cd tmt; tmt --feeling-safe --context distro=$(DISTRO) \
+		run --all --verbose \
+		provision --how local \
+		report $(TMT_REPORT)
+
+# snp boot tests (local, needs sev-snp host)
+tmt-local-snp:
+	cd tmt; tmt --feeling-safe --context distro=$(DISTRO) --context snp=yes \
 		run --all --verbose \
 		test --filter 'tag:snp' \
 		provision --how local \
-		report --how html
+		report $(TMT_REPORT)
 
 # fedora gating tests
-testing-farm-fedora:
+tf-fedora:
 	testing-farm request \
 		--git-url $(GIT_URL) \
 		--git-ref $(GIT_BRANCH) \
 		--plan plans \
-		--compose Fedora-43
+		--path tmt \
+		--compose Fedora-44 \
+		--context distro=fedora-44
