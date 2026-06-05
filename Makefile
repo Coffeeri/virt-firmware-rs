@@ -155,28 +155,29 @@ TMT_REPORT	+= --open
 endif
 
 .PHONY: tmt tmt-fips tmt-igvm tmt-snp
-# default tests
+# default tests (in VM)
 tmt:
-	tmt --context distro=$(DISTRO) \
+	cd tmt; tmt --context distro=$(DISTRO) \
 		run --all --verbose \
 		report $(TMT_REPORT)
 
+# fips mode tests (in centos stream -VM)
 tmt-fips:
-	tmt --context distro=centos-10 --context fips=yes \
+	cd tmt; tmt --context distro=centos-10 --context fips=yes \
 		run --all --verbose \
 		provision --how virtual --image centos-stream-10 \
 		report $(TMT_REPORT)
 
-# igvm boot tests (needs kvm)
-tmt-igvm:
-	tmt --context distro=$(DISTRO) \
+# default tests (local)
+tmt-local:
+	cd tmt; tmt --feeling-safe --context distro=$(DISTRO) \
 		run --all --verbose \
-		test --filter 'tag:igvm' \
+		provision --how local \
 		report $(TMT_REPORT)
 
-# snp boot tests (needs sev-snp host)
-tmt-snp:
-	tmt --feeling-safe --context distro=$(DISTRO) --context snp=yes \
+# snp boot tests (local, needs sev-snp host)
+tmt-local-snp:
+	cd tmt; tmt --feeling-safe --context distro=$(DISTRO) --context snp=yes \
 		run --all --verbose \
 		test --filter 'tag:snp' \
 		provision --how local \
@@ -188,5 +189,6 @@ tf-fedora:
 		--git-url $(GIT_URL) \
 		--git-ref $(GIT_BRANCH) \
 		--plan plans \
+		--path tmt \
 		--compose Fedora-44 \
 		--context distro=fedora-44

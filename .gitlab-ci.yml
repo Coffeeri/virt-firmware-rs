@@ -70,12 +70,14 @@ test-tmt:
   before_script:
     - dnf install -y tmt
   script:
+    - export TMT_WORKDIR_ROOT="$(pwd)/tmt-root"
     - PATH="$HOME/.cargo/bin:$PATH"
     - make install
-    - tmt --feeling-safe --context initiator=gitlab-ci
-      run --all --verbose
-      provision --how local
-      report --how html
+    - make tmt-local
+  artifacts:
+    when: always
+    paths:
+      - tmt-root
 
 pkg-libhw:
   stage: package
