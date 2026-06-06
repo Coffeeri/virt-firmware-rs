@@ -2,9 +2,9 @@
 IGNORE	:= --ignore RUSTSEC-2023-0071	# rsa timing sidechannel (no secret keys here)
 
 # rust targets
-SYSROOT	:= $(shell rustc --print sysroot)
-RUSTLIB	:= $(SYSROOT)/lib/rustlib
-TARGETS	:= $(patsubst $(RUSTLIB)/%,%,$(wildcard $(RUSTLIB)/*-*-*))
+RUST_SYSROOT	:= $(shell rustc --print sysroot)
+RUST_LIBDIR	:= $(RUST_SYSROOT)/lib/rustlib
+RUST_TARGETS	:= $(patsubst $(RUST_LIBDIR)/%,%,$(wildcard $(RUST_LIBDIR)/*-*-*))
 
 # cross compiler (used by cc crate)
 ifneq ($(shell which x86_64-linux-gnu-gcc),)
@@ -22,14 +22,14 @@ ifeq ($(ARCH),x86_64)
 TGT_BIOS32	+= build-bios-32
 endif
 
-ifneq ($(filter x86_64-unknown-none,$(TARGETS)),)
+ifneq ($(filter x86_64-unknown-none,$(RUST_TARGETS)),)
 PKGS		+= mefisto
 TGT_NONE	+= build-x-none-libefi
 TGT_NONE	+= build-x-none-varstore
 TGT_POST	+= cargo-post
 endif
 
-ifneq ($(filter $(ARCH)-unknown-uefi,$(TARGETS)),)
+ifneq ($(filter $(ARCH)-unknown-uefi,$(RUST_TARGETS)),)
 PKGS	+= efi-apps
 endif
 
@@ -71,6 +71,10 @@ duplicates:
 
 audit:
 	cargo audit $(IGNORE)
+
+rust-targets:
+	@echo "rust targets available:"
+	@for t in $(RUST_TARGETS); do echo "  - $$t"; done
 
 cargo-doc: $(patsubst %,doc-%,$(PKGS)) doc-libefi doc-libhw
 cargo-test: test-libefi test-varstore test-igvm-tools
