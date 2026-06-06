@@ -32,15 +32,18 @@ ifneq ($(filter $(ARCH)-unknown-uefi,$(TARGETS)),)
 PKGS	+= efi-apps
 endif
 
+# cargo target names
+TGT_TYPES	:= doc build clippy clippy-fix release install package
+TGT_MEFISTO	:= $(patsubst %,%-mefisto,$(TGT_TYPES))
+TGT_EFI_APPS	:= $(patsubst %,%-efi-apps,$(TGT_TYPES))
+TGT_EFI_TOOLS	:= $(patsubst %,%-efi-tools,$(TGT_TYPES))
+TGT_VARSTORE	:= $(patsubst %,%-varstore,$(TGT_TYPES))
+
 # target specific variables
-doc-mefisto build-mefisto clippy-mefisto clippy-fix-mefisto release-mefisto package-mefisto : \
-	TARGET := --target x86_64-unknown-none --features efiloader
-doc-efi-apps build-efi-apps clippy-efi-apps clippy-fix-efi-apps release-efi-apps package-efi-apps : \
-	TARGET := --target $(ARCH)-unknown-uefi --features fdt
-doc-efi-tools build-efi-tools clippy-efi-tools clippy-fix-efi-tools release-efi-tools package-efi-tools : \
-	TARGET := --features udev
-doc-varstore build-varstore clippy-varstore clippy-fix-varstore release-varstore package-varstore : \
-	TARGET := --features std,json,pem
+$(TGT_MEFISTO)    : TARGET := --target x86_64-unknown-none --features efiloader
+$(TGT_EFI_APPS)   : TARGET := --target $(ARCH)-unknown-uefi --features fdt
+$(TGT_EFI_TOOLS)  : TARGET := --features udev
+$(TGT_VARSTORE)   : TARGET := --features std,json,pem
 
 # targets
 default: all
