@@ -1,5 +1,5 @@
 # cargo audit
-IGNORE	:= --ignore RUSTSEC-2023-0071	# rsa timing sidechannel (no secret keys here)
+AUDIT_IGNORE	:= --ignore RUSTSEC-2023-0071	# rsa timing sidechannel (no secret keys here)
 
 # rust targets
 RUST_SYSROOT	:= $(shell rustc --print sysroot)
@@ -70,7 +70,7 @@ duplicates:
 	cargo tree --duplicates
 
 audit:
-	cargo audit $(IGNORE)
+	cargo audit $(AUDIT_IGNORE)
 
 rust-targets:
 	@echo "rust targets available:"
