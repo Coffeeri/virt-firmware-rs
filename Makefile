@@ -78,7 +78,7 @@ cargo-clippy: $(patsubst %,clippy-%,$(PKGS))
 cargo-clippy-fix: $(patsubst %,clippy-fix-%,$(PKGS))
 cargo-release: $(patsubst %,release-%,$(PKGS))
 cargo-install: install-efi-tools install-igvm-tools
-cargo-package: package-libefi package-efi-tools package-igvm-tools
+cargo-package: package-libhw package-libefi package-efi-tools package-igvm-tools package-varstore
 
 clean: clean-bios-32
 	cargo clean
