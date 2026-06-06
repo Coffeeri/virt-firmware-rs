@@ -78,9 +78,6 @@ audit:
 
 rust-targets:
 	@echo ""
-	@echo "all rust targets:"
-	@for t in $(RUST_TARGETS); do echo "  - $$t"; done
-	@echo ""
 	@echo "native rust targets:"
 	@for t in $(RUST_NATIVE); do echo "  - $$t"; done
 	@echo ""
