@@ -17,6 +17,10 @@ PKGS	:= efi-tools experimental igvm-tools varstore
 BIOS32	:=
 POST64	:=
 
+ifeq ($(ARCH),x86_64)
+BIOS32	+= build-bios-32
+endif
+
 ifneq ($(filter x86_64-unknown-none,$(TARGETS)),)
 PKGS	+= mefisto
 BIOS32	+= build-none-libefi
@@ -24,12 +28,7 @@ BIOS32	+= build-none-varstore
 POST64	+= cargo-post
 endif
 
-ifeq ($(ARCH),x86_64)
-PKGS	+= efi-apps
-BIOS32	+= build-bios-32
-endif
-
-ifeq ($(ARCH),aarch64)
+ifneq ($(filter $(ARCH)-unknown-uefi,$(TARGETS)),)
 PKGS	+= efi-apps
 endif
 
