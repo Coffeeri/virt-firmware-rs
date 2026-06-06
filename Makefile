@@ -12,20 +12,21 @@ export CC_x86_64_unknown_none := x86_64-linux-gnu-gcc
 endif
 
 # variables
-ARCH	:= $(shell uname -m)
-PKGS	:= efi-tools experimental igvm-tools varstore
-BIOS32	:=
-POST64	:=
+ARCH		:= $(shell uname -m)
+PKGS		:= efi-tools experimental igvm-tools varstore
+TGT_BIOS32	:=
+TGT_NONE	:=
+TGT_POST	:=
 
 ifeq ($(ARCH),x86_64)
-BIOS32	+= build-bios-32
+TGT_BIOS32	+= build-bios-32
 endif
 
 ifneq ($(filter x86_64-unknown-none,$(TARGETS)),)
-PKGS	+= mefisto
-BIOS32	+= build-none-libefi
-BIOS32	+= build-none-varstore
-POST64	+= cargo-post
+PKGS		+= mefisto
+TGT_NONE	+= build-none-libefi
+TGT_NONE	+= build-none-varstore
+TGT_POST	+= cargo-post
 endif
 
 ifneq ($(filter $(ARCH)-unknown-uefi,$(TARGETS)),)
@@ -50,10 +51,10 @@ default: all
 all: build clippy test docs
 doc docs: cargo-doc
 test tests: cargo-test
-build: $(BIOS32) cargo-build $(POST64)
+build: $(TGT_BIOS32) $(TGT_NONE) cargo-build $(TGT_POST)
 clippy: cargo-clippy
 clippy-fix: cargo-clippy-fix
-release: $(BIOS32) cargo-release
+release: $(TGT_BIOS32) cargo-release
 install: cargo-install
 package: cargo-package
 
