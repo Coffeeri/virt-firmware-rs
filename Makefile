@@ -24,8 +24,8 @@ endif
 
 ifneq ($(filter x86_64-unknown-none,$(TARGETS)),)
 PKGS		+= mefisto
-TGT_NONE	+= build-none-libefi
-TGT_NONE	+= build-none-varstore
+TGT_NONE	+= build-x-none-libefi
+TGT_NONE	+= build-x-none-varstore
 TGT_POST	+= cargo-post
 endif
 
@@ -127,7 +127,7 @@ test-%:
 build-%:
 	cargo build --package virtfw-$* $(TARGET)
 
-build-none-%:
+build-x-none-%:
 	cargo build --package virtfw-$* --target x86_64-unknown-none
 
 clippy-%:
