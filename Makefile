@@ -8,6 +8,8 @@ HOST_ARCH	:= $(shell uname -m)
 RUST_SYSROOT	:= $(shell rustc --print sysroot)
 RUST_LIBDIR	:= $(RUST_SYSROOT)/lib/rustlib
 RUST_TARGETS	:= $(patsubst $(RUST_LIBDIR)/%,%,$(wildcard $(RUST_LIBDIR)/*-*-*))
+RUST_NATIVE	:= $(patsubst $(RUST_LIBDIR)/%,%,$(wildcard $(RUST_LIBDIR)/$(HOST_ARCH)-*-*))
+RUST_CROSS	:= $(filter-out $(RUST_NATIVE), $(RUST_TARGETS))
 
 # cross compiler (used by cc crate)
 ifneq ($(shell which x86_64-linux-gnu-gcc),)
@@ -75,8 +77,16 @@ audit:
 	cargo audit $(AUDIT_IGNORE)
 
 rust-targets:
-	@echo "rust targets available:"
+	@echo ""
+	@echo "all rust targets:"
 	@for t in $(RUST_TARGETS); do echo "  - $$t"; done
+	@echo ""
+	@echo "native rust targets:"
+	@for t in $(RUST_NATIVE); do echo "  - $$t"; done
+	@echo ""
+	@echo "cross rust targets:"
+	@for t in $(RUST_CROSS); do echo "  - $$t"; done
+	@echo ""
 
 cargo-doc: $(patsubst %,doc-%,$(PKGS)) doc-libefi doc-libhw
 cargo-test: test-libefi test-varstore test-igvm-tools
