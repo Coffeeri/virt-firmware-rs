@@ -19,7 +19,7 @@ authors = [ "Gerd Hoffmann <kraxel@redhat.com>" ]
 edition = "2021"
 
 [workspace.dependencies]
-bitfield-struct = { version = "0.12" }
+bitfield-struct = { version = "0.13" }
 byteorder = { version = "1", default-features = false }
 clap = { version = "4.5.4", features = [ "derive", "wrap_help" ] }
 clap_mangen = { version = "0.2.30" }
