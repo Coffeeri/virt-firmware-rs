@@ -1,21 +1,24 @@
 # variables
-ARCH	:= $(shell uname -m)
-ifeq ($(ARCH),x86_64)
-CC	:= gcc
+ifneq ($(shell which x86_64-linux-gnu-gcc),)
+CC	:= x86_64-linux-gnu-gcc -m32
+LD	:= x86_64-linux-gnu-ld
+else ifneq ($(shell which clang),)
+CC	:= clang --target=i386
+LD	:= ld.lld
 else
-CC	:= x86_64-linux-gnu-gcc
+CC	:= gcc -m32
+LD	:= ld
 endif
 
 AS	:= $(CC)
-LD	:= $(CC)
 OBJCOPY	:= objcopy
 ELFIS	:= ../target/debug/igvm-elfis
 
-COMMON	:= -m32 -ffreestanding -nostdlib
+COMMON	:= -ffreestanding -nostdlib
 ASFLAGS	:= $(COMMON)
 CFLAGS	:= $(COMMON) -Os -g -Wall
 CFLAGS	+= -mno-mmx -mno-sse -fpic
-LDFLAGS	:= $(COMMON) -Wl,-melf_i386 -Wl,--script=bios32.lds
+LDFLAGS	:= -melf_i386 --script=bios32.lds
 
 TARGETS	:= hello.bin info.bin vmfwupdate.bin
 TARGETS	+= hello.igvm info.igvm vmfwupdate.igvm
