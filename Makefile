@@ -20,6 +20,7 @@ endif
 PKGS		:= efi-tools experimental igvm-tools varstore
 TGT_BIOS32	:=
 TGT_NONE	:=
+TGT_UEFI	:=
 TGT_POST	:=
 
 ifeq ($(HOST_ARCH),x86_64)
@@ -34,7 +35,15 @@ TGT_POST	+= cargo-post
 endif
 
 ifneq ($(filter $(HOST_ARCH)-unknown-uefi,$(RUST_TARGETS)),)
-PKGS	+= efi-apps
+PKGS		+= efi-apps
+endif
+
+ifneq ($(filter x86_64-unknown-uefi,$(RUST_CROSS)),)
+TGT_UEFI	+= build-x-uefi-efi-apps
+endif
+
+ifneq ($(filter aarch64-unknown-uefi,$(RUST_CROSS)),)
+TGT_UEFI	+= build-a-uefi-efi-apps
 endif
 
 # cargo target names
@@ -55,7 +64,7 @@ default: all
 all: build clippy test docs
 doc docs: cargo-doc
 test tests: cargo-test
-build: $(TGT_BIOS32) $(TGT_NONE) cargo-build $(TGT_POST)
+build: cargo-build $(TGT_BIOS32) $(TGT_NONE) $(TGT_UEFI) $(TGT_POST)
 clippy: cargo-clippy
 clippy-fix: cargo-clippy-fix
 release: $(TGT_BIOS32) cargo-release
@@ -142,6 +151,12 @@ build-%:
 
 build-x-none-%:
 	cargo build --package virtfw-$* --target x86_64-unknown-none
+
+build-x-uefi-efi-apps:
+	cargo build --package virtfw-efi-apps --target x86_64-unknown-uefi
+
+build-a-uefi-efi-apps:
+	cargo build --package virtfw-efi-apps --target aarch64-unknown-uefi --features fdt
 
 clippy-%:
 	cargo clippy --package virtfw-$* $(TARGET)
