@@ -1,6 +1,9 @@
 # cargo audit
 AUDIT_IGNORE	:= --ignore RUSTSEC-2023-0071	# rsa timing sidechannel (no secret keys here)
 
+# environment
+HOST_ARCH	:= $(shell uname -m)
+
 # rust targets
 RUST_SYSROOT	:= $(shell rustc --print sysroot)
 RUST_LIBDIR	:= $(RUST_SYSROOT)/lib/rustlib
@@ -12,13 +15,12 @@ export CC_x86_64_unknown_none := x86_64-linux-gnu-gcc
 endif
 
 # variables
-ARCH		:= $(shell uname -m)
 PKGS		:= efi-tools experimental igvm-tools varstore
 TGT_BIOS32	:=
 TGT_NONE	:=
 TGT_POST	:=
 
-ifeq ($(ARCH),x86_64)
+ifeq ($(HOST_ARCH),x86_64)
 TGT_BIOS32	+= build-bios-32
 endif
 
@@ -29,7 +31,7 @@ TGT_NONE	+= build-x-none-varstore
 TGT_POST	+= cargo-post
 endif
 
-ifneq ($(filter $(ARCH)-unknown-uefi,$(RUST_TARGETS)),)
+ifneq ($(filter $(HOST_ARCH)-unknown-uefi,$(RUST_TARGETS)),)
 PKGS	+= efi-apps
 endif
 
@@ -42,7 +44,7 @@ TGT_VARSTORE	:= $(patsubst %,%-varstore,$(TGT_TYPES))
 
 # target specific variables
 $(TGT_MEFISTO)    : TARGET := --target x86_64-unknown-none --features efiloader
-$(TGT_EFI_APPS)   : TARGET := --target $(ARCH)-unknown-uefi --features fdt
+$(TGT_EFI_APPS)   : TARGET := --target $(HOST_ARCH)-unknown-uefi --features fdt
 $(TGT_EFI_TOOLS)  : TARGET := --features udev
 $(TGT_VARSTORE)   : TARGET := --features std,json,pem
 
@@ -158,7 +160,6 @@ GIT_BRANCH	:= $(shell git branch --show-current)
 GIT_REMOTE	:= $(shell git config branch.$(GIT_BRANCH).remote)
 GIT_URL		:= $(shell git config remote.$(GIT_REMOTE).url)
 
-ARCH		:= $(shell uname -m)
 DISTRO_NAME	:= $(shell grep ^ID= /etc/os-release | tr -d '"' | cut -d= -f2)
 DISTRO_VERSION	:= $(shell grep ^VERSION_ID= /etc/os-release | tr -d '"' | cut -d= -f2)
 DISTRO		:= $(DISTRO_NAME)-$(DISTRO_VERSION)
