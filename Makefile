@@ -1,10 +1,15 @@
 # cargo audit
-IGNORE	:= --ignore RUSTSEC-2023-0071	# rsa timing sidechannel (no secret keys here)
+AUDIT_IGNORE	:= --ignore RUSTSEC-2023-0071	# rsa timing sidechannel (no secret keys here)
+
+# environment
+HOST_ARCH	:= $(shell uname -m)
 
 # rust targets
-SYSROOT	:= $(shell rustc --print sysroot)
-RUSTLIB	:= $(SYSROOT)/lib/rustlib
-TARGETS	:= $(patsubst $(RUSTLIB)/%,%,$(wildcard $(RUSTLIB)/*-*-*))
+RUST_SYSROOT	:= $(shell rustc --print sysroot)
+RUST_LIBDIR	:= $(RUST_SYSROOT)/lib/rustlib
+RUST_TARGETS	:= $(patsubst $(RUST_LIBDIR)/%,%,$(wildcard $(RUST_LIBDIR)/*-*-*))
+RUST_NATIVE	:= $(patsubst $(RUST_LIBDIR)/%,%,$(wildcard $(RUST_LIBDIR)/$(HOST_ARCH)-*-*))
+RUST_CROSS	:= $(filter-out $(RUST_NATIVE), $(RUST_TARGETS))
 
 # cross compiler (used by cc crate)
 ifneq ($(shell which x86_64-linux-gnu-gcc),)
@@ -12,46 +17,48 @@ export CC_x86_64_unknown_none := x86_64-linux-gnu-gcc
 endif
 
 # variables
-ARCH	:= $(shell uname -m)
-PKGS	:= efi-tools experimental igvm-tools varstore
-BIOS32	:=
-POST64	:=
+PKGS		:= efi-tools experimental igvm-tools varstore
+TGT_BIOS32	:=
+TGT_NONE	:=
+TGT_POST	:=
 
-ifneq ($(filter x86_64-unknown-none,$(TARGETS)),)
-PKGS	+= mefisto
-BIOS32	+= build-none-libefi
-BIOS32	+= build-none-varstore
-POST64	+= cargo-post
+ifeq ($(HOST_ARCH),x86_64)
+TGT_BIOS32	+= build-bios-32
 endif
 
-ifeq ($(ARCH),x86_64)
+ifneq ($(filter x86_64-unknown-none,$(RUST_TARGETS)),)
+PKGS		+= mefisto
+TGT_NONE	+= build-x-none-libefi
+TGT_NONE	+= build-x-none-varstore
+TGT_POST	+= cargo-post
+endif
+
+ifneq ($(filter $(HOST_ARCH)-unknown-uefi,$(RUST_TARGETS)),)
 PKGS	+= efi-apps
-BIOS32	+= build-bios-32
 endif
 
-ifeq ($(ARCH),aarch64)
-PKGS	+= efi-apps
-endif
+# cargo target names
+TGT_TYPES	:= doc build clippy clippy-fix release install package
+TGT_MEFISTO	:= $(patsubst %,%-mefisto,$(TGT_TYPES))
+TGT_EFI_APPS	:= $(patsubst %,%-efi-apps,$(TGT_TYPES))
+TGT_EFI_TOOLS	:= $(patsubst %,%-efi-tools,$(TGT_TYPES))
+TGT_VARSTORE	:= $(patsubst %,%-varstore,$(TGT_TYPES))
 
 # target specific variables
-doc-mefisto build-mefisto clippy-mefisto clippy-fix-mefisto release-mefisto package-mefisto : \
-	TARGET := --target x86_64-unknown-none --features efiloader
-doc-efi-apps build-efi-apps clippy-efi-apps clippy-fix-efi-apps release-efi-apps package-efi-apps : \
-	TARGET := --target $(ARCH)-unknown-uefi --features fdt
-doc-efi-tools build-efi-tools clippy-efi-tools clippy-fix-efi-tools release-efi-tools package-efi-tools : \
-	TARGET := --features udev
-doc-varstore build-varstore clippy-varstore clippy-fix-varstore release-varstore package-varstore : \
-	TARGET := --features std,json,pem
+$(TGT_MEFISTO)    : TARGET := --target x86_64-unknown-none --features efiloader
+$(TGT_EFI_APPS)   : TARGET := --target $(HOST_ARCH)-unknown-uefi --features fdt
+$(TGT_EFI_TOOLS)  : TARGET := --features udev
+$(TGT_VARSTORE)   : TARGET := --features std,json,pem
 
 # targets
 default: all
 all: build clippy test docs
 doc docs: cargo-doc
 test tests: cargo-test
-build: $(BIOS32) cargo-build $(POST64)
+build: $(TGT_BIOS32) $(TGT_NONE) cargo-build $(TGT_POST)
 clippy: cargo-clippy
 clippy-fix: cargo-clippy-fix
-release: $(BIOS32) cargo-release
+release: $(TGT_BIOS32) cargo-release
 install: cargo-install
 package: cargo-package
 
@@ -67,7 +74,19 @@ duplicates:
 	cargo tree --duplicates
 
 audit:
-	cargo audit $(IGNORE)
+	cargo audit $(AUDIT_IGNORE)
+
+rust-targets:
+	@echo ""
+	@echo "all rust targets:"
+	@for t in $(RUST_TARGETS); do echo "  - $$t"; done
+	@echo ""
+	@echo "native rust targets:"
+	@for t in $(RUST_NATIVE); do echo "  - $$t"; done
+	@echo ""
+	@echo "cross rust targets:"
+	@for t in $(RUST_CROSS); do echo "  - $$t"; done
+	@echo ""
 
 cargo-doc: $(patsubst %,doc-%,$(PKGS)) doc-libefi doc-libhw
 cargo-test: test-libefi test-varstore test-igvm-tools
@@ -76,7 +95,7 @@ cargo-clippy: $(patsubst %,clippy-%,$(PKGS))
 cargo-clippy-fix: $(patsubst %,clippy-fix-%,$(PKGS))
 cargo-release: $(patsubst %,release-%,$(PKGS))
 cargo-install: install-efi-tools install-igvm-tools
-cargo-package: package-libefi package-efi-tools package-igvm-tools
+cargo-package: package-libhw package-libefi package-efi-tools package-igvm-tools package-varstore
 
 clean: clean-bios-32
 	cargo clean
@@ -124,7 +143,7 @@ test-%:
 build-%:
 	cargo build --package virtfw-$* $(TARGET)
 
-build-none-%:
+build-x-none-%:
 	cargo build --package virtfw-$* --target x86_64-unknown-none
 
 clippy-%:
@@ -151,7 +170,6 @@ GIT_BRANCH	:= $(shell git branch --show-current)
 GIT_REMOTE	:= $(shell git config branch.$(GIT_BRANCH).remote)
 GIT_URL		:= $(shell git config remote.$(GIT_REMOTE).url)
 
-ARCH		:= $(shell uname -m)
 DISTRO_NAME	:= $(shell grep ^ID= /etc/os-release | tr -d '"' | cut -d= -f2)
 DISTRO_VERSION	:= $(shell grep ^VERSION_ID= /etc/os-release | tr -d '"' | cut -d= -f2)
 DISTRO		:= $(DISTRO_NAME)-$(DISTRO_VERSION)
