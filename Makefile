@@ -63,6 +63,9 @@ fedora: update
 		echo $$rpms;\
 		dnf list --enablerepo=updates-testing $$rpms
 
+duplicates:
+	cargo tree --duplicates
+
 audit:
 	cargo audit $(IGNORE)
 
