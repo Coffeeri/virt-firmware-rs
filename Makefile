@@ -58,6 +58,11 @@ package: cargo-package
 update:
 	cargo update --verbose
 
+fedora: update
+	rpms=$$(cargo update --verbose 2>&1 | awk '/available/ { printf("rust-%s-devel\n",$$2) }');\
+		echo $$rpms;\
+		dnf list --enablerepo=updates-testing $$rpms
+
 audit:
 	cargo audit $(IGNORE)
 
