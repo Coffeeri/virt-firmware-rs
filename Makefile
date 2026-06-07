@@ -194,7 +194,9 @@ ifeq ($(HAVE_TERMINAL),yes)
 TMT_REPORT	+= --open
 endif
 
-.PHONY: tmt tmt-fips tmt-igvm tmt-snp
+.PHONY: tmt tmt-fips tmt-local tmt-local-snp
+.PHONY: tf-fedora tf-centos-10
+
 # default tests (in VM)
 tmt:
 	cd tmt; tmt --context distro=$(DISTRO) \
@@ -232,3 +234,13 @@ tf-fedora:
 		--path tmt \
 		--compose Fedora-44 \
 		--context distro=fedora-44
+
+tf-centos-10:
+	testing-farm request \
+		--git-url $(GIT_URL) \
+		--git-ref $(GIT_BRANCH) \
+		--plan plans \
+		--path tmt \
+		--compose Centos-Stream-10 \
+		--context distro=centos-10 \
+		--context igvmboot=no
