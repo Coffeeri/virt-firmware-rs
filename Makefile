@@ -14,6 +14,8 @@ RUST_CROSS	:= $(filter-out $(RUST_NATIVE), $(RUST_TARGETS))
 # cross compiler (used by cc crate)
 ifneq ($(shell which x86_64-linux-gnu-gcc),)
 export CC_x86_64_unknown_none := x86_64-linux-gnu-gcc
+else ifneq ($(shell which clang),)
+export CC_x86_64_unknown_none := clang --target=x86_64
 endif
 
 # variables
