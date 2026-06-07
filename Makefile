@@ -203,7 +203,7 @@ tmt:
 
 # fips mode tests (in centos stream -VM)
 tmt-fips:
-	cd tmt; tmt --context distro=centos-10 --context fips=yes \
+	cd tmt; tmt --context distro=centos-10 --context fips=yes --context igvmboot=no \
 		run --all --verbose \
 		provision --how virtual --image centos-stream-10 \
 		report $(TMT_REPORT)

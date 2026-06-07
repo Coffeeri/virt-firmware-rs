@@ -1,6 +1,7 @@
 summary: tests for igvm-tools
 framework: shell
 tag: igvm
+enabled: true
 require:
   - edk2-ovmf
   - kernel-core
@@ -30,6 +31,9 @@ require:
 
 /wrap/ovmf/1boot:
     summary: boot igvm ovmf
+    adjust:
+      enabled: false
+      when: igvmboot == no
     test: |
       python boot-test-igvm-qemu.py \
         --igvm test.igvm \
@@ -61,6 +65,9 @@ require:
 
 /update/vmlinuz/1boot:
     summary: boot ovmf+kernel igvm bundle
+    adjust:
+      enabled: false
+      when: igvmboot == no
     test: |
       python boot-test-igvm-qemu.py \
         --igvm test.uki.igvm \
