@@ -241,6 +241,6 @@ tf-centos-10:
 		--git-ref $(GIT_BRANCH) \
 		--plan plans \
 		--path tmt \
-		--compose Centos-Stream-10 \
+		--compose CentOS-Stream-10 \
 		--context distro=centos-10 \
 		--context igvmboot=no
