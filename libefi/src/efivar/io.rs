@@ -104,10 +104,7 @@ impl<T: io::Read> ReadEfiExt for T {
 
     fn read_boot_order(&mut self) -> Result<boot::BootOrder> {
         let mut order = Vec::new();
-        loop {
-            let Ok(idx) = self.read_boot_index() else {
-                break;
-            };
+        while let Ok(idx) = self.read_boot_index() {
             order.push(idx);
         }
         Ok(boot::BootOrder(order))

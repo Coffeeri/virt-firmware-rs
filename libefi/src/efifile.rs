@@ -22,11 +22,7 @@ pub struct EfiFile {
 impl EfiFile {
     fn mount(file: &Path, fdev: u64) -> io::Result<(PathBuf, PathBuf)> {
         let mut mount = file.to_path_buf();
-        loop {
-            let Some(parent) = mount.parent() else {
-                // reached root '/'
-                break;
-            };
+        while let Some(parent) = mount.parent() {
             let pmeta = fs::metadata(parent)?;
             if fdev != pmeta.dev() {
                 // reached mount point
