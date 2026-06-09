@@ -20,8 +20,8 @@ CFLAGS	:= $(COMMON) -Os -g -Wall
 CFLAGS	+= -mno-mmx -mno-sse -fpic
 LDFLAGS	:= -melf_i386 --script=bios32.lds
 
-TARGETS	:= hello-poweroff.bin info.bin vmfwupdate.bin
-TARGETS	+= hello-poweroff.igvm info.igvm vmfwupdate.igvm
+TARGETS	:= hello-poweroff.bin hello-hltloop.bin info.bin vmfwupdate.bin
+TARGETS	+= hello-poweroff.igvm hello-hltloop.igvm info.igvm vmfwupdate.igvm
 
 # build targets
 all: build
@@ -29,6 +29,7 @@ all: build
 build: $(TARGETS)
 
 hello-poweroff.elf: hello-poweroff.o entry32.o pci.o output.o ioport.o
+hello-hltloop.elf: hello-hltloop.o entry32.o output.o ioport.o
 info.elf: info.o entry32.o fwcfg.o pci.o output.o ioport.o
 vmfwupdate.elf: vmfwupdate.o entry32.o fwcfg.o pci.o output.o ioport.o
 
