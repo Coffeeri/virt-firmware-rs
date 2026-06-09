@@ -1,10 +1,11 @@
 # variables
-ifneq ($(shell which x86_64-linux-gnu-gcc),)
-CC	:= x86_64-linux-gnu-gcc -m32
-LD	:= x86_64-linux-gnu-ld
-else ifneq ($(shell which clang),)
+USE_CLANG ?= no
+ifeq ($(USE_CLANG),yes)
 CC	:= clang --target=i386
 LD	:= ld.lld
+else ifneq ($(shell which x86_64-linux-gnu-gcc),)
+CC	:= x86_64-linux-gnu-gcc -m32
+LD	:= x86_64-linux-gnu-ld
 else
 CC	:= gcc -m32
 LD	:= ld
