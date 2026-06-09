@@ -12,10 +12,11 @@ RUST_NATIVE	:= $(patsubst $(RUST_LIBDIR)/%,%,$(wildcard $(RUST_LIBDIR)/$(HOST_AR
 RUST_CROSS	:= $(filter-out $(RUST_NATIVE), $(RUST_TARGETS))
 
 # cross compiler (used by cc crate)
-ifneq ($(shell which x86_64-linux-gnu-gcc),)
-export CC_x86_64_unknown_none := x86_64-linux-gnu-gcc
-else ifneq ($(shell which clang),)
+USE_CLANG	?= no
+ifeq ($(USE_CLANG),yes)
 export CC_x86_64_unknown_none := clang --target=x86_64
+else ifneq ($(shell which x86_64-linux-gnu-gcc),)
+export CC_x86_64_unknown_none := x86_64-linux-gnu-gcc
 endif
 
 # variables
