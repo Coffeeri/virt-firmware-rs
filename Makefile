@@ -12,10 +12,11 @@ RUST_NATIVE	:= $(patsubst $(RUST_LIBDIR)/%,%,$(wildcard $(RUST_LIBDIR)/$(HOST_AR
 RUST_CROSS	:= $(filter-out $(RUST_NATIVE), $(RUST_TARGETS))
 
 # cross compiler (used by cc crate)
-ifneq ($(shell which x86_64-linux-gnu-gcc),)
-export CC_x86_64_unknown_none := x86_64-linux-gnu-gcc
-else ifneq ($(shell which clang),)
+USE_CLANG	?= no
+ifeq ($(USE_CLANG),yes)
 export CC_x86_64_unknown_none := clang --target=x86_64
+else ifneq ($(shell which x86_64-linux-gnu-gcc),)
+export CC_x86_64_unknown_none := x86_64-linux-gnu-gcc
 endif
 
 # variables
@@ -189,8 +190,9 @@ DISTRO_VERSION	:= $(shell grep ^VERSION_ID= /etc/os-release | tr -d '"' | cut -d
 DISTRO		:= $(DISTRO_NAME)-$(DISTRO_VERSION)
 
 HAVE_TERMINAL	:= $(shell test -t 0 && echo yes || echo no)
+REMOTE_LOGIN	:= $(shell test "$$SSH_CONNECTION" != "" && echo yes || echo no)
 TMT_REPORT	:= --how html
-ifeq ($(HAVE_TERMINAL),yes)
+ifeq ($(HAVE_TERMINAL)-$(REMOTE_LOGIN),yes-no)
 TMT_REPORT	+= --open
 endif
 

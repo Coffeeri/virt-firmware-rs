@@ -1,5 +1,5 @@
 ROM_SIZE = 64k;
-STACK_SIZE = 1M;
+STACK_SIZE = 64k;
 
 MEMORY
 {
