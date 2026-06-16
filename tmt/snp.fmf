@@ -16,7 +16,7 @@ require:
 /0create:
     summary: wrap ovmf as igvm
     test: |
-      KERNEL=$(ls /lib/modules/*/vmlinuz | head -1)
+      KERNEL=$(ls --sort=time /lib/modules/*/vmlinuz | head -1)
       set -ex
       ukify build \
         --linux $KERNEL \
