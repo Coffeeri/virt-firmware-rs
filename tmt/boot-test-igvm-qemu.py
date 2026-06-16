@@ -50,6 +50,7 @@ def main():
                 find_qemu_binary(),
                 '-enable-kvm',
                 '-machine', 'q35,igvm-cfg=fw.igvm',
+                '-cpu', 'host',
                 '-m', '1G',
                 '-nographic', '-no-reboot',
                 '-object', f'igvm-cfg,id=fw.igvm,file={options.igvm}' ]
