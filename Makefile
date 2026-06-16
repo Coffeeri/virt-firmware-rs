@@ -190,8 +190,9 @@ DISTRO_VERSION	:= $(shell grep ^VERSION_ID= /etc/os-release | tr -d '"' | cut -d
 DISTRO		:= $(DISTRO_NAME)-$(DISTRO_VERSION)
 
 HAVE_TERMINAL	:= $(shell test -t 0 && echo yes || echo no)
+REMOTE_LOGIN	:= $(shell test "$$SSH_CONNECTION" != "" && echo yes || echo no)
 TMT_REPORT	:= --how html
-ifeq ($(HAVE_TERMINAL),yes)
+ifeq ($(HAVE_TERMINAL)-$(REMOTE_LOGIN),yes-no)
 TMT_REPORT	+= --open
 endif
 
