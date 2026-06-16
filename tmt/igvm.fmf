@@ -50,7 +50,7 @@ require:
       set -ex
       ukify build \
         --linux $KERNEL \
-        --cmdline "console=ttyS0 panic=1" \
+        --cmdline "earlyprintk=ttyS0 console=ttyS0 panic=1" \
         --output uki.efi
       igvm-wrap \
         --input /usr/share/edk2/ovmf/OVMF_CODE.fd \
