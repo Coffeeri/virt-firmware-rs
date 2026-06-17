@@ -54,3 +54,17 @@ run-uefi-netboot-xyz:
 	qemu-efi-$(HOST_ARCH) -m 4G \
 		-fw_cfg name=etc/edk2/https/cacerts,file=/etc/pki/ca-trust/extracted/edk2/cacerts.bin \
 		-kernel target/$(HOST_ARCH)-unknown-uefi/debug/netboot.efi -append xyz
+
+run-uefi-vmfwupdate-poweroff:
+	qemu-efi-x86_64 -nographic -net none \
+		-igvm /usr/share/edk2/ovmf/OVMF.igvm \
+		-kernel target/x86_64-unknown-uefi/debug/vmfwupdate.efi \
+		-append "poweroff" \
+		-device vm-launch-update
+
+run-uefi-vmfwupdate-reset:
+	qemu-efi-x86_64 -nographic -net none \
+		-igvm /usr/share/edk2/ovmf/OVMF.igvm \
+		-kernel target/x86_64-unknown-uefi/debug/vmfwupdate.efi \
+		-append "reset" \
+		-device vm-launch-update
