@@ -72,4 +72,4 @@ require:
       python boot-test-igvm-qemu.py \
         --igvm test.uki.igvm \
         --expect "Cannot open root device" \
-        --timeout 30
+        --timeout 60

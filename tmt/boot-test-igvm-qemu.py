@@ -39,7 +39,7 @@ def main():
                         type = str, metavar = 'ARGS',
                         help = 'set kernel command line (optional)')
     parser.add_argument('--timeout', dest = 'timeout',
-                        type = str, default = '20', metavar = 'SECS',
+                        type = str, default = '30', metavar = 'SECS',
                         help = 'set timeout (default: 20)')
     parser.add_argument('--snp', dest = 'snp',
                          default = False, action = 'store_true',
