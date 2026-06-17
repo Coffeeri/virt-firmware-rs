@@ -188,13 +188,13 @@ fn main() -> Status {
         return Status::SUCCESS;
     };
 
-    let Some(cmdline) = misc::cmdline("netboot") else {
+    let Some(cmdline) = misc::cmdline() else {
         println!("usage: netboot.efi $url");
         boot::stall(Duration::new(1, 0));
         return Status::SUCCESS;
     };
 
-    let uri = match cmdline.as_str() {
+    let uri = match cmdline.first().unwrap().as_str() {
         "xyz" => "http://boot.netboot.xyz/ipxe/netboot.xyz.efi",
         "coreos" => {
             let iso = coreos("stable");
@@ -205,7 +205,7 @@ fn main() -> Status {
             }
             &iso.unwrap()
         }
-        _ => &cmdline,
+        u => u,
     };
 
     println!("Creating BootEntry ...");

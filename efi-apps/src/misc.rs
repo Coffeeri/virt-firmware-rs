@@ -3,28 +3,34 @@
 //! misc utility functions
 //!
 extern crate alloc;
-use alloc::string::String;
+use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
 use uefi::prelude::*;
 use uefi::proto::device_path::DevicePath;
 use uefi::proto::loaded_image::LoadedImage;
+use uefi::proto::shell_params::ShellParameters;
 use uefi::{print, println};
 
 /// return command line if present
-pub fn cmdline(me: &str) -> Option<String> {
-    let image = boot::open_protocol_exclusive::<LoadedImage>(boot::image_handle()).ok()?;
-    let cmdline16 = image.load_options_as_cstr16().ok()?;
-    let cmdline = String::from_utf16_lossy(cmdline16.to_u16_slice());
-    let mut args: Vec<&str> = cmdline.split_whitespace().collect();
-
-    if let Some(arg0) = args.first() {
-        if arg0.starts_with(me) {
-            args.remove(0);
-        }
+pub fn cmdline() -> Option<Vec<String>> {
+    let mut args: Vec<String>;
+    if let Ok(params) = boot::open_protocol_exclusive::<ShellParameters>(boot::image_handle()) {
+        // started from efi shell
+        args = params.args().map(|s| s.to_string()).collect();
+        args.remove(0);
+    } else {
+        let image = boot::open_protocol_exclusive::<LoadedImage>(boot::image_handle()).ok()?;
+        let cmdline16 = image.load_options_as_cstr16().ok()?;
+        let cmdline = String::from_utf16_lossy(cmdline16.to_u16_slice());
+        args = cmdline.split_whitespace().map(|s| s.to_string()).collect();
     }
 
-    Some(args.join(" "))
+    if args.is_empty() {
+        None
+    } else {
+        Some(args)
+    }
 }
 
 /// connect all controllers
