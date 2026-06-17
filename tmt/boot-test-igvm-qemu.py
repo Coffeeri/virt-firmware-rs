@@ -41,6 +41,12 @@ def main():
     parser.add_argument('--timeout', dest = 'timeout',
                         type = str, default = '30', metavar = 'SECS',
                         help = 'set timeout (default: 20)')
+    parser.add_argument('--vcpu', dest = 'vcpu',
+                        type = str, default = '1', metavar = 'CPUS',
+                        help = 'set vcpu count (default: 1)')
+    parser.add_argument('--memory', dest = 'memory',
+                        type = str, default = '1G', metavar = 'MEM',
+                        help = 'set memory size (default: 1G)')
     parser.add_argument('--snp', dest = 'snp',
                          default = False, action = 'store_true',
                         help = 'boot in sev-snp mode')
@@ -51,8 +57,10 @@ def main():
                 '-enable-kvm',
                 '-machine', 'q35,igvm-cfg=fw.igvm',
                 '-cpu', 'host',
-                '-m', '1G',
+                '-m', options.memory,
+                '-smp', options.vcpu,
                 '-nographic', '-no-reboot',
+                '-net', 'none',
                 '-object', f'igvm-cfg,id=fw.igvm,file={options.igvm}' ]
 
     result = { 'name' : '/boot/in/qemu',

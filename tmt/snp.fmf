@@ -43,8 +43,17 @@ require:
     test: |
       python boot-test-igvm-qemu.py \
         --igvm snp.bare.igvm \
+        --vcpu $VCPU \
         --expect BdsDxe \
         --snp
+
+    /up:
+      environment+:
+        VCPU: 1
+
+    /smp:
+      environment+:
+        VCPU: 4
 
 /1boot/uki/nosb:
     summary: boot ovmf + uki, no secure boot
