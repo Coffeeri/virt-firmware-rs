@@ -83,8 +83,9 @@ fn main() -> Status {
     log::set_max_level(log::LevelFilter::Info);
 
     let mut use_pager = false;
-    if let Some(cmdline) = misc::cmdline("hoblist") {
-        if cmdline == "-p" || cmdline == "pager" {
+    if let Some(cmdline) = misc::cmdline() {
+        let arg1 = cmdline.first().unwrap().as_str();
+        if arg1 == "-p" || arg1 == "pager" {
             use_pager = true;
         }
     }

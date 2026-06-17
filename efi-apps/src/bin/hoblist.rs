@@ -98,12 +98,12 @@ fn list_hobs() {
         return;
     };
 
-    let Some(cmdline) = misc::cmdline("hoblist") else {
+    let Some(cmdline) = misc::cmdline() else {
         list_raw(hl);
         return;
     };
 
-    match cmdline.as_str() {
+    match cmdline.first().unwrap().as_str() {
         "help" => {
             println!("list firmware hobs");
             println!("modes:");
