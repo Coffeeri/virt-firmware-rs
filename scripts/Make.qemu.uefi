@@ -1,15 +1,15 @@
 # -*- Makefile -*-
 
 run-uefi-hello:
-	qemu-efi-$(ARCH) -nographic -net none \
-		-kernel target/$(ARCH)-unknown-uefi/debug/hello.efi
+	qemu-efi-$(HOST_ARCH) -nographic -net none \
+		-kernel target/$(HOST_ARCH)-unknown-uefi/debug/hello.efi
 
 run-uefi-fwcfg:
-	qemu-efi-$(ARCH) -nographic -net none \
-		-kernel target/$(ARCH)-unknown-uefi/debug/fwcfg.efi
+	qemu-efi-$(HOST_ARCH) -nographic -net none \
+		-kernel target/$(HOST_ARCH)-unknown-uefi/debug/fwcfg.efi
 
 run-uefi-pciscan:
-	qemu-efi-$(ARCH) -nographic -net none \
+	qemu-efi-$(HOST_ARCH) -nographic -net none \
 		\
 		-device pcie-root-port,id=port0,addr=8.0,chassis=0,multifunction=on \
 		-device pcie-root-port,id=port1,addr=8.1,chassis=1 \
@@ -27,30 +27,30 @@ run-uefi-pciscan:
 		\
 		-device pci-serial,bus=pci0 \
 		\
-		-kernel target/$(ARCH)-unknown-uefi/debug/pciscan.efi
+		-kernel target/$(HOST_ARCH)-unknown-uefi/debug/pciscan.efi
 
 run-uefi-hoblist:
-	qemu-efi-$(ARCH) -nographic -net none \
-		-kernel target/$(ARCH)-unknown-uefi/debug/hoblist.efi
+	qemu-efi-$(HOST_ARCH) -nographic -net none \
+		-kernel target/$(HOST_ARCH)-unknown-uefi/debug/hoblist.efi
 
 run-uefi-fdt:
-	qemu-efi-$(ARCH) -nographic -net none \
-		-kernel target/$(ARCH)-unknown-uefi/debug/hoblist.efi -append fdt
+	qemu-efi-$(HOST_ARCH) -nographic -net none \
+		-kernel target/$(HOST_ARCH)-unknown-uefi/debug/hoblist.efi -append fdt
 
 run-uefi-log:
-	qemu-efi-$(ARCH) -nographic -net none \
-		-kernel target/$(ARCH)-unknown-uefi/debug/debuglog.efi
+	qemu-efi-$(HOST_ARCH) -nographic -net none \
+		-kernel target/$(HOST_ARCH)-unknown-uefi/debug/debuglog.efi
 
 run-uefi-msr:
-	qemu-efi-$(ARCH) -nographic -net none \
-		-kernel target/$(ARCH)-unknown-uefi/debug/msr.efi
+	qemu-efi-$(HOST_ARCH) -nographic -net none \
+		-kernel target/$(HOST_ARCH)-unknown-uefi/debug/msr.efi
 
 run-uefi-netboot-coreos:
-	qemu-efi-$(ARCH) -m 4G \
+	qemu-efi-$(HOST_ARCH) -m 4G \
 		-fw_cfg name=etc/edk2/https/cacerts,file=/etc/pki/ca-trust/extracted/edk2/cacerts.bin \
-		-kernel target/$(ARCH)-unknown-uefi/debug/netboot.efi -append coreos
+		-kernel target/$(HOST_ARCH)-unknown-uefi/debug/netboot.efi -append coreos
 
 run-uefi-netboot-xyz:
-	qemu-efi-$(ARCH) -m 4G \
+	qemu-efi-$(HOST_ARCH) -m 4G \
 		-fw_cfg name=etc/edk2/https/cacerts,file=/etc/pki/ca-trust/extracted/edk2/cacerts.bin \
-		-kernel target/$(ARCH)-unknown-uefi/debug/netboot.efi -append xyz
+		-kernel target/$(HOST_ARCH)-unknown-uefi/debug/netboot.efi -append xyz
