@@ -23,6 +23,10 @@ struct Args {
     #[arg(long, value_name = "ESP")]
     esp: Option<String>,
 
+    /// add efi binary
+    #[arg(long, value_name = "EFI")]
+    add: Vec<String>,
+
     /// override csv output location
     #[arg(long, value_name = "CSV")]
     csv: Option<String>,
@@ -97,11 +101,20 @@ fn main() -> ExitCode {
 
     let mut csv = String::new();
     let esp_path = std::path::Path::new(&esp);
+
+    for app in args.add {
+        let binary = std::path::Path::new(&app);
+        info!("add: {}", binary.display());
+        let line = create_csv_line(esp_path, &shim_name, binary, "");
+        csv.push_str(&line);
+    }
+
     for uki in glob::glob(&uki_glob).expect("uki glob failed").flatten() {
         info!("uki: {}", uki.display());
         let line = create_csv_line(esp_path, &shim_name, &uki, &cmdline);
         csv.push_str(&line);
     }
+
     if csv.is_empty() {
         error!("no uki images found ({uki_glob})");
         return ExitCode::from(1);
