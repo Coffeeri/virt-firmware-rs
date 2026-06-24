@@ -4,7 +4,7 @@
 
 use clap::Parser;
 use log::{debug, error, info};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 use virtfw_efi_tools::shimcsv::write_boot_csv;
@@ -30,6 +30,26 @@ struct Args {
     /// override kernel cmd line (default: /etc/kernel/cmdline)
     #[arg(long, value_name = "APPEND")]
     cmdline: Option<String>,
+}
+
+fn create_csv_line(esp_path: &Path, shim_name: &str, binary: &Path, cmdline: &str) -> String {
+    let efi = binary
+        .strip_prefix(esp_path)
+        .unwrap()
+        .display()
+        .to_string()
+        .replace("/", "\\");
+    info!("efi: -> \\{efi}");
+    let title = binary.file_name().unwrap().to_str().unwrap();
+    let line = format!(
+        "{},{},\\{} {},{}\n",
+        shim_name,
+        title,
+        efi,
+        cmdline.trim(),
+        "Comment"
+    );
+    line
 }
 
 fn main() -> ExitCode {
@@ -79,22 +99,7 @@ fn main() -> ExitCode {
     let esp_path = std::path::Path::new(&esp);
     for uki in glob::glob(&uki_glob).expect("uki glob failed").flatten() {
         info!("uki: {}", uki.display());
-        let efi = uki
-            .strip_prefix(esp_path)
-            .unwrap()
-            .display()
-            .to_string()
-            .replace("/", "\\");
-        info!("efi: -> \\{efi}");
-        let title = uki.file_name().unwrap().to_str().unwrap();
-        let line = format!(
-            "{},{},\\{} {},{}\n",
-            shim_name,
-            title,
-            efi,
-            cmdline.trim(),
-            "Comment"
-        );
+        let line = create_csv_line(esp_path, &shim_name, &uki, &cmdline);
         csv.push_str(&line);
     }
     if csv.is_empty() {
