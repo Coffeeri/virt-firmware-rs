@@ -103,6 +103,10 @@ fn main() -> ExitCode {
     let esp_path = std::path::Path::new(&esp);
 
     for app in args.add {
+        if !app.starts_with(&esp) {
+            error!("{app} is not on esp ({esp})");
+            return ExitCode::from(1);
+        }
         let binary = std::path::Path::new(&app);
         info!("add: {}", binary.display());
         let line = create_csv_line(esp_path, &shim_name, binary, "");
