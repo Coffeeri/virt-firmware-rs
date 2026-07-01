@@ -71,10 +71,16 @@ pub fn snp_cpuid(func: u32, subfn: u32) -> (u32, u32, u32, u32) {
 
 #[bitfield(u32)]
 pub struct CpuidSevEax {
+    pub sme: bool,
     pub sev: bool,
+    pub page_flush_msr: bool,
     pub sev_es: bool,
     pub sev_snp: bool,
-    #[bits(29)]
+    pub vmpl: bool,
+    pub rmp_query: bool,
+    pub vmpl_sss: bool,
+
+    #[bits(24)]
     _reserved: u64,
 }
 
