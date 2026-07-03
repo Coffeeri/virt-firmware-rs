@@ -51,7 +51,7 @@ struct Args {
 
     /// select 'PK' mode
     #[arg(long, value_name = "MODE", help_heading = "Quick setup",
-          value_enum, default_value_t = PkEnroll::ExtMgmt)]
+          value_enum, default_value_t = PkEnroll::RedHat)]
     enroll: PkEnroll,
 
     /// select efi architecture for 'dbx' update
