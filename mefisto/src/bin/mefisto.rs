@@ -394,11 +394,11 @@ fn main() {
     let iload = loader.initrd_loader();
     let cmdline = loader.cmdline();
 
-    if let Some(i) = iload {
-        info!("fwcfg: setup initrd loader");
-        efi.set_initrd_loader(i);
-    }
     if let Some(k) = kload {
+        if let Some(i) = iload {
+            info!("fwcfg: setup initrd loader");
+            efi.set_initrd_loader(i);
+        }
         info!("fwcfg: loading kernel image");
         if let Some(mut li) = efi.load_image(&k) {
             li.set_load_options(cmdline);
@@ -408,10 +408,9 @@ fn main() {
         } else {
             error!("fwcfg: image load failed");
         }
-    } else {
-        error!("fwcfg: no kernel found");
     }
 
+    error!("no kernel found (igvm/fwcfg)");
     if let Some(b) = board {
         b.poweroff();
     }
