@@ -4,6 +4,7 @@ use alloc::vec::Vec;
 use core::mem::MaybeUninit;
 use log::{debug, info};
 
+use virtfw_libefi::hob::igvmdata::{EfiIgvmDataHob, EfiIgvmDataType};
 use virtfw_libhw::fwcfg::x86::FwCfgX86;
 use virtfw_libhw::fwcfg::{
     FwCfg, ITEM_CMDLINE_DATA, ITEM_CMDLINE_SIZE, ITEM_INITRD_DATA, ITEM_INITRD_SIZE,
@@ -129,6 +130,67 @@ impl efiloader::FileLoader for &FwCfgFileLoader<'_> {
     ) -> Result<(), &str> {
         debug!("load range: 0x{offset:x} +0x{size:x} to {:?}", loadbuffer);
         self.load_dma(loadbuffer, offset, size);
+        Ok(())
+    }
+}
+
+const DATA_HOBS_MAX: usize = PAGE_4K / size_of::<EfiIgvmDataHob>();
+
+#[link_section = ".igvm.datahobs"]
+static DATA_HOBS: MaybeUninit<[EfiIgvmDataHob; DATA_HOBS_MAX]> = MaybeUninit::uninit();
+
+pub struct IgvmFileLoader {
+    hob: EfiIgvmDataHob,
+    buf: &'static [u8],
+}
+
+impl IgvmFileLoader {
+    pub fn new(data_type: EfiIgvmDataType) -> Option<Self> {
+        let hobs = unsafe { DATA_HOBS.assume_init_ref() };
+        for hob in hobs {
+            if !hob.is_valid() {
+                return None;
+            }
+            if hob.data_type != data_type as u32 {
+                continue;
+            }
+            let loader = Self {
+                hob: hob.clone(),
+                buf: unsafe {
+                    core::slice::from_raw_parts(hob.address as *const _, hob.length as usize)
+                },
+            };
+            return Some(loader);
+        }
+        None
+    }
+}
+
+impl efiloader::FileLoader for IgvmFileLoader {
+    fn get_size(&self) -> usize {
+        self.hob.length as usize
+    }
+
+    fn load_file<'fl>(&self, loadbuffer: &'fl mut [MaybeUninit<u8>]) -> Result<&'fl [u8], &str> {
+        if loadbuffer.len() < self.buf.len() {
+            return Err("size mismatch");
+        }
+        let buf: &mut [u8] = unsafe { loadbuffer.assume_init_mut() };
+        buf.copy_from_slice(self.buf);
+        Ok(buf)
+    }
+
+    unsafe fn load_range(
+        &self,
+        loadbuffer: *mut (),
+        offset: usize,
+        size: usize,
+    ) -> Result<(), &str> {
+        if (offset > self.hob.length as usize) || (offset + size > self.hob.length as usize) {
+            return Err("size mismatch");
+        }
+        let dst = unsafe { core::slice::from_raw_parts_mut(loadbuffer as *mut _, size) };
+        dst.copy_from_slice(&self.buf[offset..offset + size]);
         Ok(())
     }
 }

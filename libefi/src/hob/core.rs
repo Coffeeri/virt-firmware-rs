@@ -17,7 +17,7 @@ pub const EFI_HOB_TYPE_UNUSED: u16 = 0xFFFE;
 pub const EFI_HOB_TYPE_END_OF_HOB_LIST: u16 = 0xFFFF;
 
 #[repr(C)]
-#[derive(Debug, FromBytes, IntoBytes, Immutable)]
+#[derive(Debug, FromBytes, IntoBytes, Immutable, Clone)]
 pub struct EfiHobHeader {
     pub hob_type: u16,
     pub hob_length: u16,
