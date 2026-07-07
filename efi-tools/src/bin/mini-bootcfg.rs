@@ -88,6 +88,10 @@ struct Args {
     #[arg(long, value_name = "TITLE", help_heading = "Options for entry updates")]
     title: Option<String>,
 
+    /// use shim binary FILE
+    #[arg(long, value_name = "FILE", help_heading = "Options for entry updates")]
+    shim: Option<String>,
+
     /// print boot loader name
     #[arg(long, help_heading = "Print system information")]
     print_loader: bool,
@@ -441,7 +445,10 @@ fn main() -> ExitCode {
     let osinfo = LinuxOsInfo::new();
     let bootcfg = BootConfig::new();
 
-    let shim = osinfo.shim_path().unwrap();
+    let shim = cfg
+        .shim
+        .clone()
+        .unwrap_or_else(|| osinfo.shim_path().unwrap());
     let efi_shim = EfiFile::new(&shim);
 
     if cfg.show {
