@@ -31,8 +31,8 @@ igvm_defs = { version = "0.4" }
 log = { version = "0.4", default-features = false }
 serde = { version = "1", default-features = false, features = [ "alloc", "derive" ] }
 serde_json = { version = "1", default-features = false, features = [ "alloc" ]  }
-uefi = { version = "0.37" }
-uefi-raw = { version = "0.14" }
+uefi = { version = "0.38" }
+uefi-raw = { version = "0.15" }
 uguid = { version = "2" }
 x509-cert = { version = "0.2.5", default-features = false }
 zerocopy = { version = "0.8", features = [ "derive" ] }

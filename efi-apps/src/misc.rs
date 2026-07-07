@@ -42,7 +42,7 @@ pub fn connect_all(verbose: bool) {
         print!("connecting {} handles ... ", handles.as_ref().len());
     }
     for h in handles.as_ref() {
-        let _ = boot::connect_controller(*h, None, None, true);
+        let _ = boot::connect_controller(*h, &[], None, true);
     }
     if verbose {
         println!("done");
