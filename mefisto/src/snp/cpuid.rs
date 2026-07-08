@@ -71,13 +71,21 @@ pub fn snp_cpuid(func: u32, subfn: u32) -> (u32, u32, u32, u32) {
 
 #[bitfield(u32)]
 pub struct CpuidSevEax {
+    /// AMD Secure Memory Encryption (SME) active
     pub sme: bool,
+    /// AMD Secure Encrypted Virtualization (SEV) active
     pub sev: bool,
+    /// Indicates if the PFLUSH MSR is supported.
     pub page_flush_msr: bool,
+    /// AMD SEV Encrypted State (SEV-ES) active
     pub sev_es: bool,
+    /// AMD SEV Secure Nested Paging (SEV-SNP) is active
     pub sev_snp: bool,
+    /// Virtual Machine Privilege Levels (VMPL) available
     pub vmpl: bool,
+    /// RMPQUERY instruction is supported
     pub rmp_query: bool,
+    /// VMPL Supervisor Shadow Stack is supported
     pub vmpl_sss: bool,
 
     #[bits(24)]
