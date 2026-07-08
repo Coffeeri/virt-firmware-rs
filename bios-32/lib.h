@@ -19,7 +19,7 @@ void outw(uint16_t port, uint16_t value);
 void outl(uint16_t port, uint32_t value);
 uint8_t inb(uint16_t port);
 uint16_t inw(uint16_t port);
-uint16_t inl(uint16_t port);
+uint32_t inl(uint16_t port);
 
 // output.c
 
@@ -57,4 +57,6 @@ void fwcfg_hexdump(const char *file, uint32_t max);
 void acpi_pm_init_pc(void);
 void acpi_pm_init_q35(void);
 void acpi_pm_poweroff(void);
+uint32_t acpi_pm_timer(void);
+void acpi_pm_sleep(uint32_t secs);
 void pci_init_info(bool verbose);

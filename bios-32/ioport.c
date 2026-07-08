@@ -31,7 +31,7 @@ uint16_t inw(uint16_t port)
     return value;
 }
 
-uint16_t inl(uint16_t port)
+uint32_t inl(uint16_t port)
 {
     uint32_t value;
     asm volatile ("inl %%dx, %%eax" : "=a"(value) : "d"(port));
