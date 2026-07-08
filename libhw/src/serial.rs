@@ -65,6 +65,7 @@ impl SerialWriter {
 
     pub fn putsln<B: AsRef<[u8]> + ?Sized>(&self, buf: &B) {
         self.puts(buf);
+        self.putc(b'\r');
         self.putc(b'\n');
     }
 }
@@ -96,7 +97,9 @@ impl Log for SerialWriter {
 
     fn log(&self, record: &Record) {
         let mut w = self;
-        let _ = writeln!(w, "{}: {}", record.level(), record.args());
+        let _ = write!(w, "{}: {}", record.level(), record.args());
+        w.putc(b'\r');
+        w.putc(b'\n');
     }
 
     fn flush(&self) {}
