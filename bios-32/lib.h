@@ -57,4 +57,6 @@ void fwcfg_hexdump(const char *file, uint32_t max);
 void acpi_pm_init_pc(void);
 void acpi_pm_init_q35(void);
 void acpi_pm_poweroff(void);
+uint32_t acpi_pm_timer(void);
+void acpi_pm_sleep(uint32_t secs);
 void pci_init_info(bool verbose);

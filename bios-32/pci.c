@@ -15,6 +15,7 @@
 
 #define ACPI_PM_BASE                0x600
 #define ACPI_PM_CNT    (ACPI_PM_BASE + 4)
+#define ACPI_PM_TMR    (ACPI_PM_BASE + 8)
 
 void acpi_pm_init_pc(void)
 {
@@ -37,6 +38,35 @@ void acpi_pm_init_q35(void)
 void acpi_pm_poweroff(void)
 {
     outw(ACPI_PM_CNT, 0x2000);
+}
+
+uint32_t acpi_pm_timer(void)
+{
+    return inl(ACPI_PM_TMR) & 0xffffff;
+}
+
+void acpi_pm_sleep(uint32_t secs)
+{
+    uint32_t now = acpi_pm_timer();
+    uint32_t end = now + 3579545 * secs;
+    uint32_t prev = now;
+
+    while (1) {
+        now = acpi_pm_timer();
+        if (now > end) {
+            return;
+        }
+
+        /* handle wrap around */
+        if (now < prev) {
+            if (end > 0x1000000) {
+                end -= 0x1000000;
+            } else {
+                end = 0;
+            }
+        }
+        prev = now;
+    }
 }
 
 void pci_init_info(bool verbose)
