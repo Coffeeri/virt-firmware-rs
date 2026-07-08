@@ -10,5 +10,7 @@ void main(void)
 
     pci_init_info(false);
     acpi_pm_sleep(1);
+
+    puts("poweroff ...\n");
     acpi_pm_poweroff();
 }
