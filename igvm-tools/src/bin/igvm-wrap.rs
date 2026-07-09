@@ -184,11 +184,12 @@ fn main() -> ExitCode {
             builder.add_snp_policy(None);
         }
 
-        // parameters
+        // parameters + hoblist
         if let Some(m) = ovmfmeta.as_ref() {
             if cfg.get_params() {
                 builder.add_ovmf_igvm_params(m);
             }
+            builder.add_ovmf_igvm_hoblist_clear(m);
         }
 
         // firmware code

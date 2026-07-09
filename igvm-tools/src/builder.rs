@@ -220,6 +220,21 @@ impl Builder {
         self
     }
 
+    pub fn add_ovmf_igvm_hoblist_clear(&mut self, ovmfmeta: &OvmfMeta) -> &mut Builder {
+        let Some(area) = &ovmfmeta
+            .regions
+            .iter()
+            .find(|r| r.etype == OvmfRegionType::IgvmHobArea)
+        else {
+            return self;
+        };
+
+        self.remove_page(area.memory.0);
+        self.add_data_pages(area.memory.0, &[0]);
+
+        self
+    }
+
     pub fn add_data_pages_flags(
         &mut self,
         base: usize,
