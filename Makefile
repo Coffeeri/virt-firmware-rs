@@ -97,6 +97,14 @@ rust-targets:
 	@for t in $(RUST_CROSS); do echo "  - $$t"; done
 	@echo ""
 
+dnf:
+	sudo dnf install \
+		rust cargo clippy \
+		rust-std-static-x86_64-unknown-none \
+		rust-std-static-*-unknown-uefi \
+		gcc gcc-x86_64-linux-gnu \
+		openssl-devel systemd-devel xz-devel
+
 cargo-doc: $(patsubst %,doc-%,$(PKGS)) doc-libefi doc-libhw
 cargo-test: test-libefi test-varstore test-igvm-tools
 cargo-build: $(patsubst %,build-%,$(PKGS))
