@@ -12,4 +12,9 @@ curl -s -X POST "$URL" \
      -d "{\"jwt\": \"$CRATES_IO_ID_TOKEN\"}" \
      > "$response"
 
-jq . "$response" | tr "[a-fA-F]" "x"
+if "$(jq .errors)" != "null"; then
+    jq .errors "$response" 1>&2
+    exit 1
+fi
+
+jq . "$response" | tr "a-fA-F" "x"
