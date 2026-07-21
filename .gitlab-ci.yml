@@ -156,5 +156,6 @@ oidc-test:
     - echo "foo bar"
     - echo "$CI_PROJECT_NAME"
     - echo "$CRATES_IO_PUBLISH_TOKEN" | tr "a-z" "x"
+    - echo "${CRATES_IO_PUBLISH_TOKEN::16}" | tr "a-z" "x"
 #    - echo "CRATES_IO_PUBLISH_TOKEN: ${CRATES_IO_PUBLISH_TOKEN::16}..."
   allow_failure: true
