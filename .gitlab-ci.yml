@@ -119,6 +119,15 @@ pkg-varstore:
     - make package-varstore
   allow_failure: true
 
+oidc-test:
+  stage: publish
+  id_tokens:
+    CRATES_IO_ID_TOKEN:
+      aud: crates.io
+  script:
+    - scripts/oidc-token.sh
+  allow_failure: true
+
 pages:
   stage: publish
   needs:
