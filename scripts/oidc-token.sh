@@ -4,6 +4,9 @@
 URL="https://crates.io/api/v1/trusted_publishing/tokens"
 UA="gitlab-trusted-publishing (kraxel@redhat.com)"
 
+# debug: print environment
+printenv | sort
+
 set -e
 response="$(mktemp ${TMPDIR-/tmp}/response-XXXXXXXX.json)"
 curl -s -X POST "$URL" \
@@ -18,4 +21,5 @@ if test "$(jq .errors "$response")" != "null"; then
     exit 1
 fi
 
+# debug: print token, somewhat obfuscated
 jq . "$response" | tr "a-fA-F" "x"
