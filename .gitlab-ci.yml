@@ -153,6 +153,5 @@ oidc-test:
       aud: crates.io
   script:
     - export CRATES_IO_PUBLISH_TOKEN="$(scripts/oidc-token.sh)"
-    - echo "$CRATES_IO_PUBLISH_TOKEN" | tr "a-z" "x"
-    - echo "${CRATES_IO_PUBLISH_TOKEN::16}" | tr "a-z" "x"
+    - echo "${CRATES_IO_PUBLISH_TOKEN::16}..."
   allow_failure: true
