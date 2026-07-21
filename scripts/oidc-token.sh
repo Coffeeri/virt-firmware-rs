@@ -2,10 +2,10 @@
 
 # config
 URL="https://crates.io/api/v1/trusted_publishing/tokens"
-UA="gitlab-trusted-publishing (kraxel@redhat.com)"
+UA="gitlab-trusted-publishing ($GITLAB_USER_EMAIL)"
 
 # debug: print environment
-printenv | sort
+#printenv | sort
 
 set -e
 response="$(mktemp ${TMPDIR-/tmp}/response-XXXXXXXX.json)"
