@@ -12,7 +12,7 @@ curl -s -X POST "$URL" \
      -d "{\"jwt\": \"$CRATES_IO_ID_TOKEN\"}" \
      > "$response"
 
-if "$(jq .errors)" != "null"; then
+if test "$(jq .errors)" != "null"; then
     jq .errors "$response" 1>&2
     exit 1
 fi
