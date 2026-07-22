@@ -1,6 +1,6 @@
 [package]
 name = "virtfw-libhw"
-version = "0.5.0"
+version = "0.5.1"
 publish = true
 description = "library for direct hardware access"
 readme = "README.md"
