@@ -91,37 +91,22 @@ pkg-libhw:
   <<: *pkg-check
 
 pkg-libefi:
-  stage: package
-  needs: []
-  script:
-    - make package-libefi
+  <<: *pkg-check
 
 pkg-efi-apps:
-  stage: package
-  needs: []
-  script:
-    - make package-efi-apps
+  <<: *pkg-check
   allow_failure: true
 
 pkg-efi-tools:
-  stage: package
-  needs: []
-  script:
-    - make package-efi-tools
+  <<: *pkg-check
   allow_failure: true
 
 pkg-igvm-tools:
-  stage: package
-  needs: []
-  script:
-    - make package-igvm-tools
+  <<: *pkg-check
   allow_failure: true
 
 pkg-varstore:
-  stage: package
-  needs: []
-  script:
-    - make package-varstore
+  <<: *pkg-check
   allow_failure: true
 
 pages:
@@ -160,3 +145,12 @@ oidc-test:
     - export CRATES_IO_PUBLISH_TOKEN="$(scripts/oidc-token.sh)"
     - echo "${CRATES_IO_PUBLISH_TOKEN::16}..."
   allow_failure: true
+
+upload-test:
+  stage: publish
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^[^-]-v[0-9.]+$/
+  script:
+    - PKG=${CI_COMMIT_TAG%-*}
+    - VER=${CI_COMMIT_TAG#*-}
+    - echo "package is $PKG - version is $VER"
