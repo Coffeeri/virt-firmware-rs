@@ -79,11 +79,16 @@ test-tmt:
     paths:
       - tmt-root
 
-pkg-libhw:
+.pkg-check: &pkg-check
   stage: package
   needs: []
   script:
-    - make package-libhw
+    - PKG=${CI_JOB_NAME#pkg-}
+    - echo package is ${PKG}
+    - make package-${PKG}
+
+pkg-libhw:
+  <<: *pkg-check
 
 pkg-libefi:
   stage: package
