@@ -1544,7 +1544,7 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
 name = "virtfw-efi-apps"
-version = "0.1.10"
+version = "0.1.11"
 dependencies = [
  "fdt",
  "log",
@@ -1559,7 +1559,7 @@ dependencies = [
 
 [[package]]
 name = "virtfw-efi-tools"
-version = "0.1.9"
+version = "0.1.10"
 dependencies = [
  "byteorder",
  "clap",
@@ -1589,7 +1589,7 @@ dependencies = [
 
 [[package]]
 name = "virtfw-igvm-tools"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "authenticode",
  "bitfield-struct 0.13.0",
@@ -1610,7 +1610,7 @@ dependencies = [
 
 [[package]]
 name = "virtfw-libefi"
-version = "0.6.2"
+version = "0.6.3"
 dependencies = [
  "bitfield-struct 0.13.0",
  "byteorder",
@@ -1627,7 +1627,7 @@ dependencies = [
 
 [[package]]
 name = "virtfw-libhw"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "bitfield-struct 0.13.0",
  "log",
@@ -1653,7 +1653,7 @@ dependencies = [
 
 [[package]]
 name = "virtfw-varstore"
-version = "0.6.2"
+version = "0.6.3"
 dependencies = [
  "clap",
  "clap_mangen",
