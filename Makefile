@@ -143,6 +143,8 @@ build-bios-32: build-igvm-tools
 clean-bios-32:
 	make -C bios-32 clean
 
+build-efi-apps: build-bios-32
+
 # maintainer target
 push: all
 	git push
