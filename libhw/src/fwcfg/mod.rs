@@ -6,6 +6,7 @@ pub mod x86;
 pub mod acpi;
 #[cfg(feature = "alloc")]
 pub mod smbios;
+pub mod vmfwupdate;
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
