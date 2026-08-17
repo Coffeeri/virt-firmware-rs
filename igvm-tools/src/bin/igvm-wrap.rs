@@ -126,12 +126,12 @@ fn main() -> ExitCode {
         .init();
 
     if let Some(ref infile) = cfg.input {
-        info!("reading {}", &infile);
+        info!("reading {}", infile);
 
         // code
         let firmware_res = fs::read(infile);
         if let Err(e) = firmware_res {
-            error!("read {}: {}", &infile, e);
+            error!("read {}: {}", infile, e);
             return ExitCode::from(1);
         }
         let firmware = firmware_res.unwrap();
@@ -145,10 +145,10 @@ fn main() -> ExitCode {
 
         // vars
         let uefivars = if let Some(ref varsfile) = cfg.vars {
-            info!("reading {}", &varsfile);
+            info!("reading {}", varsfile);
             let uefivars_res = fs::read(varsfile);
             if let Err(e) = uefivars_res {
-                error!("read {}: {}", &varsfile, e);
+                error!("read {}: {}", varsfile, e);
                 return ExitCode::from(1);
             }
             Some(uefivars_res.unwrap())
@@ -229,10 +229,10 @@ fn main() -> ExitCode {
                 return ExitCode::from(1);
             }
 
-            info!("writing {}", &outfile);
+            info!("writing {}", outfile);
             let res = fs::write(&outfile, blob);
             if let Err(e) = res {
-                error!("write {}: {}", &outfile, e);
+                error!("write {}: {}", outfile, e);
                 return ExitCode::from(1);
             }
         } else {

@@ -134,7 +134,7 @@ impl<'f> AcpiLoader<'f> {
                 }
             };
 
-            trace!("{:?}", &command);
+            trace!("{:?}", command);
             self.commands.push(command);
         }
         Some(())
@@ -170,7 +170,7 @@ impl<'f> AcpiLoader<'f> {
 
                 trace!(
                     "LoaderMemory: {}, item {}, size {}, addr {:x}",
-                    &mem.filename,
+                    mem.filename,
                     mem.item,
                     mem.size,
                     mem.addr

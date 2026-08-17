@@ -383,7 +383,7 @@ fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
 
     // additional data: kernel
     let kernel_blob = if let Some(kernel_name) = &cfg.kernel {
-        info!("reading {}", &kernel_name);
+        info!("reading {}", kernel_name);
         let data = std::fs::read(kernel_name).expect("kernel: file read error");
         Some(data)
     } else {
@@ -439,10 +439,10 @@ fn main() -> ExitCode {
             return ExitCode::from(1);
         }
 
-        info!("writing {}", &outfile);
+        info!("writing {}", outfile);
         let res = fs::write(&outfile, blob);
         if let Err(e) = res {
-            error!("write {}: {}", &outfile, e);
+            error!("write {}: {}", outfile, e);
             return ExitCode::from(1);
         }
     }
