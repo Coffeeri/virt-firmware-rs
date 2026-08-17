@@ -30,5 +30,5 @@ pub fn sercon_init(loglevel: log::LevelFilter) {
     SERCON.init();
     log::set_logger(&SERCON).unwrap();
     log::set_max_level(loglevel);
-    info!("serial console at {}", &SERCON);
+    info!("serial console at {}", SERCON);
 }
