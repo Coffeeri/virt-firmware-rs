@@ -219,7 +219,7 @@ fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
 
     // shim
     let shim_blob = if let Some(shim_name) = &cfg.shim {
-        info!("reading {}", &shim_name);
+        info!("reading {}", shim_name);
         let data = std::fs::read(shim_name)?;
         Some(data)
     } else {
@@ -228,7 +228,7 @@ fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
 
     // kernel
     let kernel_blob = if let Some(kernel_name) = &cfg.kernel {
-        info!("reading {}", &kernel_name);
+        info!("reading {}", kernel_name);
         let data = std::fs::read(kernel_name)?;
         Some(data)
     } else {
@@ -278,10 +278,10 @@ fn main() -> ExitCode {
             return ExitCode::from(1);
         }
 
-        info!("writing {}", &outfile);
+        info!("writing {}", outfile);
         let res = std::fs::write(&outfile, blob);
         if let Err(e) = res {
-            error!("write {}: {}", &outfile, e);
+            error!("write {}: {}", outfile, e);
             return ExitCode::from(1);
         }
     } else {

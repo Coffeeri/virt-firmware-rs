@@ -241,9 +241,9 @@ impl<'p> PciSetup<'p> {
             }
         }
 
-        debug!("  {}", &self.io);
-        debug!("  {}", &self.mem32);
-        debug!("  {}", &self.mem64);
+        debug!("  {}", self.io);
+        debug!("  {}", self.mem32);
+        debug!("  {}", self.mem64);
     }
 
     fn assign_kind(&mut self, kind: PciAddrKind, base: u64) {
