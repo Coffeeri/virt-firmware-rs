@@ -2,6 +2,7 @@ use bitfield_struct::bitfield;
 use core::mem::size_of;
 use core::ptr::addr_of;
 use log::debug;
+use num_enum::FromPrimitive;
 use zerocopy::{FromBytes, Immutable, IntoBytes};
 
 use crate::fwcfg::FwCfg;
@@ -32,11 +33,22 @@ pub struct VmFwUpdateCtrl {
     _reserved2: u32,
 }
 
+#[derive(Debug, Eq, PartialEq, FromPrimitive)]
+#[repr(u16)]
+pub enum VmFwUpdateStatus {
+    Success = 0,
+    LoadFail = 1,
+    IgvmInitFail = 2,
+    #[num_enum(default)]
+    UnknownFail = 0xffff,
+}
+
 #[derive(Debug, Default, FromBytes, IntoBytes, Immutable)]
 #[repr(C, packed)]
 pub struct VmFwUpdate {
     pub version: u16,
-    _padding: [u8; 6],
+    pub status: u16, // VmFwUpdateStatus,
+    _padding: [u8; 4],
     pub capabilities: u64, // VmFwUpdateCaps,
     pub control: u64,      // VmFwUpdateCtrl,
     pub firmware_image_addr: u64,
@@ -98,7 +110,7 @@ impl<'f> FirmwareLoader<'f> {
         self.update.capabilities.into()
     }
 
-    pub fn set_igvm(&mut self, igvm: &[u8], once: bool) {
+    pub fn set_igvm(&mut self, igvm: &[u8], once: bool) -> VmFwUpdateStatus {
         let ptr = addr_of!(*igvm);
         self.update.firmware_image_addr = ptr.addr() as u64;
         self.update.firmware_image_size = igvm.len() as u64;
@@ -107,5 +119,10 @@ impl<'f> FirmwareLoader<'f> {
             .with_ctrl_once(once)
             .into();
         self.write_update();
+        self.read_update();
+        self.update
+            .status
+            .try_into()
+            .unwrap_or(VmFwUpdateStatus::UnknownFail)
     }
 }
