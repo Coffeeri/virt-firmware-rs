@@ -8,6 +8,7 @@ use core::ops::Deref;
 use uguid::Guid;
 
 use uefi::{Error, Status};
+use virtfw_libefi::efivar::ids;
 use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr, EfiVarId};
 
 use crate::policy::{VariablePolicyEntry, VariablePolicyType};
@@ -114,6 +115,18 @@ impl EfiVarStore {
         Ok(())
     }
 
+    // extra checks for secure boot variables
+    pub fn check_secure_boot(&self, variable: &EfiVar) -> Result<(), Error<&'static str>> {
+        if variable.deref() == ids::SETUP_MODE {
+            return Err(Error::new(
+                Status::WRITE_PROTECTED,
+                "SetupMode is read-only",
+            ));
+        }
+
+        Ok(())
+    }
+
     pub fn get(&self, id: &EfiVarId) -> Result<&EfiVar, Error<&'static str>> {
         if let Some(var) = self.get_unchecked(id) {
             self.check_service(var)?;
@@ -166,6 +179,7 @@ impl EfiVarStore {
         if let Some(old) = old_opt {
             self.check_service(old)?;
             self.check_attributes(old)?;
+            self.check_secure_boot(old)?;
             self.policy_check(&new, false)?;
             if old.attr().time_auth_wr_access() {
                 return Err(Error::new(
@@ -188,6 +202,7 @@ impl EfiVarStore {
         }
         self.check_service(&new)?;
         self.check_attributes(&new)?;
+        self.check_secure_boot(&new)?;
         self.policy_check(&new, old_opt.is_none())?;
 
         if new.attr().time_auth_wr_access() {
