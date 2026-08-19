@@ -13,6 +13,28 @@ use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr, EfiVarId};
 
 use crate::policy::{VariablePolicyEntry, VariablePolicyType};
 
+#[derive(Default)]
+pub struct EfiVarStoreConfig {
+    pub allow_custom_mode: bool,
+    pub enforce_secure_boot: bool,
+}
+
+impl EfiVarStoreConfig {
+    pub const fn new() -> Self {
+        Self {
+            allow_custom_mode: false,
+            enforce_secure_boot: false,
+        }
+    }
+
+    pub const fn new_sb() -> Self {
+        Self {
+            allow_custom_mode: false,
+            enforce_secure_boot: true,
+        }
+    }
+}
+
 pub struct EfiVarStore {
     // boot phases
     pub(crate) end_of_dxe: bool,
@@ -25,6 +47,9 @@ pub struct EfiVarStore {
     // variable Policies
     pub(crate) policy_locked: bool,
     pub(crate) policies: Vec<VariablePolicyEntry>,
+
+    // configuration
+    pub(crate) config: EfiVarStoreConfig,
 }
 
 impl EfiVarStore {
@@ -40,7 +65,13 @@ impl EfiVarStore {
 
             policy_locked: false,
             policies,
+
+            config: EfiVarStoreConfig::new(),
         }
+    }
+
+    pub fn configure(&mut self, config: EfiVarStoreConfig) {
+        self.config = config
     }
 
     fn get_position(&self, id: &EfiVarId) -> Option<usize> {
@@ -121,6 +152,20 @@ impl EfiVarStore {
             return Err(Error::new(
                 Status::WRITE_PROTECTED,
                 "SetupMode is read-only",
+            ));
+        }
+
+        if variable.deref() == ids::SECURE_BOOT_ENABLE && self.config.enforce_secure_boot {
+            return Err(Error::new(
+                Status::WRITE_PROTECTED,
+                "secure boot must be active",
+            ));
+        }
+
+        if variable.deref() == ids::CUSTOM_MODE && !self.config.allow_custom_mode {
+            return Err(Error::new(
+                Status::WRITE_PROTECTED,
+                "custom mode is disabled",
             ));
         }
 

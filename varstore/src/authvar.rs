@@ -148,13 +148,16 @@ impl EfiVarStore {
 
         self.set_signature_support();
 
+        if self.config.enforce_secure_boot {
+            self.set_secure_boot_enable(true)
+        }
+
         let sb;
         if let Some(sbe) = self.get_secure_boot_enable() {
             sb = !setup && sbe;
         } else {
             sb = !setup;
         }
-
         self.set_secure_boot(sb);
 
         self.set_custom_mode(false);
