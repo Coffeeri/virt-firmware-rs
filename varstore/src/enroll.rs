@@ -55,6 +55,13 @@ impl EfiVarStore {
         self.enroll_pk(ts, &pk);
     }
 
+    pub fn enroll_pk_microsoft(&mut self) {
+        let mut pk = EfiSigDB::new();
+        pk.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_PK_2023);
+        let ts = pk.get_x509_mtime();
+        self.enroll_pk(ts, &pk);
+    }
+
     pub fn enroll_kek_microsoft(&mut self) {
         let mut kek = EfiSigDB::new();
         kek.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_KEK_2011);

@@ -19,6 +19,8 @@ pub enum PkEnroll {
     ExtMgmt,
     #[value(name = "redhat", help = "Red Hat Secure Boot (PK/KEK key 1)")]
     RedHat,
+    #[value(name = "microsoft", help = "Windows OEM Devices PK")]
+    Microsoft,
 }
 
 #[derive(Parser, Debug)]
@@ -192,6 +194,7 @@ fn main() -> ExitCode {
         match cfg.enroll {
             PkEnroll::RedHat => store.enroll_pk_redhat(),
             PkEnroll::ExtMgmt => store.enroll_pk_mgmt(),
+            PkEnroll::Microsoft => store.enroll_pk_microsoft(),
         }
     }
 
