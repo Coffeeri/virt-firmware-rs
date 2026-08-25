@@ -44,6 +44,10 @@ struct Args {
     #[arg(long, value_name = "FILE", help_heading = "Update UKI boot entries")]
     remove_uki: Option<String>,
 
+    /// remove stale UKI entries
+    #[arg(long, help_heading = "Update UKI boot entries")]
+    cleanup_uki: bool,
+
     /// override cmd line for boot entry
     #[arg(long, value_name = "CMDLINE", help_heading = "Update UKI boot entries")]
     cmdline: Option<String>,
@@ -193,6 +197,41 @@ fn find_boot_entry_for_file<'cfg>(
         }
     }
     None
+}
+
+fn is_boot_entry_stale(shim: Option<&EfiFile>, entry: &boot::BootEntry) -> Option<bool> {
+    let f1 = EfiFile::new_from_dp(&entry.devpath)?;
+    let stale;
+    if let Some(s) = shim {
+        let f1_name = f1.efi_name()?;
+        let s_name = s.efi_name()?;
+        if f1_name != s_name {
+            debug!("shim mismatch [found {f1_name}, expected {s_name}]");
+            return None;
+        }
+        debug!("devpath: -> {} [shim]", f1.file.display());
+
+        let boot::BootEntryOptData::String { string: cmdline } = &entry.optdata else {
+            return None;
+        };
+        let binary = cmdline.split_ascii_whitespace().next()?;
+        let f2 = f1.new_with_efi_name(&NoCaseString::new(binary));
+        stale = !f2.file.exists();
+        debug!(
+            "ukipath: -> {} [{}]",
+            f2.file.display(),
+            if stale { "stale" } else { "exists" }
+        );
+    } else {
+        stale = !f1.file.exists();
+        debug!(
+            "devpath: -> {} [{}]",
+            f1.file.display(),
+            if stale { "stale" } else { "exists" }
+        );
+    }
+
+    Some(stale)
 }
 
 fn write_variable(var: &EfiVar, dryrun: bool) -> io::Result<()> {
@@ -513,6 +552,23 @@ fn main() -> ExitCode {
         if let Err(e) = remove_bootentry(&bootcfg, idx, dryrun) {
             error!("remove boot entry: {e}");
             return ExitCode::from(1);
+        }
+        return ExitCode::from(0);
+    }
+
+    if cfg.cleanup_uki {
+        for (i, e) in &bootcfg.entries {
+            let Some(stale) = is_boot_entry_stale(efi_shim.as_ref().ok(), e) else {
+                continue;
+            };
+            let result = if stale { "stale" } else { "good" };
+            info!("{i}  {}  -> {result}", e.title);
+            if stale {
+                if let Err(e) = remove_bootentry(&bootcfg, i, dryrun) {
+                    error!("remove boot entry: {e}");
+                    return ExitCode::from(1);
+                }
+            }
         }
         return ExitCode::from(0);
     }
