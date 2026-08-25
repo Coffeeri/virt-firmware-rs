@@ -33,7 +33,7 @@ fn main() -> ExitCode {
     };
     env_logger::Builder::from_default_env()
         .filter_module(module_path!(), levelfilter)
-        .filter_module("libefi", levelfilter)
+        .filter_module("virtfw_libefi", levelfilter)
         .format_timestamp(None)
         .format_target(false)
         .init();
