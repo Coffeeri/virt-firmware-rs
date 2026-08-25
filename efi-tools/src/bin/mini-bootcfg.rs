@@ -499,8 +499,8 @@ fn main() -> ExitCode {
     if let Some(ref uki) = cfg.remove_uki {
         let efi_uki = match EfiFile::new(uki) {
             Err(e) => {
-                error!("{uki}: {e}");
-                return ExitCode::from(1);
+                warn!("{uki}: {e}");
+                return ExitCode::from(0);
             }
             Ok(u) => u,
         };
