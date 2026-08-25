@@ -1,4 +1,5 @@
 extern crate std;
+use std::format;
 use std::fs;
 use std::io;
 use std::os::unix::fs::MetadataExt;
@@ -50,6 +51,81 @@ impl EfiFile {
             rfile,
             device,
         })
+    }
+
+    fn device_from_partuuid(guid: &Guid) -> Option<u64> {
+        let mut path = PathBuf::from("/dev/disk/by-partuuid");
+        path.push(guid.to_string());
+        let meta = fs::metadata(&path).ok()?;
+        Some(meta.rdev())
+    }
+
+    fn mount_from_device(device: u64) -> Option<PathBuf> {
+        let major = device / 256;
+        let minor = device % 256;
+        let search = format!("{major}:{minor}");
+
+        let mountinfo = fs::read_to_string("/proc/self/mountinfo").ok()?;
+        for line in mountinfo.lines() {
+            let mut iter = line.split_whitespace();
+            let _ = iter.next();
+            let _ = iter.next();
+            let device = iter.next()?;
+            let _ = iter.next();
+            let mount = iter.next()?;
+            if search == device {
+                return Some(mount.into());
+            }
+        }
+        None
+    }
+
+    fn rfile_from_efi_name(efi_name: &NoCaseString) -> PathBuf {
+        let mut rfile = PathBuf::new();
+        for item in efi_name.0.split("\\") {
+            rfile.push(item);
+        }
+        rfile
+    }
+
+    pub fn new_from_dp(dp: &devpath::DevPath) -> Option<Self> {
+        // MediaHd -> mount point
+        let hd_node = dp.nodes.first()?;
+        let devpath::DevPathNode::MediaHd(part) = hd_node else {
+            return None;
+        };
+
+        let rdev = Self::device_from_partuuid(&part.signature)?;
+        let mount = Self::mount_from_device(rdev)?;
+
+        // MediaFilePath -> relative PathBuf
+        let file_node = dp.nodes.get(1)?;
+        let devpath::DevPathNode::MediaFilePath(filename) = file_node else {
+            return None;
+        };
+        let rfile = Self::rfile_from_efi_name(filename);
+
+        let file = mount.join(&rfile);
+        let device = udev::Device::from_devnum(udev::DeviceType::Block, rdev).ok()?;
+        Some(EfiFile {
+            file,
+            fdev: rdev,
+            mount,
+            rfile,
+            device,
+        })
+    }
+
+    pub fn new_with_efi_name(self, efi_name: &NoCaseString) -> Self {
+        let rfile = Self::rfile_from_efi_name(efi_name);
+        let file = self.mount.join(&rfile);
+        EfiFile {
+            file,
+            fdev: self.fdev,
+            mount: self.mount,
+            rfile,
+            device: self.device,
+        }
     }
 
     pub fn efi_name(&self) -> Option<NoCaseString> {
