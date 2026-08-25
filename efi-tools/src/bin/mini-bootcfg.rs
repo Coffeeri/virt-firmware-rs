@@ -173,21 +173,22 @@ fn find_boot_entry_for_file<'cfg>(
                 return Some(i);
             }
         }
-        if let Some(shim) = shim_opt {
-            if let Some(dp) = shim.devpath() {
-                if e.devpath == dp {
-                    // entry device path matches shim, and ...
-                    if let boot::BootEntryOptData::String { string: cmdline } = &e.optdata {
-                        let mut iter = cmdline.split_ascii_whitespace();
-                        let binary = NoCaseString::new(iter.next().unwrap());
-                        if let Some(uki_path) = uki.efi_name() {
-                            if uki_path == binary {
-                                // ... entry optdata matches uki path
-                                return Some(i);
-                            }
-                        }
-                    }
-                }
+        let Some(shim) = shim_opt else { continue };
+        let Some(dp) = shim.devpath() else { continue };
+        if e.devpath == dp {
+            // entry device path matches shim, and ...
+            let boot::BootEntryOptData::String { string: cmdline } = &e.optdata else {
+                continue;
+            };
+            let Some(binary) = cmdline.split_ascii_whitespace().next() else {
+                continue;
+            };
+            let Some(uki_path) = uki.efi_name() else {
+                continue;
+            };
+            if uki_path == NoCaseString::new(binary) {
+                // ... entry optdata matches uki path
+                return Some(i);
             }
         }
     }
