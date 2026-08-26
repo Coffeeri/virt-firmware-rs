@@ -70,8 +70,8 @@ fn loadfile(filename: &str) -> Option<Vec<u8>> {
     blob
 }
 
-const HELLO_POWEROFF: &[u8] = include_bytes!("../../../bios-32/hello-poweroff.igvm");
-const HELLO_RESET: &[u8] = include_bytes!("../../../bios-32/hello-reset.igvm");
+const HELLO_POWEROFF: &[u8] = include_bytes!("../data/hello-poweroff.igvm");
+const HELLO_RESET: &[u8] = include_bytes!("../data/hello-reset.igvm");
 
 #[entry]
 fn main() -> Status {
