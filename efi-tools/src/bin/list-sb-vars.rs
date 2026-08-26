@@ -29,6 +29,7 @@ fn print_cert(der: &[u8]) {
         );
     }
     println!("    valid  : {} -> {}", info.not_before, info.not_after);
+    println!("    signed : {}", info.signature);
 }
 
 fn print_sigdb(name: &str, guid: &Guid) {
