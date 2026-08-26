@@ -37,9 +37,9 @@ impl CertInfo {
         let not_after = tbs.validity().not_after.to_date_time();
         let info = Self {
             subject: subject.to_string(),
-            subject_cn: Self::attr(&subject, &OID_CN),
+            subject_cn: Self::attr(subject, &OID_CN),
             issuer: issuer.to_string(),
-            issuer_cn: Self::attr(&issuer, &OID_CN),
+            issuer_cn: Self::attr(issuer, &OID_CN),
             not_before: EfiTime::from(&not_before),
             not_after: EfiTime::from(&not_after),
         };
