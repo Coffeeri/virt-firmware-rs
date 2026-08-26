@@ -1638,6 +1638,7 @@ dependencies = [
  "chrono",
  "clap",
  "der",
+ "libc",
  "log",
  "openssl",
  "udev",

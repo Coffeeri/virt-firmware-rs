@@ -61,8 +61,8 @@ impl EfiFile {
     }
 
     fn mount_from_device(device: u64) -> Option<PathBuf> {
-        let major = device / 256;
-        let minor = device % 256;
+        let major = libc::major(device);
+        let minor = libc::minor(device);
         let search = format!("{major}:{minor}");
 
         let mountinfo = fs::read_to_string("/proc/self/mountinfo").ok()?;
