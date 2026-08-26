@@ -158,4 +158,7 @@ upload-release:
     - VER=${CI_COMMIT_TAG##*-}
     - echo "package is $PKG - version is $VER"
     - export CARGO_REGISTRY_TOKEN="$(scripts/oidc-token.sh)"
-    - cargo publish --package "virtfw-$PKG"
+    - case "$PKG" in;
+      efi-apps)  cargo publish --package "virtfw-$PKG" --target x86_64-unknown-uefi;;
+      *)         cargo publish --package "virtfw-$PKG";;
+      esac
