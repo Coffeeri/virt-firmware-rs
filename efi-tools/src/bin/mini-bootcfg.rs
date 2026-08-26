@@ -343,24 +343,35 @@ fn add_bootindex(bootcfg: &BootConfig, index: &boot::BootIndex, cfg: &Args) -> i
     Ok(())
 }
 
-fn remove_bootentry(bootcfg: &BootConfig, index: &boot::BootIndex, dryrun: bool) -> io::Result<()> {
-    let name = format!("Boot{index}");
-    delete_variable(&name, dryrun)?;
+fn remove_bootentries(
+    bootcfg: &BootConfig,
+    items: &[&boot::BootIndex],
+    dryrun: bool,
+) -> io::Result<()> {
+    for index in items {
+        let name = format!("Boot{index}");
+        delete_variable(&name, dryrun)?;
 
-    if let Some(next) = bootcfg.next {
-        if next == *index {
-            delete_variable("BootNext", dryrun)?;
+        if let Some(next) = bootcfg.next {
+            if next == **index {
+                delete_variable("BootNext", dryrun)?;
+            }
         }
     }
 
     if let Some(old_order) = &bootcfg.order {
-        if let Some(pos) = old_order.position(index) {
-            let new_order = old_order.remove(pos);
+        let new_order = old_order.remove_elems(items);
+        if new_order.len() != old_order.len() {
             update_bootorder(&new_order, old_order, dryrun)?;
         }
     }
 
     Ok(())
+}
+
+fn remove_bootentry(bootcfg: &BootConfig, index: &boot::BootIndex, dryrun: bool) -> io::Result<()> {
+    let items = vec![index];
+    remove_bootentries(bootcfg, items.as_slice(), dryrun)
 }
 
 fn boot_successful(bootcfg: &BootConfig, dryrun: bool) -> io::Result<()> {
@@ -557,6 +568,7 @@ fn main() -> ExitCode {
     }
 
     if cfg.cleanup_uki {
+        let mut items = Vec::new();
         for (i, e) in &bootcfg.entries {
             let Some(stale) = is_boot_entry_stale(efi_shim.as_ref().ok(), e) else {
                 continue;
@@ -564,11 +576,12 @@ fn main() -> ExitCode {
             let result = if stale { "stale" } else { "good" };
             info!("{i}  {}  -> {result}", e.title);
             if stale {
-                if let Err(e) = remove_bootentry(&bootcfg, i, dryrun) {
-                    error!("remove boot entry: {e}");
-                    return ExitCode::from(1);
-                }
+                items.push(i);
             }
+        }
+        if let Err(e) = remove_bootentries(&bootcfg, items.as_slice(), dryrun) {
+            error!("remove boot entry: {e}");
+            return ExitCode::from(1);
         }
         return ExitCode::from(0);
     }
