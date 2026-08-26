@@ -78,12 +78,19 @@ impl BootOrder {
         BootOrder(v)
     }
 
-    pub fn remove_elem(&self, elem: &BootIndex) -> BootOrder {
+    pub fn remove_elems(&self, elems: &[&BootIndex]) -> BootOrder {
         let mut v = self.0.clone();
-        if let Some(index) = self.position(elem) {
-            v.remove(index);
+        for elem in elems {
+            if let Some(index) = v.iter().position(|i| i == *elem) {
+                v.remove(index);
+            }
         }
         BootOrder(v)
+    }
+
+    pub fn remove_elem(&self, elem: &BootIndex) -> BootOrder {
+        let elems = vec![elem];
+        self.remove_elems(elems.as_slice())
     }
 }
 
