@@ -41,5 +41,5 @@ uguid = { version = "2" }
 x509-cert = { version = "0.3", default-features = false }
 zerocopy = { version = "0.8", features = [ "derive" ] }
 
-virtfw-libhw = { path = "libhw", version = "0.5.1" }
-virtfw-libefi = { path = "libefi", version = "0.6.3" }
+virtfw-libhw = { path = "libhw", version = "0.5.2" }
+virtfw-libefi = { path = "libefi", version = "0.6.4" }
