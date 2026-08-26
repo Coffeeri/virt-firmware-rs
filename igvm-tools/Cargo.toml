@@ -24,10 +24,10 @@ igvm_defs.workspace = true
 log.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+sha2.workspace = true
 uguid.workspace = true
 zerocopy.workspace = true
 
-sha2 = "0.10.9"
 object = "0.39"
 authenticode = { version = "0.6", optional = true, features = [ "object" ] }
 
