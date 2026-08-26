@@ -158,4 +158,4 @@ upload-release:
     - VER=${CI_COMMIT_TAG##*-}
     - echo "package is $PKG - version is $VER"
     - export CRATES_IO_PUBLISH_TOKEN="$(scripts/oidc-token.sh)"
-    - cargo publish package "virtfw-$PKG"
+    - cargo publish --package "virtfw-$PKG"
