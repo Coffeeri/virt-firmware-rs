@@ -24,7 +24,7 @@ byteorder = { version = "1", default-features = false }
 clap = { version = "4.5.4", features = [ "derive", "wrap_help" ] }
 clap_mangen = { version = ">= 0.2.30, < 0.4" }
 env_logger = { version = "0.11" }
-der = { version = "0.7.10" }
+der = { version = "0.8" }
 fdt = { version = "0.1" }
 igvm = { version = "0.4" }
 igvm_defs = { version = "0.4" }
@@ -38,7 +38,7 @@ spin = { version = ">= 0.10, < 0.13" }
 uefi = { version = "0.39" }
 uefi-raw = { version = "0.15.1" }
 uguid = { version = "2" }
-x509-cert = { version = "0.2.5", default-features = false }
+x509-cert = { version = "0.3", default-features = false }
 zerocopy = { version = "0.8", features = [ "derive" ] }
 
 virtfw-libhw = { path = "libhw", version = "0.5.1" }

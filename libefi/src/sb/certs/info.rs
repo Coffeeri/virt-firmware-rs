@@ -20,8 +20,8 @@ pub struct CertInfo {
 
 impl CertInfo {
     fn attr(name: &Name, oid: &ObjectIdentifier) -> Option<String> {
-        for attr in name.0.iter() {
-            if attr.0.iter().any(|x| x.oid == *oid) {
+        for attr in name.iter_rdn() {
+            if attr.iter().any(|x| x.oid == *oid) {
                 return Some(attr.to_string());
             }
         }
@@ -30,10 +30,11 @@ impl CertInfo {
 
     pub fn new_from_der(der: &[u8]) -> Option<Self> {
         let cert = Certificate::from_der(der).ok()?;
-        let subject = cert.tbs_certificate.subject;
-        let issuer = cert.tbs_certificate.issuer;
-        let not_before = cert.tbs_certificate.validity.not_before.to_date_time();
-        let not_after = cert.tbs_certificate.validity.not_after.to_date_time();
+        let tbs = cert.tbs_certificate();
+        let subject = tbs.subject();
+        let issuer = tbs.issuer();
+        let not_before = tbs.validity().not_before.to_date_time();
+        let not_after = tbs.validity().not_after.to_date_time();
         let info = Self {
             subject: subject.to_string(),
             subject_cn: Self::attr(&subject, &OID_CN),
