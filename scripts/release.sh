@@ -34,7 +34,7 @@ echo "# checking package ..."
 (set -x; cargo package --package "$project" $target)	|| exit 1
 
 echo "# uploading package ..."
-(set -x; cargo publish --package "$project" $target)	|| exit 1
+(set -x; cargo publish --package "$project" --dry-run $target)	|| exit 1
 
 echo "# tagging release ..."
 (set -x; git tag "$tag")				|| exit 1
