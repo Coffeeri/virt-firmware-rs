@@ -1,5 +1,6 @@
 #[cfg(feature = "x509")]
 pub mod info;
+pub mod oids;
 pub mod profiles;
 
 pub const REDHAT_PK_KEK_2014: &[u8] = include_bytes!("redhat.com/rh-pk-kek-2014.der");
