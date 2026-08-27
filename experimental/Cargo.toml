@@ -13,13 +13,22 @@ edition.workspace = true
 [dependencies]
 clap.workspace = true
 clap_mangen.workspace = true
+der.workspace = true
 env_logger.workspace = true
 log.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+sha2.workspace = true
 uguid.workspace = true
+x509-cert.workspace = true
 zerocopy.workspace = true
 
 rust-lzma = "0.6"
+object = "0.39"
+cms = "0.2"
+authenticode = { version = "0.6", features = [ "object" ] }
+hex = { version = "0.4", default-features = false, features = [ "alloc" ] }
+x509-verify = { version = "0.4", features = [ "x509" ] }
+openssl = { version = "0.10" }
 
-virtfw-libefi = { workspace = true }
+virtfw-libefi = { workspace = true, features = [ "x509", "std" ] }
