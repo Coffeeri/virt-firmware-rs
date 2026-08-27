@@ -28,20 +28,24 @@ impl CertInfo {
         None
     }
 
-    pub fn new_from_der(der: &[u8]) -> Option<Self> {
-        let cert = Certificate::from_der(der).ok()?;
-        let subject = cert.tbs_certificate.subject;
-        let issuer = cert.tbs_certificate.issuer;
+    pub fn new(cert: &Certificate) -> Self {
+        let subject = &cert.tbs_certificate.subject;
+        let issuer = &cert.tbs_certificate.issuer;
         let not_before = cert.tbs_certificate.validity.not_before.to_date_time();
         let not_after = cert.tbs_certificate.validity.not_after.to_date_time();
-        let info = Self {
+        Self {
             subject: subject.to_string(),
-            subject_cn: Self::attr(&subject, &OID_CN),
+            subject_cn: Self::attr(subject, &OID_CN),
             issuer: issuer.to_string(),
-            issuer_cn: Self::attr(&issuer, &OID_CN),
+            issuer_cn: Self::attr(issuer, &OID_CN),
             not_before: EfiTime::from(&not_before),
             not_after: EfiTime::from(&not_after),
-        };
+        }
+    }
+
+    pub fn new_from_der(der: &[u8]) -> Option<Self> {
+        let cert = Certificate::from_der(der).ok()?;
+        let info = Self::new(&cert);
         Some(info)
     }
 }
