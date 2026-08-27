@@ -5,9 +5,8 @@ use der::Decode;
 use x509_cert::name::Name;
 use x509_cert::Certificate;
 
+use super::oids::OID_CERT_CN;
 use crate::types::EfiTime;
-
-const OID_CN: ObjectIdentifier = ObjectIdentifier::new_unwrap("2.5.4.3");
 
 pub struct CertInfo {
     pub subject: String,
@@ -35,9 +34,9 @@ impl CertInfo {
         let not_after = cert.tbs_certificate.validity.not_after.to_date_time();
         Self {
             subject: subject.to_string(),
-            subject_cn: Self::attr(subject, &OID_CN),
+            subject_cn: Self::attr(subject, &OID_CERT_CN),
             issuer: issuer.to_string(),
-            issuer_cn: Self::attr(issuer, &OID_CN),
+            issuer_cn: Self::attr(issuer, &OID_CERT_CN),
             not_before: EfiTime::from(&not_before),
             not_after: EfiTime::from(&not_after),
         }
