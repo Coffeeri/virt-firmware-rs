@@ -13,11 +13,15 @@ pub const OID_ALGO_RSA: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.2.840
 pub const OID_ALGO_SHA256_RSA: ObjectIdentifier =
     ObjectIdentifier::new_unwrap("1.2.840.113549.1.1.11");
 
-pub fn oid_name(oid: &ObjectIdentifier) -> Option<&'static str> {
+pub fn oid_to_known_name(oid: &ObjectIdentifier) -> Option<&'static str> {
     match *oid {
         OID_ALGO_SHA256 => Some("SHA-256"),
         OID_ALGO_RSA => Some("RSA"),
         OID_ALGO_SHA256_RSA => Some("SHA-256 with RSA"),
         _ => None,
     }
+}
+
+pub fn oid_to_name(oid: &ObjectIdentifier) -> &'static str {
+    oid_to_known_name(oid).unwrap_or("unknown")
 }
