@@ -1,5 +1,6 @@
 #[cfg(feature = "x509")]
 pub mod info;
+#[cfg(feature = "x509")]
 pub mod oids;
 pub mod profiles;
 
