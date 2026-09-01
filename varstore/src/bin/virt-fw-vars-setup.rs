@@ -1,4 +1,4 @@
-use clap::{CommandFactory, Parser, ValueEnum};
+use clap::{CommandFactory, Parser};
 use log::error;
 use std::process::ExitCode;
 
@@ -9,19 +9,9 @@ use virtfw_libefi::arch::EfiArch;
 use virtfw_libefi::efivar::auth::auth_to_esl;
 use virtfw_libefi::efivar::sigdb::EfiSigDB;
 use virtfw_libefi::guids;
-use virtfw_libefi::sb::certs::profiles::SecureBootProfile;
+use virtfw_libefi::sb::certs::profiles::{PkEnroll, SecureBootProfile};
 use virtfw_libefi::sb::dbx::*;
 use virtfw_varstore::store::EfiVarStore;
-
-#[derive(Debug, Clone, ValueEnum)]
-pub enum PkEnroll {
-    #[value(name = "mgmt", help = "EFI_CERT_EXTERNAL_MANAGEMENT_GUID")]
-    ExtMgmt,
-    #[value(name = "redhat", help = "Red Hat Secure Boot (PK/KEK key 1)")]
-    RedHat,
-    #[value(name = "microsoft", help = "Windows OEM Devices PK")]
-    Microsoft,
-}
 
 #[derive(Parser, Debug)]
 #[command(version, author, name = "virt-fw-vars-setup",
