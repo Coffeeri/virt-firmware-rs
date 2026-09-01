@@ -150,3 +150,49 @@ impl ValueEnum for SecureBootProfile {
         Some(pv)
     }
 }
+
+#[derive(Debug, Clone)]
+pub enum PkEnroll {
+    ExtMgmt,
+    RedHat,
+    Microsoft,
+}
+
+impl PkEnroll {
+    pub fn sigdb(&self) -> EfiSigDB {
+        let mut sigdb = EfiSigDB::new();
+        match self {
+            PkEnroll::ExtMgmt => {
+                return EfiSigDB::new_pk_external_mgmt();
+            }
+            PkEnroll::RedHat => {
+                sigdb.add_x509_from_der(&OvmfEnrollDefaultKeys, REDHAT_PK_KEK_2014);
+            }
+            PkEnroll::Microsoft => {
+                sigdb.add_x509_from_der(&MicrosoftVendor, MICROSOFT_PK_2023);
+            }
+        }
+        sigdb
+    }
+}
+
+#[cfg(feature = "std")]
+impl ValueEnum for PkEnroll {
+    fn value_variants<'a>() -> &'a [Self] {
+        static VARIANTS: [PkEnroll; 3] = [PkEnroll::ExtMgmt, PkEnroll::RedHat, PkEnroll::Microsoft];
+        &VARIANTS
+    }
+
+    fn to_possible_value(&self) -> Option<PossibleValue> {
+        let pv = match self {
+            PkEnroll::ExtMgmt => {
+                PossibleValue::new("mgmt").help("EFI_CERT_EXTERNAL_MANAGEMENT_GUID")
+            }
+            PkEnroll::RedHat => {
+                PossibleValue::new("redhat").help("Red Hat Secure Boot (PK/KEK key 1)")
+            }
+            PkEnroll::Microsoft => PossibleValue::new("microsoft").help("Windows OEM Devices PK"),
+        };
+        Some(pv)
+    }
+}
