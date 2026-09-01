@@ -237,3 +237,9 @@ impl From<&EfiSigDB> for Vec<u8> {
         bytes
     }
 }
+
+impl From<EfiSigDB> for Vec<u8> {
+    fn from(sigdb: EfiSigDB) -> Vec<u8> {
+        (&sigdb).into()
+    }
+}
