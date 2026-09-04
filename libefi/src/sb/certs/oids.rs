@@ -1,6 +1,12 @@
 use der::asn1::ObjectIdentifier;
 
+// x509
 pub const OID_CERT_CN: ObjectIdentifier = ObjectIdentifier::new_unwrap("2.5.4.3");
+pub const OID_CERT_C: ObjectIdentifier = ObjectIdentifier::new_unwrap("2.5.4.6");
+pub const OID_CERT_L: ObjectIdentifier = ObjectIdentifier::new_unwrap("2.5.4.7");
+pub const OID_CERT_ST: ObjectIdentifier = ObjectIdentifier::new_unwrap("2.5.4.8");
+pub const OID_CERT_O: ObjectIdentifier = ObjectIdentifier::new_unwrap("2.5.4.10");
+pub const OID_CERT_OU: ObjectIdentifier = ObjectIdentifier::new_unwrap("2.5.4.11");
 
 // cms
 pub const OID_CMS_SIGNED_DATA: ObjectIdentifier =
@@ -29,6 +35,13 @@ pub const OID_ALGO_ML_DSA_87: ObjectIdentifier =
 
 pub fn oid_to_known_name(oid: &ObjectIdentifier) -> Option<&'static str> {
     match *oid {
+        OID_CERT_CN => Some("CN"),
+        OID_CERT_C => Some("C"),
+        OID_CERT_L => Some("L"),
+        OID_CERT_ST => Some("ST"),
+        OID_CERT_O => Some("O"),
+        OID_CERT_OU => Some("OU"),
+
         OID_CMS_SIGNED_DATA => Some("SignedData [pkcs7]"),
 
         OID_ALGO_SHA256 => Some("SHA-256"),
