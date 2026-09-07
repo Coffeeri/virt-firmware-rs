@@ -65,7 +65,7 @@ fn test_dbx_update_pkcs7() {
         Vec::new(),
     );
 
-    let authvar = EfiVarAuth2::new_from_bytes(DBX_X86_64).expect("Failed to parse DBX update");
+    let authvar = EfiVarAuth2::new_from_bytes(DBX_2011_X86_64).expect("Failed to parse DBX update");
     let pkcs7 = Pkcs7::from_der(&authvar.get_pkcs7()).expect("Failed to parse PKCS#7");
     let good_data = authvar.get_signed_data(&variable);
     let bad_data = good_data.get(1..).unwrap();
