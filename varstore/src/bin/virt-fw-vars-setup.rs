@@ -11,6 +11,7 @@ use virtfw_libefi::efivar::sigdb::EfiSigDB;
 use virtfw_libefi::guids;
 use virtfw_libefi::sb::certs::profiles::{PkEnroll, SecureBootProfile};
 use virtfw_libefi::sb::dbx::*;
+use virtfw_libefi::types::EfiTime;
 use virtfw_varstore::store::EfiVarStore;
 
 #[derive(Parser, Debug)]
@@ -139,20 +140,22 @@ fn main() -> ExitCode {
     store.enroll_db(db.get_x509_mtime(), &db);
 
     // dbx
-    let auth = if let Some(filename) = cfg.set_dbx_update {
-        match std::fs::read(&filename) {
+    let (ts, dbx) = if let Some(filename) = cfg.set_dbx_update {
+        let auth = match std::fs::read(&filename) {
             Err(e) => {
                 error!("{filename}: {e}");
                 return 1.into();
             }
             Ok(a) => a,
-        }
+        };
+        let (ts, esl) = auth_to_esl(&auth).unwrap();
+        let sigdb = EfiSigDB::new_from_bytes(esl).unwrap();
+        (ts, sigdb)
     } else {
-        get_dbx_opt(cfg.arch).into()
+        let sigdb = get_dbx_opt(cfg.arch);
+        (EfiTime::dbxupdate(), sigdb)
     };
-    let (dbx_ts, esl) = auth_to_esl(&auth).unwrap();
-    let dbx = EfiSigDB::new_from_bytes(esl).unwrap();
-    store.enroll_dbx(Some(dbx_ts), &dbx);
+    store.enroll_dbx(Some(ts), &dbx);
 
     // KEK
     if cfg.add_kek_cert.is_empty() {

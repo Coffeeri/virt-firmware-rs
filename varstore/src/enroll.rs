@@ -3,7 +3,6 @@
 //!
 //use alloc::vec::Vec;
 
-use virtfw_libefi::efivar::auth::auth_to_esl;
 use virtfw_libefi::efivar::ids;
 use virtfw_libefi::efivar::sigdb::EfiSigDB;
 use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr, EfiVarId};
@@ -89,10 +88,8 @@ impl EfiVarStore {
     }
 
     pub fn enroll_dbx_native(&mut self) {
-        if let Some(auth) = DBX_NATIVE {
-            let (ts, esl) = auth_to_esl(auth).unwrap();
-            let dbx = EfiSigDB::new_from_bytes(esl).unwrap();
-            self.enroll_dbx(Some(ts), &dbx);
-        }
+        let ts = EfiTime::dbxupdate();
+        let dbx = get_dbx_native();
+        self.enroll_dbx(Some(ts), &dbx);
     }
 }
