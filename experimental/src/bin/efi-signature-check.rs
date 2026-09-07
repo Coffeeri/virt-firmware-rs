@@ -19,7 +19,7 @@ use virtfw_libefi::sb::certs::{MICROSOFT_KEK_2011, MICROSOFT_KEK_2023};
 use virtfw_libefi::varstore::sysfs;
 
 use virtfw_experimental::eficms::native::EfiCmsNative;
-use virtfw_experimental::eficms::openssl::{EfiCmsOpenSSLCms, EfiCmsOpenSSLPkcs7};
+use virtfw_experimental::eficms::openssl::EfiCmsOpenSSLPkcs7;
 use virtfw_experimental::eficms::parse::{
     get_certificate, get_issuer_cert, get_issuer_serial, get_signed_data, get_signer_info,
 };
@@ -35,15 +35,10 @@ pub enum EfiCmsImpl {
     )]
     Native,
     #[value(
-        name = "openssl-pkcs7",
+        name = "openssl",
         help = "OpenSSL implementation, using PKCS7_* functions (default)"
     )]
     OpenSSLPkcs7,
-    #[value(
-        name = "openssl-cms",
-        help = "OpenSSL implementation, using CMS_* functions"
-    )]
-    OpenSSLCms,
 }
 
 #[derive(Parser, Debug)]
@@ -314,7 +309,6 @@ fn main() -> ExitCode {
         Some(EfiCmsImpl::Null) => &mut EfiCmsNull::new(),
         Some(EfiCmsImpl::Native) => &mut EfiCmsNative::new(),
         Some(EfiCmsImpl::OpenSSLPkcs7) => &mut EfiCmsOpenSSLPkcs7::new(),
-        Some(EfiCmsImpl::OpenSSLCms) => &mut EfiCmsOpenSSLCms::new(),
         None => &mut EfiCmsOpenSSLPkcs7::new(), // default
     };
 

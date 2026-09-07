@@ -1,4 +1,3 @@
-use openssl::cms::{CMSOptions, CmsContentInfo};
 use openssl::pkcs7::{Pkcs7, Pkcs7Flags};
 use openssl::stack::Stack;
 use openssl::x509::store::{X509Store, X509StoreBuilder};
@@ -118,69 +117,6 @@ impl EfiCms for EfiCmsOpenSSLPkcs7 {
                     // - "unable to get local issuer certificate": continue, try next cert set
                     // - anyting else: return error
                     if e.errors().iter().find(|e| e.code() == 0x10800075).is_none() {
-                        return Err(e.into());
-                    }
-                }
-            }
-        }
-        Err(EfiCmsError::CertificateNotTrusted)
-    }
-}
-
-// using CMS_*
-#[derive(Default)]
-pub struct EfiCmsOpenSSLCms {
-    base: EfiCmsOpenSSLBase,
-}
-
-impl EfiCmsOpenSSLCms {
-    pub fn new() -> Self {
-        Self {
-            base: EfiCmsOpenSSLBase::new(),
-        }
-    }
-}
-
-impl EfiCms for EfiCmsOpenSSLCms {
-    fn add_certs_vec(&mut self, kind: EfiCmsCert, certs: Vec<Vec<u8>>) {
-        self.base.add_certs_vec(kind, certs);
-    }
-
-    fn verify_signature(&self, signature: &[u8], data: Option<&[u8]>) -> Result<(), EfiCmsError> {
-        let mut cms = CmsContentInfo::from_der(signature)?;
-
-        cms.verify(
-            None,
-            None,
-            data,
-            None,
-            CMSOptions::BINARY | CMSOptions::NOVERIFY,
-        )?;
-        Ok(())
-    }
-
-    fn verify_certificate(
-        &self,
-        signature: &[u8],
-        data: Option<&[u8]>,
-    ) -> Result<EfiCmsCert, EfiCmsError> {
-        let mut cms = CmsContentInfo::from_der(signature)?;
-
-        for kind in [
-            EfiCmsCert::PK,
-            EfiCmsCert::KEK,
-            EfiCmsCert::db,
-            EfiCmsCert::MokList,
-        ] {
-            let store = self.base.cert_store(kind);
-            match cms.verify(None, Some(&store), data, None, CMSOptions::BINARY) {
-                Ok(_) => {
-                    return Ok(kind);
-                }
-                Err(e) => {
-                    // - "unable to get local issuer certificate": continue, try next cert set
-                    // - anyting else: return error
-                    if e.errors().iter().find(|e| e.code() == 0x17000064).is_none() {
                         return Err(e.into());
                     }
                 }
