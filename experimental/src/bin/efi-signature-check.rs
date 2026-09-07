@@ -56,31 +56,36 @@ struct Args {
     code: Option<EfiCmsImpl>,
 
     /// select 'PK' option
-    #[arg(long)]
+    #[arg(long, value_name = "OPT", help_heading = "certificate configuration")]
     pk_enroll: Option<PkEnroll>,
 
     /// use default 'KEK' certificates
-    #[arg(long)]
+    #[arg(long, help_heading = "certificate configuration")]
     kek_default: bool,
 
     /// select 'db' profile
-    #[arg(long)]
+    #[arg(long, value_name = "NAME", help_heading = "certificate configuration")]
     profile: Option<SecureBootProfile>,
 
     /// pe/efi binary to inspect
-    #[arg(long, visible_alias = "efi")]
+    #[arg(
+        long,
+        visible_alias = "efi",
+        value_name = "FILE",
+        help_heading = "verify signatures"
+    )]
     pe: Vec<String>,
 
     /// KEK variable update to inspect
-    #[arg(long)]
+    #[arg(long, value_name = "FILE", help_heading = "verify signatures")]
     kek: Vec<String>,
 
     /// db variable update to inspect
-    #[arg(long)]
+    #[arg(long, value_name = "FILE", help_heading = "verify signatures")]
     db: Vec<String>,
 
     /// dbx variable update to inspect
-    #[arg(long)]
+    #[arg(long, value_name = "FILE", help_heading = "verify signatures")]
     dbx: Vec<String>,
 
     #[arg(long, hide = true)]
