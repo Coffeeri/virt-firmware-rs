@@ -63,4 +63,10 @@ fn sb_enroll_libefi() {
     store.enroll_db_microsoft_uefi();
     store.enroll_dbx_native();
     store.reset();
+
+    assert_eq!(store.get_setup_mode(), false);
+
+    let sb = store.get(&ids::SECURE_BOOT.into()).unwrap();
+    let yes = vec![1];
+    assert_eq!(sb.data(), &yes);
 }

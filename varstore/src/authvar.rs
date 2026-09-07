@@ -25,7 +25,7 @@ pub const SB_SECURE_BOOT: &str = "SecureBoot";
 pub const SB_SECURE_BOOT_ENABLE: &str = "SecureBootEnable";
 
 impl EfiVarStore {
-    fn get_setup_mode(&self) -> bool {
+    pub fn get_setup_mode(&self) -> bool {
         self.get_unchecked(&ids::PK.into()).is_none()
     }
 
@@ -37,7 +37,7 @@ impl EfiVarStore {
         self.set_unchecked_bool(ids::SECURE_BOOT.into(), EfiVarAttr::new_bs_rt(), enabled);
     }
 
-    fn get_secure_boot_enable(&mut self) -> Option<bool> {
+    pub fn get_secure_boot_enable(&mut self) -> Option<bool> {
         let sbe = self.get_unchecked(&ids::SECURE_BOOT_ENABLE.into())?;
         Some(sbe.data()[0] != 0)
     }
