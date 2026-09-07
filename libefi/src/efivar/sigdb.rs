@@ -4,6 +4,7 @@ extern crate alloc;
 use alloc::vec;
 use alloc::vec::Vec;
 use core::fmt;
+use log::debug;
 
 use uguid::Guid;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
@@ -25,6 +26,7 @@ struct EfiSigListHeader {
     // entries following here
 }
 
+#[derive(Debug, PartialEq, Clone)]
 pub struct EfiSignature {
     pub owner: Guid,
     pub data: Vec<u8>,
@@ -47,6 +49,7 @@ impl EfiSignature {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct EfiSigList {
     pub kind: Guid,
     pub header_data: Vec<u8>,
@@ -98,6 +101,15 @@ impl EfiSigList {
         }
     }
 
+    pub fn new_sha256() -> Self {
+        Self {
+            kind: guids::EfiCertSha256,
+            header_data: Vec::new(),
+            entry_size: 32 + 16,
+            entries: Vec::new(),
+        }
+    }
+
     pub fn new_sha256_from_list(owner: &Guid, list: Vec<[u8; 32]>) -> Self {
         let entries = list
             .into_iter()
@@ -122,8 +134,16 @@ impl EfiSigList {
         }
     }
 
+    pub fn is_x509(&self) -> bool {
+        self.kind == guids::EfiCertX509
+    }
+
+    pub fn is_sha256(&self) -> bool {
+        self.kind == guids::EfiCertSha256
+    }
+
     pub fn get_x509(&self) -> Option<&[u8]> {
-        if self.kind != guids::EfiCertX509 {
+        if !self.is_x509() {
             return None;
         }
         Some(self.entries[0].data.as_ref())
@@ -218,6 +238,67 @@ impl EfiSigDB {
             .filter_map(CertInfo::new_from_der)
             .map(|i| i.not_before)
             .max()
+    }
+
+    pub fn sha256_exists(&self, entry: &EfiSignature) -> bool {
+        for list in self.siglists.iter().filter(|l| l.is_sha256()) {
+            if list.entries.iter().find(|e| *e == entry).is_some() {
+                return true;
+            }
+        }
+        false
+    }
+
+    pub fn x509_exists(&self, cert: &[u8]) -> bool {
+        for siglist in self.siglists.iter().filter(|l| l.is_x509()) {
+            if siglist.entries[0].data == cert {
+                return true;
+            }
+        }
+        false
+    }
+
+    pub fn merge(&mut self, add: &EfiSigDB) {
+        for addlist in &add.siglists {
+            match addlist.kind {
+                guids::EfiCertX509 => {
+                    let cert = addlist.get_x509().unwrap();
+                    if self.x509_exists(cert) {
+                        continue;
+                    }
+                    self.siglists.push(addlist.clone());
+                }
+                guids::EfiCertSha256 => {
+                    let newentries: Vec<EfiSignature> = addlist
+                        .entries
+                        .iter()
+                        .filter(|e| !self.sha256_exists(e))
+                        .cloned()
+                        .collect();
+                    debug!(
+                        "sigdb/merge: sha256: {}/{} entries are new",
+                        newentries.len(),
+                        addlist.entries.len()
+                    );
+                    if newentries.is_empty() {
+                        continue;
+                    }
+
+                    if self.siglists.iter().find(|l| l.is_sha256()).is_none() {
+                        let l = EfiSigList::new_sha256();
+                        self.siglists.push(l);
+                    };
+
+                    let list = self.siglists.iter_mut().find(|l| l.is_sha256()).unwrap();
+                    for n in newentries {
+                        list.entries.push(n)
+                    }
+                }
+                _ => {
+                    debug!("sigdb/merge: unknown kind: {}", addlist.kind);
+                }
+            }
+        }
     }
 }
 
