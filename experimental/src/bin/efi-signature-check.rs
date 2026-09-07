@@ -311,7 +311,7 @@ fn main() -> ExitCode {
         info!("using config '{pkenroll:?}' for 'PK'");
         let pk: Vec<u8> = pkenroll.sigdb().into();
         eficms.add_certs_sigdb(EfiCmsCert::PK, &pk);
-    } else if let Some(pk) = get_sigdb("PK", &guids::EfiImageSecurityDatabase) {
+    } else if let Some(pk) = get_sigdb("PK", &guids::EfiGlobalVariable) {
         info!("using host efi variable for 'PK'");
         eficms.add_certs_sigdb(EfiCmsCert::PK, &pk);
     }
@@ -323,7 +323,7 @@ fn main() -> ExitCode {
         kek.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_KEK_2023);
         let blob: Vec<u8> = kek.into();
         eficms.add_certs_sigdb(EfiCmsCert::KEK, &blob);
-    } else if let Some(kek) = get_sigdb("KEK", &guids::EfiImageSecurityDatabase) {
+    } else if let Some(kek) = get_sigdb("KEK", &guids::EfiGlobalVariable) {
         info!("using host efi variable for 'KEK'");
         eficms.add_certs_sigdb(EfiCmsCert::KEK, &kek);
     }
