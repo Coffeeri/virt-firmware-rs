@@ -170,7 +170,7 @@ fn process_signature(
 fn process_pe_binary(
     eficms: &dyn EfiCms,
     filename: &str,
-) -> Result<bool, Box<dyn std::error::Error>> {
+) -> Result<(), Box<dyn std::error::Error>> {
     println!("parsing efi/pe binary: {filename}");
     let binary = std::fs::read(filename)?;
     let pefile = pe::PeFile64::parse(binary.as_ref())?;
@@ -179,8 +179,7 @@ fn process_pe_binary(
 
     let Some(iter) = AttributeCertificateIterator::new(&pefile).expect("enumerate signatures")
     else {
-        print!("no signatures");
-        return Ok(false);
+        return Err("no signatures present".into());
     };
 
     let mut hasher = Sha256::new();
@@ -231,7 +230,10 @@ fn process_pe_binary(
         println!("summary: {FAIL} only bad signatures");
     }
 
-    Ok(sig_pass > 0)
+    if sig_pass == 0 {
+        return Err("signature verification failed".into());
+    }
+    Ok(())
 }
 
 fn print_signature_database(data: &[u8]) -> Option<()> {
@@ -253,7 +255,7 @@ fn process_sb_var_update(
     eficms: &dyn EfiCms,
     variable: EfiVarId,
     filename: &str,
-) -> Result<bool, Box<dyn std::error::Error>> {
+) -> Result<(), Box<dyn std::error::Error>> {
     println!("parsing variable update: {filename}");
     let update = std::fs::read(filename)?;
     let authvar =
@@ -281,7 +283,10 @@ fn process_sb_var_update(
 
     print_signature_database(authvar.data());
 
-    Ok(passed)
+    if !passed {
+        return Err("signature verification failed".into());
+    }
+    Ok(())
 }
 
 fn get_sigdb(name: &str, guid: &Guid) -> Option<Vec<u8>> {
@@ -291,6 +296,7 @@ fn get_sigdb(name: &str, guid: &Guid) -> Option<Vec<u8>> {
 
 fn main() -> ExitCode {
     let cfg = Args::parse();
+    let mut rc = 0;
 
     if cfg.manpage {
         let man = clap_mangen::Man::new(Args::command());
@@ -351,29 +357,33 @@ fn main() -> ExitCode {
         let r = process_pe_binary(eficms, pe);
         if let Err(e) = r {
             error!("{pe}: {e}");
+            rc = 1;
         }
     }
 
     for update in &cfg.kek {
         let r = process_sb_var_update(eficms, ids::KEK.into(), update);
         if let Err(e) = r {
-            error!("{update}: {e}")
+            error!("{update}: {e}");
+            rc = 1;
         }
     }
 
     for update in &cfg.db {
         let r = process_sb_var_update(eficms, ids::DB.into(), update);
         if let Err(e) = r {
-            error!("{update}: {e}")
+            error!("{update}: {e}");
+            rc = 1;
         }
     }
 
     for update in &cfg.dbx {
         let r = process_sb_var_update(eficms, ids::DBX.into(), update);
         if let Err(e) = r {
-            error!("{update}: {e}")
+            error!("{update}: {e}");
+            rc = 1;
         }
     }
 
-    0.into()
+    rc.into()
 }
