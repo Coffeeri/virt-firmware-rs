@@ -64,6 +64,19 @@ impl EfiTime {
             ..Default::default()
         }
     }
+
+    pub fn dbxupdate() -> Self {
+        // used by microsoft for dbx updates
+        Self {
+            year: 2010,
+            month: 3,
+            day: 6,
+            hour: 19,
+            minute: 17,
+            second: 21,
+            ..Default::default()
+        }
+    }
 }
 
 #[cfg(feature = "x509")]
