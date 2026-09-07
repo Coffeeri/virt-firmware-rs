@@ -8,7 +8,7 @@ const DATA_SB_DB: &[u8] = include_bytes!("data/enroll/db.auth");
 const DATA_SB_DBX: &[u8] = include_bytes!("data/enroll/dbx.auth");
 
 #[test]
-fn sb_enroll() {
+fn sb_enroll_testdata() {
     let pk = EfiVar::new_from_slice(
         ids::PK.into(),
         EfiVarAttr::new_nv_bs_rt().with_time_auth_wr_access(true),
@@ -52,4 +52,15 @@ fn sb_enroll() {
     assert!(res.is_err());
     let res = store.set(pk.clone());
     assert!(res.is_err());
+}
+
+#[test]
+fn sb_enroll_libefi() {
+    let mut store = EfiVarStore::new();
+
+    store.enroll_pk_mgmt();
+    store.enroll_kek_microsoft();
+    store.enroll_db_microsoft_uefi();
+    store.enroll_dbx_native();
+    store.reset();
 }
