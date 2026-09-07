@@ -155,7 +155,8 @@ fn igvm_add_kernel(
     let db_blob = esl_to_auth(&db_ts, &Vec::<u8>::from(&db));
 
     // dbx
-    let dbx_blob = get_dbx_opt(cfg.arch);
+    let dbx_esl: Vec<u8> = get_dbx_opt(cfg.arch).into();
+    let dbx_blob = esl_to_auth(&EfiTime::dbxupdate(), &dbx_esl);
 
     // calculate load addresses + create hobs
     if secureboot {
@@ -163,7 +164,7 @@ fn igvm_add_kernel(
         hoblist.add(&pk_blob, EfiIgvmDataType::Pk, true);
         hoblist.add(&kek_blob, EfiIgvmDataType::Kek, true);
         hoblist.add(&db_blob, EfiIgvmDataType::Db, true);
-        hoblist.add(dbx_blob, EfiIgvmDataType::Dbx, true);
+        hoblist.add(&dbx_blob, EfiIgvmDataType::Dbx, true);
     }
     if let Some(b) = shim_blob {
         info!("add shim efi binary");
