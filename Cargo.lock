@@ -1856,13 +1856,14 @@ dependencies = [
 
 [[package]]
 name = "virtfw-libefi"
-version = "0.6.5"
+version = "0.7.0"
 dependencies = [
  "bitfield-struct 0.13.0",
  "byteorder",
  "chrono",
  "clap",
  "der",
+ "env_logger",
  "libc",
  "log",
  "openssl",
