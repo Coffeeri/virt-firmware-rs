@@ -255,6 +255,7 @@ fn process_sb_var_update(
     let update = std::fs::read(filename)?;
     let authvar =
         EfiVarAuth2::new_from_bytes(&update).expect("failed to parse auth variable update");
+    println!("timestamp: {}", authvar.header().time);
 
     let variable = EfiVar::new_with_vec(
         variable,
