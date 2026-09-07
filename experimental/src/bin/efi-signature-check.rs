@@ -89,6 +89,7 @@ struct Args {
 
 const GOOD: &str = "✅";
 const FAIL: &str = "❌";
+const SKIP: &str = "⏩";
 
 fn emoji(good: bool) -> &'static str {
     if good {
@@ -138,7 +139,7 @@ fn process_signature(
         println!("    signed : {}", info.signature);
 
         if cert != issuer {
-            println!("    verify : skip (not the issuer certificate)");
+            println!("    verify : {SKIP} skip (not the issuer certificate)");
             continue;
         }
 
