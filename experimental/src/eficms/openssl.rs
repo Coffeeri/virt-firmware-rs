@@ -1,3 +1,5 @@
+use log::debug;
+
 use openssl::pkcs7::{Pkcs7, Pkcs7Flags};
 use openssl::stack::Stack;
 use openssl::x509::store::{X509Store, X509StoreBuilder};
@@ -51,6 +53,20 @@ impl EfiCmsOpenSSL {
         }
         builder.build()
     }
+
+    fn log_errors(stack: &openssl::error::ErrorStack) {
+        for error in stack.errors() {
+            debug!("openssl/verify: {error}");
+        }
+    }
+
+    fn has_error(stack: &openssl::error::ErrorStack, find_code: u64) -> bool {
+        stack
+            .errors()
+            .iter()
+            .find(|e| e.code() == find_code)
+            .is_some()
+    }
 }
 
 impl EfiCms for EfiCmsOpenSSL {
@@ -65,14 +81,23 @@ impl EfiCms for EfiCmsOpenSSL {
         let certs = Stack::new().unwrap();
         let empty = Self::empty_cert_store();
 
-        pkcs7.verify(
+        debug!("openssl/verify: checking signature");
+        match pkcs7.verify(
             &certs,
             &empty,
             data,
             None,
             Pkcs7Flags::BINARY | Pkcs7Flags::NOVERIFY,
-        )?;
-        Ok(())
+        ) {
+            Ok(_) => {
+                debug!("openssl/verify: passed");
+                Ok(())
+            }
+            Err(e) => {
+                Self::log_errors(&e);
+                Err(e.into())
+            }
+        }
     }
 
     fn verify_certificate(
@@ -89,15 +114,18 @@ impl EfiCms for EfiCmsOpenSSL {
             EfiCmsCert::db,
             EfiCmsCert::MokList,
         ] {
+            debug!("openssl/verify: checking {kind:?} certificates");
             let store = self.cert_store(kind);
             match pkcs7.verify(&certs, &store, data, None, Pkcs7Flags::BINARY) {
                 Ok(_) => {
+                    debug!("openssl/verify: passed");
                     return Ok(kind);
                 }
                 Err(e) => {
+                    Self::log_errors(&e);
                     // - "unable to get local issuer certificate": continue, try next cert set
                     // - anyting else: return error
-                    if e.errors().iter().find(|e| e.code() == 0x10800075).is_none() {
+                    if !Self::has_error(&e, 0x10800075) {
                         return Err(e.into());
                     }
                 }
