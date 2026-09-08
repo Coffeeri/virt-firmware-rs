@@ -46,6 +46,10 @@ pub enum EfiCmsImpl {
           about = "pkcs7 playground",
           long_about = None)]
 struct Args {
+    /// set loglevel
+    #[arg(short, long, value_name = "LEVEL", default_value = "info")]
+    loglevel: log::Level,
+
     /// pkcs7 verification code
     #[arg(long)]
     code: Option<EfiCmsImpl>,
@@ -301,8 +305,11 @@ fn main() -> ExitCode {
         return 0.into();
     }
 
+    let levelfilter = cfg.loglevel.to_level_filter();
     env_logger::Builder::from_default_env()
-        .filter_module(module_path!(), log::LevelFilter::Debug)
+        .filter_module(module_path!(), levelfilter)
+        .filter_module("virtfw_libefi", levelfilter)
+        .filter_module("virtfw_experimental", levelfilter)
         .format_timestamp(None)
         .format_target(false)
         .init();
