@@ -13,23 +13,16 @@ impl From<openssl::error::ErrorStack> for EfiCmsError {
 }
 
 // ---------------------------------------------------------------------
-// OpenSSL variants
+// OpenSSL variant
 
-// shared code
 #[derive(Default)]
-pub struct EfiCmsOpenSSLBase {
+pub struct EfiCmsOpenSSL {
     certs: Vec<(EfiCmsCert, Vec<u8>)>,
 }
 
-impl EfiCmsOpenSSLBase {
+impl EfiCmsOpenSSL {
     pub fn new() -> Self {
         Self { certs: Vec::new() }
-    }
-
-    fn add_certs_vec(&mut self, kind: EfiCmsCert, certs: Vec<Vec<u8>>) {
-        for c in certs {
-            self.certs.push((kind, c));
-        }
     }
 
     fn empty_cert_store() -> X509Store {
@@ -60,29 +53,17 @@ impl EfiCmsOpenSSLBase {
     }
 }
 
-// using PKCS7_*
-#[derive(Default)]
-pub struct EfiCmsOpenSSLPkcs7 {
-    base: EfiCmsOpenSSLBase,
-}
-
-impl EfiCmsOpenSSLPkcs7 {
-    pub fn new() -> Self {
-        Self {
-            base: EfiCmsOpenSSLBase::new(),
-        }
-    }
-}
-
-impl EfiCms for EfiCmsOpenSSLPkcs7 {
+impl EfiCms for EfiCmsOpenSSL {
     fn add_certs_vec(&mut self, kind: EfiCmsCert, certs: Vec<Vec<u8>>) {
-        self.base.add_certs_vec(kind, certs);
+        for c in certs {
+            self.certs.push((kind, c));
+        }
     }
 
     fn verify_signature(&self, signature: &[u8], data: Option<&[u8]>) -> Result<(), EfiCmsError> {
         let pkcs7 = Pkcs7::from_der(signature)?;
         let certs = Stack::new().unwrap();
-        let empty = EfiCmsOpenSSLBase::empty_cert_store();
+        let empty = Self::empty_cert_store();
 
         pkcs7.verify(
             &certs,
@@ -108,7 +89,7 @@ impl EfiCms for EfiCmsOpenSSLPkcs7 {
             EfiCmsCert::db,
             EfiCmsCert::MokList,
         ] {
-            let store = self.base.cert_store(kind);
+            let store = self.cert_store(kind);
             match pkcs7.verify(&certs, &store, data, None, Pkcs7Flags::BINARY) {
                 Ok(_) => {
                     return Ok(kind);

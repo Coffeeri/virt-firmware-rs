@@ -19,7 +19,7 @@ use virtfw_libefi::sb::certs::{MICROSOFT_KEK_2011, MICROSOFT_KEK_2023};
 use virtfw_libefi::varstore::sysfs;
 
 use virtfw_experimental::eficms::native::EfiCmsNative;
-use virtfw_experimental::eficms::openssl::EfiCmsOpenSSLPkcs7;
+use virtfw_experimental::eficms::openssl::EfiCmsOpenSSL;
 use virtfw_experimental::eficms::parse::{
     get_certificate, get_issuer_cert, get_issuer_serial, get_signed_data, get_signer_info,
 };
@@ -310,8 +310,8 @@ fn main() -> ExitCode {
     let eficms: &mut dyn EfiCms = match cfg.code {
         Some(EfiCmsImpl::Null) => &mut EfiCmsNull::new(),
         Some(EfiCmsImpl::Native) => &mut EfiCmsNative::new(),
-        Some(EfiCmsImpl::OpenSSLPkcs7) => &mut EfiCmsOpenSSLPkcs7::new(),
-        None => &mut EfiCmsOpenSSLPkcs7::new(), // default
+        Some(EfiCmsImpl::OpenSSLPkcs7) => &mut EfiCmsOpenSSL::new(),
+        None => &mut EfiCmsOpenSSL::new(), // default
     };
 
     if let Some(pkenroll) = cfg.pk_enroll {
