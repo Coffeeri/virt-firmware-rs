@@ -116,7 +116,13 @@ impl EfiCms for EfiCmsOpenSSL {
         ] {
             debug!("openssl/verify: checking {kind:?} certificates");
             let store = self.cert_store(kind);
-            match pkcs7.verify(&certs, &store, data, None, Pkcs7Flags::BINARY) {
+            match pkcs7.verify(
+                &certs,
+                &store,
+                data,
+                None,
+                Pkcs7Flags::BINARY | Pkcs7Flags::NOSIGS,
+            ) {
                 Ok(_) => {
                     debug!("openssl/verify: passed");
                     return Ok(kind);
