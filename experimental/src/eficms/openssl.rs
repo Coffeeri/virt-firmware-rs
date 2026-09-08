@@ -129,11 +129,13 @@ impl EfiCms for EfiCmsOpenSSL {
                 }
                 Err(e) => {
                     Self::log_errors(&e);
-                    // - "unable to get local issuer certificate": continue, try next cert set
-                    // - anyting else: return error
-                    if !Self::has_error(&e, 0x10800075) {
-                        return Err(e.into());
+                    // "unable to get local issuer certificate"
+                    // -> continue, try next cert set
+                    if Self::has_error(&e, 0x10800075) {
+                        continue;
                     }
+                    // anyting else -> return error
+                    return Err(e.into());
                 }
             }
         }
