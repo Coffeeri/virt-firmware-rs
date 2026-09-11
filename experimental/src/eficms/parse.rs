@@ -9,23 +9,27 @@ use virtfw_libefi::sb::certs::oids::{oid_to_name, OID_CMS_SIGNED_DATA};
 
 use super::EfiCmsError;
 
-pub fn asn1_dump(bytes: &[u8], depth: usize) -> der::Result<()> {
+pub fn asn1_dump(bytes: &[u8], depth: usize, max: usize) -> der::Result<()> {
     let mut reader = der::SliceReader::new(bytes)?;
     while !reader.is_finished() {
         let any = AnyRef::decode(&mut reader)?;
         let indent = "  ".repeat(depth);
 
         if any.tag().is_constructed() {
-            println!("{indent}{}: {} bytes", any.tag(), any.value().len());
-            asn1_dump(any.value(), depth + 1)?;
+            println!("{indent}- {}: {} bytes", any.tag(), any.value().len());
+            if depth < max {
+                asn1_dump(any.value(), depth + 1, max)?;
+            }
         } else if any.tag() == Tag::ObjectIdentifier {
             let oid = ObjectIdentifier::from_bytes(any.value())?;
-            println!("{indent}{}: {} ({oid})", any.tag(), oid_to_name(&oid));
+            println!("{indent}- {}: {} ({oid})", any.tag(), oid_to_name(&oid));
         } else if any.tag() == Tag::PrintableString {
             let s = PrintableString::new(any.value())?;
-            println!("{indent}{}: {s}", any.tag());
+            println!("{indent}- {}: {s}", any.tag());
+        } else if any.tag() == Tag::OctetString || any.tag() == Tag::BitString {
+            println!("{indent}- {}: {} bytes", any.tag(), any.value().len());
         } else {
-            println!("{indent}{}: {:02x?}", any.tag(), any.value());
+            println!("{indent}- {}: {:02x?}", any.tag(), any.value());
         }
     }
     Ok(())
