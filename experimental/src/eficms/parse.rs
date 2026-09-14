@@ -2,10 +2,12 @@ use cms::cert::{CertificateChoices, IssuerAndSerialNumber};
 use cms::content_info::ContentInfo;
 use cms::signed_data::{SignedData, SignerIdentifier, SignerInfo};
 use der::asn1::{AnyRef, ObjectIdentifier, PrintableString};
-use der::{Decode, Reader, SliceReader, Tag, Tagged};
+use der::{Decode, Encode, Reader, SliceReader, Tag, Tagged};
 use x509_cert::Certificate;
 
-use virtfw_libefi::sb::certs::oids::{oid_to_name, OID_CMS_SIGNED_DATA};
+use virtfw_libefi::sb::certs::oids::{
+    oid_to_name, OID_CMS_DATA, OID_CMS_SIGNED_DATA, OID_SPC_INDIRECT_DATA,
+};
 
 use super::EfiCmsError;
 
@@ -91,4 +93,46 @@ pub fn get_signed_data(signature: &[u8]) -> Result<SignedData, EfiCmsError> {
     let sd: SignedData = ci.content.decode_as()?;
 
     Ok(sd)
+}
+
+// Authenticode signatures use pkcs7 v1.5 (aka RfC 2315) which is not
+// 100% compatible with CMS RfC 5652.  Therefore passing signatures
+// with embedded content into CMS APIs might not work.  Specifically
+// openssl rejects them.
+//
+// This function does the preprocessing needed to use CMS APIs.  The
+// embedded content is extracted and removed from the signature, the
+// modified signature and detached content is returned as separate
+// items for CMS APIs.
+pub fn preprocess_authenticode(signature: &[u8]) -> Result<(Vec<u8>, Vec<u8>), EfiCmsError> {
+    // parse
+    let mut reader = SliceReader::new(signature)?;
+    let ci = ContentInfo::decode(&mut reader)?;
+    let mut sd: SignedData = ci.content.decode_as()?;
+
+    // sanity checks
+    if sd.encap_content_info.econtent_type != OID_SPC_INDIRECT_DATA {
+        return Err(EfiCmsError::NoAuthenticodeSignature);
+    };
+    if sd.encap_content_info.econtent.is_none() {
+        return Err(EfiCmsError::MissingEmbeddedContent);
+    }
+
+    // get content
+    let detached_content = sd.encap_content_info.econtent.unwrap();
+    let detached_content_bytes = detached_content.value();
+
+    // remove embedded content
+    sd.encap_content_info.econtent_type = OID_CMS_DATA;
+    sd.encap_content_info.econtent = None;
+
+    // re-encode signature
+    let detached_sd_der = sd.to_der()?;
+    let detached_ci = ContentInfo {
+        content_type: ci.content_type,
+        content: der::Any::from_der(&detached_sd_der)?,
+    };
+    let detached_ci_der = detached_ci.to_der()?;
+
+    Ok((detached_ci_der, detached_content_bytes.into()))
 }
