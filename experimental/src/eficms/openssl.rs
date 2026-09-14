@@ -1,8 +1,6 @@
 use log::debug;
 
 use openssl::cms::{CMSOptions, CmsContentInfo};
-use openssl::pkcs7::{Pkcs7, Pkcs7Flags};
-use openssl::stack::Stack;
 use openssl::x509::store::{X509Store, X509StoreBuilder};
 use openssl::x509::verify::X509VerifyFlags;
 use openssl::x509::{X509PurposeId, X509};
@@ -95,8 +93,7 @@ impl EfiCms for EfiCmsOpenSSL {
         signature: &[u8],
         data: Option<&[u8]>,
     ) -> Result<EfiCmsCert, EfiCmsError> {
-        let pkcs7 = Pkcs7::from_der(signature)?;
-        let certs = Stack::new().unwrap();
+        let mut cms = CmsContentInfo::from_der(signature)?;
 
         for kind in [
             EfiCmsCert::PK,
@@ -106,12 +103,12 @@ impl EfiCms for EfiCmsOpenSSL {
         ] {
             debug!("openssl/verify: checking {kind:?} certificates");
             let store = self.cert_store(kind);
-            match pkcs7.verify(
-                &certs,
-                &store,
+            match cms.verify(
+                None,
+                Some(&store),
                 data,
                 None,
-                Pkcs7Flags::BINARY | Pkcs7Flags::NOSIGS,
+                CMSOptions::BINARY | CMSOptions::NO_CONTENT_VERIFY,
             ) {
                 Ok(_) => {
                     debug!("openssl/verify: passed");
@@ -121,7 +118,7 @@ impl EfiCms for EfiCmsOpenSSL {
                     Self::log_errors(&e);
                     // "unable to get local issuer certificate"
                     // -> continue, try next cert set
-                    if Self::has_error(&e, 0x10800075) {
+                    if Self::has_error(&e, 0x17000064) {
                         continue;
                     }
                     // anyting else -> return error
