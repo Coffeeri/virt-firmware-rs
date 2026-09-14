@@ -22,6 +22,7 @@ use virtfw_experimental::eficms::native::EfiCmsNative;
 use virtfw_experimental::eficms::openssl::EfiCmsOpenSSL;
 use virtfw_experimental::eficms::parse::{
     get_certificate, get_issuer_cert, get_issuer_serial, get_signed_data, get_signer_info,
+    preprocess_authenticode,
 };
 use virtfw_experimental::eficms::{EfiCms, EfiCmsCert, EfiCmsError, EfiCmsNull};
 
@@ -207,7 +208,9 @@ fn process_pe_binary(
             hex::encode(sig.digest())
         );
 
-        match process_signature(eficms, ac.data, None) {
+        let (signature, content) =
+            preprocess_authenticode(ac.data).expect("preprocess authenticode signature");
+        match process_signature(eficms, &signature, Some(&content)) {
             Ok(true) => {
                 if authenticode_good {
                     sig_pass += 1;
