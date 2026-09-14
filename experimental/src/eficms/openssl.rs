@@ -1,5 +1,6 @@
 use log::debug;
 
+use openssl::cms::{CMSOptions, CmsContentInfo};
 use openssl::pkcs7::{Pkcs7, Pkcs7Flags};
 use openssl::stack::Stack;
 use openssl::x509::store::{X509Store, X509StoreBuilder};
@@ -25,15 +26,6 @@ pub struct EfiCmsOpenSSL {
 impl EfiCmsOpenSSL {
     pub fn new() -> Self {
         Self { certs: Vec::new() }
-    }
-
-    fn empty_cert_store() -> X509Store {
-        let mut builder = X509StoreBuilder::new().unwrap();
-        builder
-            .set_flags(X509VerifyFlags::PARTIAL_CHAIN | X509VerifyFlags::NO_CHECK_TIME)
-            .unwrap();
-        builder.set_purpose(X509PurposeId::ANY).unwrap();
-        builder.build()
     }
 
     fn cert_store(&self, kind: EfiCmsCert) -> X509Store {
@@ -77,17 +69,15 @@ impl EfiCms for EfiCmsOpenSSL {
     }
 
     fn verify_signature(&self, signature: &[u8], data: Option<&[u8]>) -> Result<(), EfiCmsError> {
-        let pkcs7 = Pkcs7::from_der(signature)?;
-        let certs = Stack::new().unwrap();
-        let empty = Self::empty_cert_store();
+        let mut cms = CmsContentInfo::from_der(signature)?;
 
         debug!("openssl/verify: checking signature");
-        match pkcs7.verify(
-            &certs,
-            &empty,
+        match cms.verify(
+            None,
+            None,
             data,
             None,
-            Pkcs7Flags::BINARY | Pkcs7Flags::NOVERIFY,
+            CMSOptions::BINARY | CMSOptions::NO_SIGNER_CERT_VERIFY,
         ) {
             Ok(_) => {
                 debug!("openssl/verify: passed");
