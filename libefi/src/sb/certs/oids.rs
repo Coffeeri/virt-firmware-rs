@@ -9,6 +9,7 @@ pub const OID_CERT_O: ObjectIdentifier = ObjectIdentifier::new_unwrap("2.5.4.10"
 pub const OID_CERT_OU: ObjectIdentifier = ObjectIdentifier::new_unwrap("2.5.4.11");
 
 // cms
+pub const OID_CMS_DATA: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.2.840.113549.1.7.1");
 pub const OID_CMS_SIGNED_DATA: ObjectIdentifier =
     ObjectIdentifier::new_unwrap("1.2.840.113549.1.7.2");
 
@@ -42,7 +43,8 @@ pub fn oid_to_known_name(oid: &ObjectIdentifier) -> Option<&'static str> {
         OID_CERT_O => Some("O"),
         OID_CERT_OU => Some("OU"),
 
-        OID_CMS_SIGNED_DATA => Some("SignedData [pkcs7]"),
+        OID_CMS_DATA => Some("Data [cms/pkcs7]"),
+        OID_CMS_SIGNED_DATA => Some("SignedData [cms/pkcs7]"),
 
         OID_ALGO_SHA256 => Some("SHA-256"),
         OID_ALGO_SHA384 => Some("SHA-384"),
