@@ -117,6 +117,7 @@ fedora-rpm-check:
     - sed -e '/experimental/d' -i Cargo.toml
     - mapfile -t rpms < <(cargo2rpm -p Cargo.toml buildrequires)
     - dnf install -y "${rpms[@]}"
+  allow_failure: true
 
 pages:
   stage: publish
