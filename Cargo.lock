@@ -1799,12 +1799,17 @@ dependencies = [
 name = "virtfw-efi-tools"
 version = "0.1.12"
 dependencies = [
+ "authenticode",
  "byteorder",
  "clap",
+ "clap_mangen",
  "dialoguer",
  "env_logger",
  "glob",
+ "hex",
  "log",
+ "object",
+ "sha2",
  "uguid",
  "virtfw-libefi",
 ]
@@ -1813,15 +1818,12 @@ dependencies = [
 name = "virtfw-experimental"
 version = "0.0.1"
 dependencies = [
- "authenticode",
  "clap",
  "clap_mangen",
  "cms",
  "der",
  "env_logger",
- "hex",
  "log",
- "object",
  "openssl",
  "rust-lzma",
  "serde",

@@ -17,6 +17,10 @@ name = "generate-boot-csv"
 name = "list-sb-vars"
 
 [[bin]]
+name = "check-sb-signature"
+required-features = [ "eficms" ]
+
+[[bin]]
 name = "mini-bootcfg"
 required-features = [ "udev" ]
 
@@ -25,12 +29,18 @@ name = "uefi-boot-menu"
 
 [features]
 udev = [ "virtfw-libefi/udev" ]
+eficms = [ "virtfw-libefi/eficmsopenssl" ]
 
 [dependencies]
+authenticode.workspace = true
 byteorder.workspace = true
 clap.workspace = true
+clap_mangen.workspace = true
 env_logger.workspace = true
+hex.workspace = true
 log.workspace = true
+object.workspace = true
+sha2.workspace = true
 uguid.workspace = true
 
 dialoguer = "0.12"

@@ -24,27 +24,17 @@ use virtfw_libefi::sb::certs::profiles::{PkEnroll, SecureBootProfile};
 use virtfw_libefi::sb::certs::{MICROSOFT_KEK_2011, MICROSOFT_KEK_2023};
 use virtfw_libefi::varstore::sysfs;
 
-use virtfw_experimental::eficms::native::EfiCmsNative;
-
 #[derive(Debug, Clone, ValueEnum)]
 pub enum EfiCmsImpl {
     #[value(name = "null", help = "dummy implementation")]
     Null,
-    #[value(
-        name = "native",
-        help = "native implementation (RustCrypto/x509-verify)"
-    )]
-    Native,
-    #[value(
-        name = "openssl",
-        help = "OpenSSL implementation, using PKCS7_* functions (default)"
-    )]
+    #[value(name = "openssl", help = "OpenSSL implementation (default)")]
     OpenSSLPkcs7,
 }
 
 #[derive(Parser, Debug)]
-#[command(version, author, name = "pkcs7",
-          about = "pkcs7 playground",
+#[command(version, author, name = "check-sb-signature",
+          about = "pkcs7 signature checker for efi binaries and efi variable updates",
           long_about = None)]
 struct Args {
     /// set loglevel
@@ -52,7 +42,7 @@ struct Args {
     loglevel: log::Level,
 
     /// pkcs7 verification code
-    #[arg(long)]
+    #[arg(long, hide = true)]
     code: Option<EfiCmsImpl>,
 
     /// select 'PK' option
@@ -61,7 +51,7 @@ struct Args {
 
     /// use default 'KEK' certificates
     #[arg(long, help_heading = "certificate configuration")]
-    kek_default: bool,
+    default_kek: bool,
 
     /// select 'db' profile
     #[arg(long, value_name = "NAME", help_heading = "certificate configuration")]
@@ -319,7 +309,6 @@ fn main() -> ExitCode {
 
     let eficms: &mut dyn EfiCms = match cfg.code {
         Some(EfiCmsImpl::Null) => &mut EfiCmsNull::new(),
-        Some(EfiCmsImpl::Native) => &mut EfiCmsNative::new(),
         Some(EfiCmsImpl::OpenSSLPkcs7) => &mut EfiCmsOpenSSL::new(),
         None => &mut EfiCmsOpenSSL::new(), // default
     };
@@ -333,7 +322,7 @@ fn main() -> ExitCode {
         eficms.add_certs_sigdb(EfiCmsCert::PK, &pk);
     }
 
-    if cfg.kek_default {
+    if cfg.default_kek {
         info!("using microsoft certs for 'KEK'");
         let mut kek = EfiSigDB::new();
         kek.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_KEK_2011);

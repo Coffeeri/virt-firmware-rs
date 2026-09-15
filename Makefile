@@ -59,7 +59,7 @@ TGT_VARSTORE	:= $(patsubst %,%-varstore,$(TGT_TYPES))
 # target specific variables
 $(TGT_MEFISTO)    : TARGET := --target x86_64-unknown-none --features efiloader
 $(TGT_EFI_APPS)   : TARGET := --target $(HOST_ARCH)-unknown-uefi --features fdt
-$(TGT_EFI_TOOLS)  : TARGET := --features udev
+$(TGT_EFI_TOOLS)  : TARGET := --features udev,eficms
 $(TGT_VARSTORE)   : TARGET := --features std,json,pem
 
 # targets

@@ -26,9 +26,6 @@ x509-cert.workspace = true
 zerocopy.workspace = true
 
 rust-lzma = "0.6"
-object = "0.39"
-authenticode = { version = "0.6", features = [ "object" ] }
-hex = { version = "0.4", default-features = false, features = [ "alloc" ] }
 x509-verify = { version = "0.4", features = [ "x509" ] }
 
 virtfw-libefi = { workspace = true, features = [ "x509", "std", "eficmsopenssl" ] }
