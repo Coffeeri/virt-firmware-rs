@@ -1,5 +1,5 @@
 use cms::signed_data::SignerInfo;
-use der::{Decode, Encode};
+use der::Decode;
 use x509_cert::spki::AlgorithmIdentifierOwned;
 use x509_cert::Certificate;
 
@@ -45,23 +45,15 @@ impl EfiCmsNative {
 
     fn verify_signature(
         sinfo: &SignerInfo,
-        data: Option<&[u8]>,
+        data: &[u8],
         cert: &Certificate,
     ) -> Result<(), EfiCmsError> {
-        let message = if let Some(msg) = data {
-            msg
-        } else {
-            let Some(sattr) = sinfo.signed_attrs.as_ref() else {
-                return Err(EfiCmsError::MissingSignedAttributes);
-            };
-            &sattr.to_der()?
-        };
-
         let spki = cert.tbs_certificate.subject_public_key_info.clone();
+        let vkey: x509_verify::VerifyingKey = spki.try_into()?;
+
         let algo = Self::map_algo(sinfo)?;
         let signature = x509_verify::Signature::new(&algo, sinfo.signature.as_bytes());
-        let vinfo = x509_verify::VerifyInfo::new(message.into(), signature);
-        let vkey: x509_verify::VerifyingKey = spki.try_into()?;
+        let vinfo = x509_verify::VerifyInfo::new(data.into(), signature);
 
         vkey.verify(&vinfo)?;
         Ok(())
@@ -94,7 +86,7 @@ impl EfiCms for EfiCmsNative {
         }
     }
 
-    fn verify_signature(&self, signature: &[u8], data: Option<&[u8]>) -> Result<(), EfiCmsError> {
+    fn verify_signature(&self, signature: &[u8], data: &[u8]) -> Result<(), EfiCmsError> {
         let sd = get_signed_data(signature)?;
         let si = get_signer_info(&sd)?;
         let cert = get_issuer_cert(&sd)?;
@@ -106,7 +98,7 @@ impl EfiCms for EfiCmsNative {
     fn verify_certificate(
         &self,
         signature: &[u8],
-        _data: Option<&[u8]>,
+        _data: &[u8],
     ) -> Result<EfiCmsCert, EfiCmsError> {
         let sd = get_signed_data(signature)?;
         let cert = get_issuer_cert(&sd)?;

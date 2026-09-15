@@ -77,12 +77,8 @@ pub trait EfiCms {
         self.add_certs_vec(kind, certs);
     }
 
-    fn verify_signature(&self, signature: &[u8], data: Option<&[u8]>) -> Result<(), EfiCmsError>;
-    fn verify_certificate(
-        &self,
-        signature: &[u8],
-        data: Option<&[u8]>,
-    ) -> Result<EfiCmsCert, EfiCmsError>;
+    fn verify_signature(&self, signature: &[u8], data: &[u8]) -> Result<(), EfiCmsError>;
+    fn verify_certificate(&self, signature: &[u8], data: &[u8]) -> Result<EfiCmsCert, EfiCmsError>;
 }
 
 // ---------------------------------------------------------------------
@@ -100,14 +96,14 @@ impl EfiCmsNull {
 impl EfiCms for EfiCmsNull {
     fn add_certs_vec(&mut self, _kind: EfiCmsCert, _certs: Vec<Vec<u8>>) {}
 
-    fn verify_signature(&self, _signature: &[u8], _data: Option<&[u8]>) -> Result<(), EfiCmsError> {
+    fn verify_signature(&self, _signature: &[u8], _data: &[u8]) -> Result<(), EfiCmsError> {
         Err(EfiCmsError::NotImplemented)
     }
 
     fn verify_certificate(
         &self,
         _signature: &[u8],
-        _data: Option<&[u8]>,
+        _data: &[u8],
     ) -> Result<EfiCmsCert, EfiCmsError> {
         Err(EfiCmsError::NotImplemented)
     }

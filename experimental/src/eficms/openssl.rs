@@ -66,14 +66,14 @@ impl EfiCms for EfiCmsOpenSSL {
         }
     }
 
-    fn verify_signature(&self, signature: &[u8], data: Option<&[u8]>) -> Result<(), EfiCmsError> {
+    fn verify_signature(&self, signature: &[u8], data: &[u8]) -> Result<(), EfiCmsError> {
         let mut cms = CmsContentInfo::from_der(signature)?;
 
         debug!("openssl/verify: checking signature");
         match cms.verify(
             None,
             None,
-            data,
+            Some(data),
             None,
             CMSOptions::BINARY | CMSOptions::NO_SIGNER_CERT_VERIFY,
         ) {
@@ -88,11 +88,7 @@ impl EfiCms for EfiCmsOpenSSL {
         }
     }
 
-    fn verify_certificate(
-        &self,
-        signature: &[u8],
-        data: Option<&[u8]>,
-    ) -> Result<EfiCmsCert, EfiCmsError> {
+    fn verify_certificate(&self, signature: &[u8], data: &[u8]) -> Result<EfiCmsCert, EfiCmsError> {
         let mut cms = CmsContentInfo::from_der(signature)?;
 
         for kind in [
@@ -106,7 +102,7 @@ impl EfiCms for EfiCmsOpenSSL {
             match cms.verify(
                 None,
                 Some(&store),
-                data,
+                Some(data),
                 None,
                 CMSOptions::BINARY | CMSOptions::NO_CONTENT_VERIFY,
             ) {

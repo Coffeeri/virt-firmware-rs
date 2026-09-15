@@ -107,7 +107,7 @@ fn emoji(good: bool) -> &'static str {
 fn process_signature(
     eficms: &dyn EfiCms,
     signature: &[u8],
-    signed_data: Option<&[u8]>,
+    signed_data: &[u8],
 ) -> Result<bool, EfiCmsError> {
     let sd = get_signed_data(signature)?;
     let si = get_signer_info(&sd)?;
@@ -210,7 +210,7 @@ fn process_pe_binary(
 
         let (signature, content) =
             preprocess_authenticode(ac.data).expect("preprocess authenticode signature");
-        match process_signature(eficms, &signature, Some(&content)) {
+        match process_signature(eficms, &signature, &content) {
             Ok(true) => {
                 if authenticode_good {
                     sig_pass += 1;
@@ -276,7 +276,7 @@ fn process_sb_var_update(
     let signature = authvar.get_pkcs7();
     let signed_data = authvar.get_signed_data(&variable);
 
-    let passed = match process_signature(eficms, &signature, Some(&signed_data)) {
+    let passed = match process_signature(eficms, &signature, &signed_data) {
         Ok(r) => r,
         Err(e) => {
             error!("{e}");
