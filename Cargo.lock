@@ -1803,6 +1803,7 @@ dependencies = [
  "byteorder",
  "clap",
  "clap_mangen",
+ "der",
  "dialoguer",
  "env_logger",
  "glob",
@@ -1812,6 +1813,7 @@ dependencies = [
  "sha2",
  "uguid",
  "virtfw-libefi",
+ "x509-cert",
 ]
 
 [[package]]
