@@ -159,7 +159,9 @@ fn main() -> ExitCode {
 
     // KEK
     if cfg.add_kek_cert.is_empty() {
-        store.enroll_kek_microsoft();
+        let kek = cfg.enroll.kek_sigdb();
+        let ts = kek.get_x509_mtime();
+        store.enroll_kek(ts, &kek);
     } else {
         let mut kek = EfiSigDB::new();
         for filename in cfg.add_kek_cert {
@@ -184,11 +186,9 @@ fn main() -> ExitCode {
         pk.add_x509_from_der(&guids::OvmfEnrollDefaultKeys, &der.unwrap());
         store.enroll_pk(pk.get_x509_mtime(), &pk);
     } else {
-        match cfg.enroll {
-            PkEnroll::RedHat => store.enroll_pk_redhat(),
-            PkEnroll::ExtMgmt => store.enroll_pk_mgmt(),
-            PkEnroll::Microsoft => store.enroll_pk_microsoft(),
-        }
+        let pk = cfg.enroll.sigdb();
+        let ts = pk.get_x509_mtime();
+        store.enroll_pk(ts, &pk);
     }
 
     // SecureBootEnable
