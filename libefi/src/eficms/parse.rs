@@ -11,12 +11,11 @@ use cms::content_info::ContentInfo;
 use cms::signed_data::{SignedData, SignerIdentifier, SignerInfo};
 use der::asn1::{AnyRef, ObjectIdentifier, PrintableString};
 use der::{Decode, Encode, Reader, SliceReader, Tag, Tagged};
+use x509_cert::spki::AlgorithmIdentifierOwned;
 use x509_cert::Certificate;
 
 use crate::eficms::EfiCmsError;
-use crate::sb::certs::oids::{
-    oid_to_name, OID_CMS_DATA, OID_CMS_SIGNED_DATA, OID_SPC_INDIRECT_DATA,
-};
+use crate::sb::certs::oids::*;
 
 #[cfg(feature = "std")]
 pub fn asn1_dump(bytes: &[u8], depth: usize, max: usize) -> der::Result<()> {
@@ -57,6 +56,22 @@ pub fn get_issuer_serial(si: &SignerInfo) -> Result<&IssuerAndSerialNumber, EfiC
         return Err(EfiCmsError::MissingIssuerAndSerialNumber);
     };
     Ok(sid)
+}
+
+pub fn get_combined_algorithm(sinfo: &SignerInfo) -> Result<AlgorithmIdentifierOwned, EfiCmsError> {
+    let d = sinfo.digest_alg.oid;
+    let s = sinfo.signature_algorithm.oid;
+    let combined = match (d, s) {
+        (OID_ALGO_SHA256, OID_ALGO_RSA) => OID_ALGO_SHA256_RSA,
+        (_, _) => {
+            return Err(EfiCmsError::UnknownAlgorithmCombination);
+        }
+    };
+    let algo = AlgorithmIdentifierOwned {
+        oid: combined,
+        parameters: None,
+    };
+    Ok(algo)
 }
 
 pub fn get_certificate(cc: &CertificateChoices) -> Option<&Certificate> {
