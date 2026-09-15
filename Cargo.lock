@@ -1863,6 +1863,7 @@ dependencies = [
  "byteorder",
  "chrono",
  "clap",
+ "cms",
  "der",
  "env_logger",
  "libc",

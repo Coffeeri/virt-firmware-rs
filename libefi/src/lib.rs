@@ -5,6 +5,8 @@ pub mod arch;
 pub mod bootcfg;
 #[cfg(feature = "std")]
 pub mod distro;
+#[cfg(feature = "eficms")]
+pub mod eficms;
 #[cfg(feature = "udev")]
 pub mod efifile;
 pub mod efivar;

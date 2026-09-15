@@ -3,16 +3,9 @@ use der::Decode;
 use x509_cert::spki::AlgorithmIdentifierOwned;
 use x509_cert::Certificate;
 
-use super::parse::{get_issuer_cert, get_signed_data, get_signer_info};
-use super::{EfiCms, EfiCmsCert, EfiCmsError};
-
+use virtfw_libefi::eficms::parse::{get_issuer_cert, get_signed_data, get_signer_info};
+use virtfw_libefi::eficms::{EfiCms, EfiCmsCert, EfiCmsError};
 use virtfw_libefi::sb::certs::oids::*;
-
-impl From<x509_verify::Error> for EfiCmsError {
-    fn from(xv: x509_verify::Error) -> Self {
-        Self::X509Verify(xv)
-    }
-}
 
 // ---------------------------------------------------------------------
 // RustCrypto variant, using x509_verify crate
@@ -49,13 +42,15 @@ impl EfiCmsNative {
         cert: &Certificate,
     ) -> Result<(), EfiCmsError> {
         let spki = cert.tbs_certificate.subject_public_key_info.clone();
-        let vkey: x509_verify::VerifyingKey = spki.try_into()?;
+        let vkey: x509_verify::VerifyingKey = spki.try_into().expect("spki -> vkey");
 
         let algo = Self::map_algo(sinfo)?;
         let signature = x509_verify::Signature::new(&algo, sinfo.signature.as_bytes());
         let vinfo = x509_verify::VerifyInfo::new(data.into(), signature);
 
-        vkey.verify(&vinfo)?;
+        if vkey.verify(&vinfo).is_err() {
+            return Err(EfiCmsError::UnspecifiedError);
+        }
         Ok(())
     }
 

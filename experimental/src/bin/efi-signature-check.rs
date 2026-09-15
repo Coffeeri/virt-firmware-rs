@@ -7,6 +7,12 @@ use uguid::Guid;
 
 use sha2::{Digest, Sha256};
 
+use virtfw_libefi::eficms::openssl::EfiCmsOpenSSL;
+use virtfw_libefi::eficms::parse::{
+    get_certificate, get_issuer_cert, get_issuer_serial, get_signed_data, get_signer_info,
+    preprocess_authenticode,
+};
+use virtfw_libefi::eficms::{EfiCms, EfiCmsCert, EfiCmsError, EfiCmsNull};
 use virtfw_libefi::efivar::auth::EfiVarAuth2;
 use virtfw_libefi::efivar::ids;
 use virtfw_libefi::efivar::sigdb::EfiSigDB;
@@ -19,12 +25,6 @@ use virtfw_libefi::sb::certs::{MICROSOFT_KEK_2011, MICROSOFT_KEK_2023};
 use virtfw_libefi::varstore::sysfs;
 
 use virtfw_experimental::eficms::native::EfiCmsNative;
-use virtfw_experimental::eficms::openssl::EfiCmsOpenSSL;
-use virtfw_experimental::eficms::parse::{
-    get_certificate, get_issuer_cert, get_issuer_serial, get_signed_data, get_signer_info,
-    preprocess_authenticode,
-};
-use virtfw_experimental::eficms::{EfiCms, EfiCmsCert, EfiCmsError, EfiCmsNull};
 
 #[derive(Debug, Clone, ValueEnum)]
 pub enum EfiCmsImpl {

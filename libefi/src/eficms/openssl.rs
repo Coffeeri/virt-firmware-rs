@@ -1,3 +1,5 @@
+extern crate alloc;
+use alloc::vec::Vec;
 use log::debug;
 
 use openssl::cms::{CMSOptions, CmsContentInfo};
@@ -5,7 +7,7 @@ use openssl::x509::store::{X509Store, X509StoreBuilder};
 use openssl::x509::verify::X509VerifyFlags;
 use openssl::x509::{X509PurposeId, X509};
 
-use super::{EfiCms, EfiCmsCert, EfiCmsError};
+use crate::eficms::{EfiCms, EfiCmsCert, EfiCmsError};
 
 impl From<openssl::error::ErrorStack> for EfiCmsError {
     fn from(err: openssl::error::ErrorStack) -> Self {

@@ -1,8 +1,11 @@
-pub mod native;
+#[cfg(feature = "eficmsopenssl")]
 pub mod openssl;
 pub mod parse;
 
-use virtfw_libefi::efivar::sigdb::EfiSigDB;
+extern crate alloc;
+use alloc::vec::Vec;
+
+use crate::efivar::sigdb::EfiSigDB;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
@@ -15,6 +18,7 @@ pub enum EfiCmsCert {
 
 #[derive(Debug)]
 pub enum EfiCmsError {
+    UnspecifiedError,
     NotImplemented,
     UnknownAlgorithmCombination,
     ContentIsNoSignature,
@@ -27,13 +31,14 @@ pub enum EfiCmsError {
     CertificateNotTrusted,
     NoAuthenticodeSignature,
     Der(der::Error),
-    X509Verify(x509_verify::Error),
+    #[cfg(feature = "eficmsopenssl")]
     OpenSSL(::openssl::error::ErrorStack),
 }
 
 impl core::fmt::Display for EfiCmsError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
+            Self::UnspecifiedError => write!(f, "unspecified error"),
             Self::NotImplemented => write!(f, "not implemented"),
             Self::UnknownAlgorithmCombination => write!(f, "unknown algorithm combination"),
             Self::ContentIsNoSignature => write!(f, "content is not a signature"),
@@ -46,7 +51,7 @@ impl core::fmt::Display for EfiCmsError {
             Self::CertificateNotTrusted => write!(f, "certificate is not trusted"),
             Self::NoAuthenticodeSignature => write!(f, "no authenticode signature"),
             Self::Der(e) => write!(f, "der: {}", e),
-            Self::X509Verify(e) => write!(f, "x509-verify: {}", e),
+            #[cfg(feature = "eficmsopenssl")]
             Self::OpenSSL(e) => write!(f, "openssl: {}", e),
         }
     }

@@ -1,3 +1,11 @@
+#[cfg(feature = "std")]
+extern crate std;
+#[cfg(feature = "std")]
+use std::println;
+
+extern crate alloc;
+use alloc::vec::Vec;
+
 use cms::cert::{CertificateChoices, IssuerAndSerialNumber};
 use cms::content_info::ContentInfo;
 use cms::signed_data::{SignedData, SignerIdentifier, SignerInfo};
@@ -5,12 +13,12 @@ use der::asn1::{AnyRef, ObjectIdentifier, PrintableString};
 use der::{Decode, Encode, Reader, SliceReader, Tag, Tagged};
 use x509_cert::Certificate;
 
-use virtfw_libefi::sb::certs::oids::{
+use crate::eficms::EfiCmsError;
+use crate::sb::certs::oids::{
     oid_to_name, OID_CMS_DATA, OID_CMS_SIGNED_DATA, OID_SPC_INDIRECT_DATA,
 };
 
-use super::EfiCmsError;
-
+#[cfg(feature = "std")]
 pub fn asn1_dump(bytes: &[u8], depth: usize, max: usize) -> der::Result<()> {
     let mut reader = der::SliceReader::new(bytes)?;
     while !reader.is_finished() {

@@ -16,6 +16,8 @@ udev = [ "std", "dep:udev" ]
 sbdata = []
 sbtest = [ "sbdata" ]
 x509 = [ "sbdata" , "dep:der", "dep:x509-cert" ]
+eficms = [ "dep:cms" ]
+eficmsopenssl = [ "eficms", "std", "dep:openssl" ]
 
 [dependencies]
 bitfield-struct.workspace = true
@@ -25,7 +27,9 @@ uguid.workspace = true
 zerocopy.workspace = true
 
 clap = { workspace = true, optional = true }
+cms = { workspace = true, optional = true }
 der = { workspace = true, optional = true }
+openssl = { workspace = true, optional = true }
 x509-cert = { workspace = true, optional = true }
 
 chrono = { version = "0.4", optional = true }
