@@ -109,6 +109,15 @@ pkg-varstore:
   <<: *pkg-check
   allow_failure: true
 
+fedora-rpm-check:
+  stage: package
+  needs: []
+  script:
+    - sed -e '/mefisto/d' -i Cargo.toml
+    - sed -e '/experimental/d' -i Cargo.toml
+    - mapfile -t rpms < <(cargo2rpm -p Cargo.toml buildrequires)
+    - dnf install -y "${rpms[@]}"
+
 pages:
   stage: publish
   needs:
