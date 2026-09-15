@@ -151,7 +151,7 @@ impl ValueEnum for SecureBootProfile {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum PkEnroll {
     ExtMgmt,
     RedHat,
@@ -172,6 +172,16 @@ impl PkEnroll {
                 sigdb.add_x509_from_der(&MicrosoftVendor, MICROSOFT_PK_2023);
             }
         }
+        sigdb
+    }
+
+    pub fn kek_sigdb(&self) -> EfiSigDB {
+        let mut sigdb = EfiSigDB::new();
+        if *self == Self::RedHat {
+            sigdb.add_x509_from_der(&OvmfEnrollDefaultKeys, REDHAT_PK_KEK_2014);
+        }
+        sigdb.add_x509_from_der(&MicrosoftVendor, MICROSOFT_KEK_2011);
+        sigdb.add_x509_from_der(&MicrosoftVendor, MICROSOFT_KEK_2023);
         sigdb
     }
 }
