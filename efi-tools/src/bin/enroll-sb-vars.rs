@@ -1,6 +1,8 @@
 use authenticode::AttributeCertificateIterator;
 use clap::{CommandFactory, Parser};
 use der::Decode;
+use dialoguer::theme::ColorfulTheme;
+use dialoguer::Select;
 use log::{debug, error, info};
 use object::read::pe;
 use std::path::PathBuf;
@@ -71,6 +73,10 @@ struct Args {
     #[arg(long, value_name = "MODE",
           value_enum, default_value_t = PkEnroll::RedHat)]
     enroll: PkEnroll,
+
+    /// enable interactive 'db' certificate selection
+    #[arg(long, short)]
+    interactive: bool,
 
     /// select 'db' boot loader certificate
     ///
@@ -270,6 +276,27 @@ fn enroll_one_sigdb(
     Ok(())
 }
 
+fn cert_menu(
+    certs: &[(&'static Guid, &'static [u8])],
+) -> Result<(&'static Guid, &'static [u8]), Box<dyn std::error::Error>> {
+    let mut titlelist = Vec::new();
+    for (_guid, cert) in certs {
+        let info = CertInfo::new_from_der(cert).unwrap();
+        titlelist.push(info.desc().to_owned());
+    }
+
+    let theme = ColorfulTheme::default();
+    let sel = Select::with_theme(&theme)
+        .with_prompt("select 'db' ca certificate")
+        .items(&titlelist)
+        .interact_opt()?;
+
+    let Some(s) = sel else {
+        return Err("interactive menu canceled".into());
+    };
+    Ok(certs[s])
+}
+
 fn enroll(cfg: &Args) -> Result<(), Box<dyn std::error::Error>> {
     if cfg.dry_run {
         info!("--- dry run mode ---");
@@ -288,20 +315,24 @@ fn enroll(cfg: &Args) -> Result<(), Box<dyn std::error::Error>> {
         let db_certs = find_ca_certs(cfg, &subjects);
         if db_certs.is_empty() {
             if let Some(ref m) = cfg.ca_subject {
-                let msg = format!("no db ca certificate matching \"{m}\"");
+                let msg = format!("no 'db' ca certificate matching \"{m}\"");
                 return Err(msg.into());
             } else {
-                return Err("no db ca certificate".into());
+                return Err("no 'db' ca certificate".into());
             }
         }
-        if db_certs.len() > 1 {
-            return Err("multiple signatures present, pick one via --ca-subject <match>".into());
-        }
+
+        let (guid, cert) = if db_certs.len() > 1 {
+            if !cfg.interactive {
+                return Err("found multiple signatures, try --ca-subject <match> or -i".into());
+            }
+            &cert_menu(&db_certs)?
+        } else {
+            db_certs.first().unwrap()
+        };
 
         let mut sigdb = EfiSigDB::new();
-        for (guid, cert) in db_certs {
-            sigdb.add_x509_from_der(guid, cert);
-        }
+        sigdb.add_x509_from_der(guid, cert);
         sigdb
     };
 
