@@ -58,6 +58,11 @@ audit:
   script:
     - make audit
 
+machete:
+  stage: build
+  script:
+    - cargo machete
+
 test-cargo:
   stage: tests
   needs: []
