@@ -3,6 +3,7 @@
 #![no_main]
 
 extern crate alloc;
+use alloc::format;
 use alloc::vec::Vec;
 
 use core::mem::MaybeUninit;
@@ -347,11 +348,12 @@ fn main() {
     info!("efi loader init complete");
 
     if let Some(mut smbios) = smbios::SmbiosLoader::new(&FWCFG) {
+        let version = format!("{META_BIOS_NAME} v{META_BIOS_MAJOR}.{META_BIOS_MINOR}");
         smbios.set_bios(
             META_BIOS_MAJOR,
             META_BIOS_MINOR,
             META_BIOS_NAME,
-            META_CRATE_VER,
+            &version,
             META_BIOS_DATE,
         );
         smbios
