@@ -53,12 +53,12 @@ release:
   script:
     - make install
 
-audit:
+cargo-audit:
   stage: build
   script:
     - make audit
 
-machete:
+cargo-machete:
   stage: build
   script:
     - cargo machete
