@@ -26,7 +26,7 @@ struct Args {
     #[arg(long, hide = true)]
     manpage: bool,
 
-    /// select 'db' profile
+    /// select 'db' certificate profile
     ///
     /// Use 'uefi*' profiles for linux guests, use 'win*' profiles for
     /// windows guests.  If in doubt you can also use the 'all'
@@ -40,7 +40,7 @@ struct Args {
     )]
     profile: Option<SecureBootProfile>,
 
-    /// select 'PK' mode
+    /// select 'PK' enroll mode
     #[arg(long, value_name = "MODE", help_heading = "Quick setup",
           value_enum, default_value_t = PkEnroll::RedHat)]
     enroll: PkEnroll,
