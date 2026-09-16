@@ -287,7 +287,12 @@ fn enroll(cfg: &Args) -> Result<(), Box<dyn std::error::Error>> {
         let subjects = find_ca_subjects(loader)?;
         let db_certs = find_ca_certs(cfg, &subjects);
         if db_certs.is_empty() {
-            return Err("no db ca certificate".into());
+            if let Some(ref m) = cfg.ca_subject {
+                let msg = format!("no db ca certificate matching \"{m}\"");
+                return Err(msg.into());
+            } else {
+                return Err("no db ca certificate".into());
+            }
         }
         if db_certs.len() > 1 {
             return Err("multiple signatures present, pick one via --ca-subject <match>".into());
