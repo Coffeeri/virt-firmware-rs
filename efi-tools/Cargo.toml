@@ -36,7 +36,6 @@ eficms = [ "virtfw-libefi/eficmsopenssl" ]
 
 [dependencies]
 authenticode.workspace = true
-byteorder.workspace = true
 clap.workspace = true
 clap_mangen.workspace = true
 der.workspace = true

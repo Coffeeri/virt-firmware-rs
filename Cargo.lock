@@ -1800,7 +1800,6 @@ name = "virtfw-efi-tools"
 version = "0.1.12"
 dependencies = [
  "authenticode",
- "byteorder",
  "clap",
  "clap_mangen",
  "der",
@@ -1826,11 +1825,9 @@ dependencies = [
  "der",
  "env_logger",
  "log",
- "openssl",
  "rust-lzma",
  "serde",
  "serde_json",
- "sha2",
  "uguid",
  "virtfw-libefi",
  "x509-cert",
@@ -1851,8 +1848,6 @@ dependencies = [
  "igvm_defs",
  "log",
  "object",
- "serde",
- "serde_json",
  "sha2",
  "uguid",
  "virtfw-libefi",
@@ -1903,7 +1898,6 @@ dependencies = [
  "virtfw-libefi",
  "virtfw-libhw",
  "x86_64",
- "zerocopy",
 ]
 
 [[package]]
