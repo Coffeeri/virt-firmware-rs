@@ -39,12 +39,15 @@ Enroll secure boot certificates.  By default the utility will look at
 your boot loader (usually shim.efi) and enroll the CA certificate used
 to sign the boot loader.  In case the boot loader has multiple
 signatures you might have to pick one using '--ca-subject'.
-Alternatively you can pick a set of certificates using '--profile'.
+Alternatively you can pick a set of certificates using '--profile' and
+load certiticates from files using '--add-db-cert'.  You can use dry
+run mode to verify the utility will do what you want before actually
+enrolling the certificates.
 
 This needs a recent UEFI firmware version which accepts an unsigned
 platform key (PK).  The config switch (PcdRequireSelfSignedPk) was
 added to edk2 in 2023.  The default for OVMF has been changed in
-upstream edk2 in 2026 (edk2-stable202605 + newer).  When using the
+upstream edk2 in 2026 (edk2-stable202605 or newer).  When using the
 qemu variable (-device uefi-vars) store you need qemu 11.2 or newer.
 
 This utility is restricted to virtual machines.
