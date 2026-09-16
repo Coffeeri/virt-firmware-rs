@@ -51,4 +51,12 @@ impl CertInfo {
         let info = Self::new(&cert);
         Some(info)
     }
+
+    pub fn desc(&self) -> &str {
+        if let Some(ref cn) = self.subject_cn {
+            cn
+        } else {
+            &self.subject
+        }
+    }
 }
