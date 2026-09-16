@@ -1906,7 +1906,6 @@ version = "0.6.5"
 dependencies = [
  "clap",
  "clap_mangen",
- "der",
  "env_logger",
  "flate2",
  "hex",
@@ -1916,7 +1915,6 @@ dependencies = [
  "uefi",
  "uguid",
  "virtfw-libefi",
- "x509-cert",
  "zerocopy",
 ]
 
