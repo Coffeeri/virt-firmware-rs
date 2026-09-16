@@ -40,7 +40,7 @@ your boot loader (usually shim.efi) and enroll the CA certificate used
 to sign the boot loader.  In case the boot loader has multiple
 signatures you might have to pick one using '--ca-subject'.
 Alternatively you can pick a set of certificates using '--profile' and
-load certiticates from files using '--add-db-cert'.  You can use dry
+load certificates from files using '--add-db-cert'.  You can use dry
 run mode to verify the utility will do what you want before actually
 enrolling the certificates.
 
