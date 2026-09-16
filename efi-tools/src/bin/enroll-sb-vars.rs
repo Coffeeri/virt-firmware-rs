@@ -40,9 +40,9 @@ your boot loader (usually shim.efi) and enroll the CA certificate used
 to sign the boot loader.  In case the boot loader has multiple
 signatures you might have to pick one using '--ca-subject'.
 Alternatively you can pick a set of certificates using '--profile'.
-Additional certificates can be loaded from files using
-'--add-db-cert'.  You can use dry run mode to verify the utility will
-do what you want before actually enrolling the certificates.
+Additional certificates can be loaded from files using '--db-cert'.
+You can use dry run mode to verify the utility will do what you want
+before actually enrolling the certificates.
 
 This needs a recent UEFI firmware version which accepts an unsigned
 platform key (PK).  The config switch (PcdRequireSelfSignedPk) was
@@ -72,18 +72,18 @@ struct Args {
           value_enum, default_value_t = PkEnroll::RedHat)]
     enroll: PkEnroll,
 
+    /// select 'db' boot loader certificate
+    ///
+    /// Might be needed if your boot loader has multiple signatures to
+    /// specify which signature CA should be used.
+    #[arg(long, value_name = "CN")]
+    ca_subject: Option<String>,
+
     /// select 'db' certificate profile
     ///
     /// For linux systems you usually need 'uefi11' or 'uefi23'.
     #[arg(long, value_name = "NAME")]
     profile: Option<SecureBootProfile>,
-
-    /// select 'db' boot loader certificate
-    ///
-    /// Might be needed if your boot loader has multiple signatures to
-    /// specify which should be used.
-    #[arg(long, value_name = "CN")]
-    ca_subject: Option<String>,
 
     /// add certificate to 'db'
     ///
@@ -92,7 +92,7 @@ struct Args {
     /// '--profile none' if you want specify all certificates
     /// explicitly.
     #[arg(long, value_name = "FILE")]
-    add_db_cert: Vec<String>,
+    db_cert: Vec<String>,
 
     #[arg(long, hide = true)]
     manpage: bool,
@@ -305,7 +305,7 @@ fn enroll(cfg: &Args) -> Result<(), Box<dyn std::error::Error>> {
         sigdb
     };
 
-    for filename in &cfg.add_db_cert {
+    for filename in &cfg.db_cert {
         let der = cert_loadfile(filename)?;
         db.add_x509_from_der(&guids::OvmfEnrollDefaultKeys, &der);
     }
