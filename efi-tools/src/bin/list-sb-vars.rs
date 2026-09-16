@@ -9,21 +9,30 @@ use virtfw_libefi::varstore::sysfs;
 
 #[derive(Parser, Debug)]
 #[command(version, name = "list-sb-vars", about = "list secure boot databases", long_about = None)]
-struct Args {}
+struct Args {
+    /// verbose mode (print more certificate details)
+    #[arg(short, long)]
+    verbose: bool,
+}
 
-fn print_cert(der: &[u8]) {
+fn print_cert(cfg: &Args, der: &[u8]) {
     let info = CertInfo::new_from_der(der).expect("x509 cert parse error");
     if info.subject == info.issuer {
         println!("    subject: \"{}\" (self-signed)", info.desc());
     } else {
         println!("    subject: \"{}\"", info.desc());
+    }
+    if !cfg.verbose {
+        return;
+    }
+    if info.subject != info.issuer {
         println!("    issuer : \"{}\"", info.desc_issuer());
     }
     println!("    valid  : {} -> {}", info.not_before, info.not_after);
     println!("    signed : {}", info.signature);
 }
 
-fn print_sigdb(name: &str, guid: &Guid) {
+fn print_sigdb(cfg: &Args, name: &str, guid: &Guid) {
     let Some(var) = sysfs::varstore_read(name, guid) else {
         println!("no {name}");
         return;
@@ -38,7 +47,7 @@ fn print_sigdb(name: &str, guid: &Guid) {
     for siglist in sigdb.siglists {
         println!("  {siglist}");
         if let Some(der) = siglist.get_x509() {
-            print_cert(der);
+            print_cert(cfg, der);
         }
     }
 }
@@ -52,13 +61,13 @@ fn loginit() {
 }
 
 fn main() {
-    Args::parse();
+    let cfg = Args::parse();
     loginit();
 
-    print_sigdb("PK", &guids::EfiGlobalVariable);
-    print_sigdb("KEK", &guids::EfiGlobalVariable);
-    print_sigdb("db", &guids::EfiImageSecurityDatabase);
-    print_sigdb("dbx", &guids::EfiImageSecurityDatabase);
-    print_sigdb("MokListRT", &guids::ShimVariable);
-    print_sigdb("MokListXRT", &guids::ShimVariable);
+    print_sigdb(&cfg, "PK", &guids::EfiGlobalVariable);
+    print_sigdb(&cfg, "KEK", &guids::EfiGlobalVariable);
+    print_sigdb(&cfg, "db", &guids::EfiImageSecurityDatabase);
+    print_sigdb(&cfg, "dbx", &guids::EfiImageSecurityDatabase);
+    print_sigdb(&cfg, "MokListRT", &guids::ShimVariable);
+    print_sigdb(&cfg, "MokListXRT", &guids::ShimVariable);
 }
