@@ -189,9 +189,9 @@ fn find_ca_subjects(bootloader: PathBuf) -> Result<Vec<RdnSequence>, Box<dyn std
             let good = sid.issuer == cert.tbs_certificate.issuer
                 && sid.serial_number == cert.tbs_certificate.serial_number;
             if good {
-                info!("  signature {i}, cert {c}, issuer {desc}, ok");
+                info!("  signature {i}, cert {c}, issuer \"{desc}\", ok");
             } else {
-                debug!("  signature {i}, cert {c}, issuer {desc}, skip (not issuer)");
+                debug!("  signature {i}, cert {c}, issuer \"{desc}\", skip (not issuer)");
             }
         }
     }
@@ -239,7 +239,7 @@ fn enroll_one_sigdb(
     for siglist in &sigdb.siglists {
         if let Some(cert) = siglist.get_x509() {
             if let Some(info) = CertInfo::new_from_der(cert) {
-                info!("  x509: {}", info.subject_cn.unwrap_or(info.subject));
+                info!("  x509: \"{}\"", info.subject_cn.unwrap_or(info.subject));
                 continue;
             }
         }
