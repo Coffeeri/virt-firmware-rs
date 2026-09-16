@@ -2,13 +2,11 @@ use clap::{CommandFactory, Parser};
 use log::error;
 use std::process::ExitCode;
 
-use der::{DecodePem, Encode};
-use x509_cert::Certificate;
-
 use virtfw_libefi::arch::EfiArch;
 use virtfw_libefi::efivar::auth::auth_to_esl;
 use virtfw_libefi::efivar::sigdb::EfiSigDB;
 use virtfw_libefi::guids;
+use virtfw_libefi::sb::certs::loadfile::cert_loadfile;
 use virtfw_libefi::sb::certs::profiles::{PkEnroll, SecureBootProfile};
 use virtfw_libefi::sb::dbx::*;
 use virtfw_libefi::types::EfiTime;
@@ -97,24 +95,6 @@ fn loginit() {
         .init();
 }
 
-fn cert_is_pem(data: &[u8]) -> bool {
-    let Ok(s) = std::str::from_utf8(data) else {
-        return false;
-    };
-    s.contains("-----BEGIN")
-}
-
-fn cert_load(filename: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
-    let data = std::fs::read(filename)?;
-
-    if cert_is_pem(&data) {
-        let cert = Certificate::from_pem(&data)?;
-        Ok(cert.to_der().expect("serialize cert"))
-    } else {
-        Ok(data)
-    }
-}
-
 fn main() -> ExitCode {
     let cfg = Args::parse();
     loginit();
@@ -130,7 +110,7 @@ fn main() -> ExitCode {
     // db
     let mut db = cfg.profile.unwrap().sigdb();
     for filename in cfg.add_db_cert {
-        let der = cert_load(&filename);
+        let der = cert_loadfile(&filename);
         if let Err(e) = der {
             error!("{filename}: {e}");
             return 1.into();
@@ -165,7 +145,7 @@ fn main() -> ExitCode {
     } else {
         let mut kek = EfiSigDB::new();
         for filename in cfg.add_kek_cert {
-            let der = cert_load(&filename);
+            let der = cert_loadfile(&filename);
             if let Err(e) = der {
                 error!("{filename}: {e}");
                 return 1.into();
@@ -178,7 +158,7 @@ fn main() -> ExitCode {
     // PK
     if let Some(filename) = cfg.set_pk_cert {
         let mut pk = EfiSigDB::new();
-        let der = cert_load(&filename);
+        let der = cert_loadfile(&filename);
         if let Err(e) = der {
             error!("{filename}: {e}");
             return 1.into();
