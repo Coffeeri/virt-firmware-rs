@@ -59,4 +59,12 @@ impl CertInfo {
             &self.subject
         }
     }
+
+    pub fn desc_issuer(&self) -> &str {
+        if let Some(ref cn) = self.issuer_cn {
+            cn
+        } else {
+            &self.issuer
+        }
+    }
 }
