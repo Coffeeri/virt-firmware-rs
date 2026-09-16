@@ -185,7 +185,7 @@ fn find_ca_subjects(bootloader: PathBuf) -> Result<Vec<RdnSequence>, Box<dyn std
 
         for (c, cert) in sig.certificates().enumerate() {
             let info = CertInfo::new(cert);
-            let desc = info.issuer_cn.unwrap_or(info.issuer);
+            let desc = info.desc();
             let good = sid.issuer == cert.tbs_certificate.issuer
                 && sid.serial_number == cert.tbs_certificate.serial_number;
             if good {
@@ -218,7 +218,7 @@ fn find_ca_certs(cfg: &Args, subjects: &[RdnSequence]) -> Vec<(&'static Guid, &'
             }
             if let Some(ref subject) = cfg.ca_subject {
                 let info = CertInfo::new(&cert);
-                let desc = info.subject_cn.unwrap_or(info.subject);
+                let desc = info.desc();
                 if !desc.contains(subject) {
                     debug!("  ignoring \"{}\", does not match \"{}\"", desc, subject);
                     return None;
@@ -239,7 +239,7 @@ fn enroll_one_sigdb(
     for siglist in &sigdb.siglists {
         if let Some(cert) = siglist.get_x509() {
             if let Some(info) = CertInfo::new_from_der(cert) {
-                info!("  x509: \"{}\"", info.subject_cn.unwrap_or(info.subject));
+                info!("  x509: \"{}\"", info.desc());
                 continue;
             }
         }

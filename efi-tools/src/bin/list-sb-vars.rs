@@ -14,19 +14,10 @@ struct Args {}
 fn print_cert(der: &[u8]) {
     let info = CertInfo::new_from_der(der).expect("x509 cert parse error");
     if info.subject == info.issuer {
-        println!(
-            "    subject: {} (self-signed)",
-            info.subject_cn.unwrap_or("no CN".to_string())
-        );
+        println!("    subject: \"{}\" (self-signed)", info.desc());
     } else {
-        println!(
-            "    subject: {}",
-            info.subject_cn.unwrap_or("no CN".to_string())
-        );
-        println!(
-            "    issuer : {}",
-            info.issuer_cn.unwrap_or("no CN".to_string())
-        );
+        println!("    subject: \"{}\"", info.desc());
+        println!("    issuer : \"{}\"", info.desc_issuer());
     }
     println!("    valid  : {} -> {}", info.not_before, info.not_after);
     println!("    signed : {}", info.signature);

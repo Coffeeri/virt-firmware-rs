@@ -129,8 +129,8 @@ fn process_signature(
     {
         let info = CertInfo::new(cert);
         println!("  - certificate #{c}");
-        println!("    subject: {}", info.subject_cn.unwrap_or(info.subject));
-        println!("    issuer : {}", info.issuer_cn.unwrap_or(info.issuer));
+        println!("    subject: {}", info.desc());
+        println!("    issuer : {}", info.desc_issuer());
         println!("    signed : {}", info.signature);
 
         if cert != issuer {
@@ -237,7 +237,7 @@ fn print_signature_database(data: &[u8]) -> Option<()> {
         println!("  - {}", siglist);
         if let Some(cert) = siglist.get_x509() {
             if let Some(info) = CertInfo::new_from_der(cert) {
-                println!("    subject: {}", info.subject_cn.unwrap_or(info.subject));
+                println!("    subject: {}", info.desc());
             }
         }
     }
