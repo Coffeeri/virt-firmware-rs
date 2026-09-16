@@ -191,7 +191,7 @@ fn find_ca_subjects(bootloader: PathBuf) -> Result<Vec<RdnSequence>, Box<dyn std
 
         for (c, cert) in sig.certificates().enumerate() {
             let info = CertInfo::new(cert);
-            let desc = info.desc();
+            let desc = info.desc_issuer();
             let good = sid.issuer == cert.tbs_certificate.issuer
                 && sid.serial_number == cert.tbs_certificate.serial_number;
             if good {
