@@ -108,6 +108,7 @@ fn loginit(cfg: &Args) {
     let levelfilter = cfg.loglevel.to_level_filter();
     env_logger::Builder::from_default_env()
         .filter_module(module_path!(), levelfilter)
+        .filter_module("virtfw_libefi", levelfilter)
         .format_timestamp(None)
         .format_target(false)
         .init();
