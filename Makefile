@@ -225,14 +225,14 @@ tmt-fips:
 # default tests (local)
 tmt-local:
 	cd tmt; tmt --feeling-safe --context distro=$(DISTRO) \
-		run --all --verbose \
+		run --all --verbose -e PATH=$(PATH) \
 		provision --how local \
 		report $(TMT_REPORT)
 
 # snp boot tests (local, needs sev-snp host)
 tmt-local-snp:
 	cd tmt; tmt --feeling-safe --context distro=$(DISTRO) --context snp=yes \
-		run --all --verbose \
+		run --all --verbose -e PATH=$(PATH) \
 		test --filter 'tag:snp' \
 		provision --how local \
 		report $(TMT_REPORT)
