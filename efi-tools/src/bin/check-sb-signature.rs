@@ -19,6 +19,7 @@ use virtfw_libefi::efivar::sigdb::EfiSigDB;
 use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr, EfiVarId};
 use virtfw_libefi::guids;
 use virtfw_libefi::sb::certs::info::CertInfo;
+use virtfw_libefi::sb::certs::loadfile::cert_loadfile;
 use virtfw_libefi::sb::certs::oids::oid_to_name;
 use virtfw_libefi::sb::certs::profiles::{PkEnroll, SecureBootProfile};
 use virtfw_libefi::sb::certs::{MICROSOFT_KEK_2011, MICROSOFT_KEK_2023};
@@ -56,6 +57,10 @@ struct Args {
     /// select 'db' profile
     #[arg(long, value_name = "NAME", help_heading = "certificate configuration")]
     profile: Option<SecureBootProfile>,
+
+    /// load additional certificates
+    #[arg(long, value_name = "FILE", help_heading = "certificate configuration")]
+    cert: Vec<String>,
 
     /// pe/efi binary to inspect
     #[arg(
@@ -346,6 +351,15 @@ fn main() -> ExitCode {
     if let Some(mok) = get_sigdb("MokListRT", &guids::ShimVariable) {
         info!("using host efi variable for 'MokList'");
         eficms.add_certs_sigdb(EfiCmsCert::MokList, &mok);
+    }
+
+    if !cfg.cert.is_empty() {
+        let certs = cfg
+            .cert
+            .iter()
+            .map(|fname| cert_loadfile(&fname).expect("load certificate"))
+            .collect();
+        eficms.add_certs_vec(EfiCmsCert::Other, certs);
     }
 
     for pe in &cfg.pe {
