@@ -184,7 +184,14 @@ impl BootConfig {
             String::new()
         };
 
-        format!("{i}  {title:32}{prop_str}")
+        let tw = self
+            .entries
+            .iter()
+            .map(|e| e.1.title.len())
+            .max()
+            .unwrap_or(32);
+
+        format!("{i}  {title:tw$}{prop_str}", tw = tw)
     }
 }
 
