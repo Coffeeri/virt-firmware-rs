@@ -98,6 +98,7 @@ impl EfiCms for EfiCmsOpenSSL {
             EfiCmsCert::KEK,
             EfiCmsCert::db,
             EfiCmsCert::MokList,
+            EfiCmsCert::Other,
         ] {
             debug!("openssl/verify: checking {kind:?} certificates");
             let store = self.cert_store(kind);

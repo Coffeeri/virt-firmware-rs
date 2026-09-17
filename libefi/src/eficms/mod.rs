@@ -14,6 +14,7 @@ pub enum EfiCmsCert {
     KEK,
     db,
     MokList,
+    Other,
 }
 
 #[derive(Debug)]
