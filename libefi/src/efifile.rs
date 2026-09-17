@@ -21,7 +21,7 @@ pub struct EfiFile {
 }
 
 impl EfiFile {
-    fn mount(file: &Path, fdev: u64) -> io::Result<(PathBuf, PathBuf)> {
+    fn mount(file: &Path, fdev: u64) -> io::Result<PathBuf> {
         let mut mount = file.to_path_buf();
         while let Some(parent) = mount.parent() {
             let pmeta = fs::metadata(parent)?;
@@ -31,8 +31,7 @@ impl EfiFile {
             }
             mount = parent.to_path_buf();
         }
-        let rfile = file.strip_prefix(&mount).unwrap().to_path_buf();
-        Ok((mount, rfile))
+        Ok(mount)
     }
 
     pub fn new(filename: &str) -> io::Result<EfiFile> {
@@ -40,7 +39,8 @@ impl EfiFile {
         let meta = fs::metadata(&file)?;
         let fdev = meta.dev();
 
-        let (mount, rfile) = EfiFile::mount(&file, fdev)?;
+        let mount = EfiFile::mount(&file, fdev)?;
+        let rfile = file.strip_prefix(&mount).unwrap().to_path_buf();
 
         let device = udev::Device::from_devnum(udev::DeviceType::Block, fdev)?;
 
