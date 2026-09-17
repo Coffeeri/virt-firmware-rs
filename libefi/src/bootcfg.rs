@@ -150,8 +150,15 @@ impl BootConfig {
 
     pub fn index_title(&self, i: &BootIndex) -> String {
         let title: &str;
-
         let mut prop: Vec<&str> = Vec::new();
+
+        let pos;
+        if let Some(o) = &self.order {
+            if let Some(i) = o.position(i) {
+                pos = format!("#{}", i + 1);
+                prop.push(&pos);
+            }
+        }
         if Some(*i) == self.current {
             prop.push("current")
         }
@@ -170,14 +177,6 @@ impl BootConfig {
         } else {
             title = "[missing]";
         };
-
-        let pos;
-        if let Some(o) = &self.order {
-            if let Some(i) = o.position(i) {
-                pos = format!("#{}", i + 1);
-                prop.push(&pos);
-            }
-        }
 
         let prop_str = if !prop.is_empty() {
             format!("  [{}]", prop.join(","))
