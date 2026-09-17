@@ -13,3 +13,24 @@ framework: shell
 /list-sb-vars:
     summary: print secure boot variables
     test: list-sb-vars
+
+/check-sb-signature:
+    summary: test signature verification
+    test: check-sb-signature --pe data/${SIGTYPE}.efi --cert data/${SIGTYPE}.crt
+
+    /rsa2048:
+        environment+:
+            SIGTYPE: rsa2048-sha256
+
+    /rsa3072:
+        environment+:
+            SIGTYPE: rsa3072-sha384
+
+    /rsa4096:
+        environment+:
+            SIGTYPE: rsa4096-sha512
+
+    /ml-dsa-87:
+        environment+:
+            SIGTYPE: ml-dsa-87-default
+
