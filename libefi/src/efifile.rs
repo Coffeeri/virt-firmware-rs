@@ -1,12 +1,11 @@
 extern crate std;
+use log::{debug, error};
 use std::format;
 use std::fs;
 use std::io;
 use std::os::unix::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 use std::string::{String, ToString};
-
-use log::error;
 use uguid::Guid;
 
 use crate::efivar::devpath;
@@ -31,12 +30,24 @@ impl EfiFile {
             }
             mount = parent.to_path_buf();
         }
+        debug!("mount point for {} is {}", file.display(), mount.display());
         Ok(mount)
     }
 
     pub fn new(filename: &str) -> io::Result<EfiFile> {
-        let file = fs::canonicalize(filename)?;
-        let meta = fs::metadata(&file)?;
+        let file = match fs::canonicalize(filename) {
+            Ok(f) => f,
+            Err(_) => PathBuf::from(filename),
+        };
+        let meta = match fs::metadata(&file) {
+            Ok(m) => m,
+            Err(_) => {
+                // file might not exist (due to kernel uninstall),
+                // try use parent directory instead then
+                let dir = file.parent().expect("get parent dir");
+                fs::metadata(dir)?
+            }
+        };
         let fdev = meta.dev();
 
         let mount = EfiFile::mount(&file, fdev)?;
