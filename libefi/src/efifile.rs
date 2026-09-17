@@ -37,7 +37,12 @@ impl EfiFile {
     pub fn new(filename: &str) -> io::Result<EfiFile> {
         let file = match fs::canonicalize(filename) {
             Ok(f) => f,
-            Err(_) => PathBuf::from(filename),
+            Err(e) => {
+                if e.kind() != io::ErrorKind::NotFound {
+                    return Err(e);
+                }
+                PathBuf::from(filename)
+            }
         };
         let meta = match fs::metadata(&file) {
             Ok(m) => m,
