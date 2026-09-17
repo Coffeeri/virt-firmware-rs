@@ -293,6 +293,52 @@ fn get_sigdb(name: &str, guid: &Guid) -> Option<Vec<u8>> {
     Some(var.data().to_vec())
 }
 
+fn load_certificates(cfg: &Args, eficms: &mut dyn EfiCms) {
+    if let Some(ref pkenroll) = cfg.pk_enroll {
+        info!("using config '{pkenroll:?}' for 'PK'");
+        let pk: Vec<u8> = pkenroll.sigdb().into();
+        eficms.add_certs_sigdb(EfiCmsCert::PK, &pk);
+    } else if let Some(pk) = get_sigdb("PK", &guids::EfiGlobalVariable) {
+        info!("using host efi variable for 'PK'");
+        eficms.add_certs_sigdb(EfiCmsCert::PK, &pk);
+    }
+
+    if cfg.default_kek {
+        info!("using microsoft certs for 'KEK'");
+        let mut kek = EfiSigDB::new();
+        kek.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_KEK_2011);
+        kek.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_KEK_2023);
+        let blob: Vec<u8> = kek.into();
+        eficms.add_certs_sigdb(EfiCmsCert::KEK, &blob);
+    } else if let Some(kek) = get_sigdb("KEK", &guids::EfiGlobalVariable) {
+        info!("using host efi variable for 'KEK'");
+        eficms.add_certs_sigdb(EfiCmsCert::KEK, &kek);
+    }
+
+    if let Some(ref profile) = cfg.profile {
+        info!("using profile '{profile:?}' for 'db'");
+        let db: Vec<u8> = profile.sigdb().into();
+        eficms.add_certs_sigdb(EfiCmsCert::db, &db);
+    } else if let Some(db) = get_sigdb("db", &guids::EfiImageSecurityDatabase) {
+        info!("using host efi variable for 'db'");
+        eficms.add_certs_sigdb(EfiCmsCert::db, &db);
+    }
+
+    if let Some(mok) = get_sigdb("MokListRT", &guids::ShimVariable) {
+        info!("using host efi variable for 'MokList'");
+        eficms.add_certs_sigdb(EfiCmsCert::MokList, &mok);
+    }
+
+    if !cfg.cert.is_empty() {
+        let certs = cfg
+            .cert
+            .iter()
+            .map(|fname| cert_loadfile(fname).expect("load certificate"))
+            .collect();
+        eficms.add_certs_vec(EfiCmsCert::Other, certs);
+    }
+}
+
 fn main() -> ExitCode {
     let cfg = Args::parse();
     let mut rc = 0;
@@ -318,49 +364,7 @@ fn main() -> ExitCode {
         None => &mut EfiCmsOpenSSL::new(), // default
     };
 
-    if let Some(pkenroll) = cfg.pk_enroll {
-        info!("using config '{pkenroll:?}' for 'PK'");
-        let pk: Vec<u8> = pkenroll.sigdb().into();
-        eficms.add_certs_sigdb(EfiCmsCert::PK, &pk);
-    } else if let Some(pk) = get_sigdb("PK", &guids::EfiGlobalVariable) {
-        info!("using host efi variable for 'PK'");
-        eficms.add_certs_sigdb(EfiCmsCert::PK, &pk);
-    }
-
-    if cfg.default_kek {
-        info!("using microsoft certs for 'KEK'");
-        let mut kek = EfiSigDB::new();
-        kek.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_KEK_2011);
-        kek.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_KEK_2023);
-        let blob: Vec<u8> = kek.into();
-        eficms.add_certs_sigdb(EfiCmsCert::KEK, &blob);
-    } else if let Some(kek) = get_sigdb("KEK", &guids::EfiGlobalVariable) {
-        info!("using host efi variable for 'KEK'");
-        eficms.add_certs_sigdb(EfiCmsCert::KEK, &kek);
-    }
-
-    if let Some(profile) = cfg.profile {
-        info!("using profile '{profile:?}' for 'db'");
-        let db: Vec<u8> = profile.sigdb().into();
-        eficms.add_certs_sigdb(EfiCmsCert::db, &db);
-    } else if let Some(db) = get_sigdb("db", &guids::EfiImageSecurityDatabase) {
-        info!("using host efi variable for 'db'");
-        eficms.add_certs_sigdb(EfiCmsCert::db, &db);
-    }
-
-    if let Some(mok) = get_sigdb("MokListRT", &guids::ShimVariable) {
-        info!("using host efi variable for 'MokList'");
-        eficms.add_certs_sigdb(EfiCmsCert::MokList, &mok);
-    }
-
-    if !cfg.cert.is_empty() {
-        let certs = cfg
-            .cert
-            .iter()
-            .map(|fname| cert_loadfile(&fname).expect("load certificate"))
-            .collect();
-        eficms.add_certs_vec(EfiCmsCert::Other, certs);
-    }
+    load_certificates(&cfg, eficms);
 
     for pe in &cfg.pe {
         let r = process_pe_binary(eficms, pe);
