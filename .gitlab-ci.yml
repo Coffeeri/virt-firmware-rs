@@ -79,6 +79,9 @@ test-tmt:
     - PATH="$HOME/.cargo/bin:$PATH"
     - make install
     - make tmt-local
+  after_script:
+    - ARTIFACTS="https://${CI_PAGES_HOSTNAME}/-/${CI_PROJECT_NAME}/-/jobs/${CI_JOB_ID}/artifacts"
+    - find tmt-root -name "*.html" -exec echo "${ARTIFACTS}/{}" ";"
   artifacts:
     when: always
     paths:
