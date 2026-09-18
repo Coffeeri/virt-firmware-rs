@@ -1,11 +1,12 @@
 use authenticode::{authenticode_digest, AttributeCertificateIterator};
 use clap::{CommandFactory, Parser, ValueEnum};
+use der::asn1::ObjectIdentifier;
 use log::{error, info};
+use object::pe::ImageNtHeaders64;
 use object::read::pe;
+use sha2::{Digest, Sha256, Sha384, Sha512};
 use std::process::ExitCode;
 use uguid::Guid;
-
-use sha2::{Digest, Sha256};
 
 use virtfw_libefi::eficms::openssl::EfiCmsOpenSSL;
 use virtfw_libefi::eficms::parse::{
@@ -20,7 +21,9 @@ use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr, EfiVarId};
 use virtfw_libefi::guids;
 use virtfw_libefi::sb::certs::info::CertInfo;
 use virtfw_libefi::sb::certs::loadfile::cert_loadfile;
-use virtfw_libefi::sb::certs::oids::oid_to_name;
+use virtfw_libefi::sb::certs::oids::{
+    oid_to_name, OID_ALGO_SHA256, OID_ALGO_SHA384, OID_ALGO_SHA512,
+};
 use virtfw_libefi::sb::certs::profiles::{PkEnroll, SecureBootProfile};
 use virtfw_libefi::sb::certs::{MICROSOFT_KEK_2011, MICROSOFT_KEK_2023};
 use virtfw_libefi::varstore::sysfs;
@@ -163,6 +166,32 @@ fn process_signature(
     Ok(checks_passed)
 }
 
+fn hash_pe_binary(
+    pefile: &pe::PeFile<ImageNtHeaders64>,
+    algo: ObjectIdentifier,
+) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+    let hash = match algo {
+        OID_ALGO_SHA256 => {
+            let mut hasher = Sha256::new();
+            authenticode_digest(pefile, &mut hasher).expect("hash pefile");
+            hasher.finalize().as_slice().into()
+        }
+        OID_ALGO_SHA384 => {
+            let mut hasher = Sha384::new();
+            authenticode_digest(pefile, &mut hasher).expect("hash pefile");
+            hasher.finalize().as_slice().into()
+        }
+        OID_ALGO_SHA512 => {
+            let mut hasher = Sha512::new();
+            authenticode_digest(pefile, &mut hasher).expect("hash pefile");
+            hasher.finalize().as_slice().into()
+        }
+        _ => return Err("unknown hash algorithm".into()),
+    };
+
+    Ok(hash)
+}
+
 fn process_pe_binary(
     eficms: &dyn EfiCms,
     filename: &str,
@@ -178,11 +207,6 @@ fn process_pe_binary(
         return Err("no signatures present".into());
     };
 
-    let mut hasher = Sha256::new();
-    authenticode_digest(&pefile, &mut hasher).expect("authenticode digest failed");
-    let hash = hasher.finalize();
-    println!("authenticode/sha256: {}", hex::encode(hash));
-
     for (i, item) in iter.enumerate() {
         println!("- signature #{i}");
         let ac = item.as_ref().expect("get AttributeCertificate");
@@ -190,15 +214,19 @@ fn process_pe_binary(
             .get_authenticode_signature()
             .expect("get AuthenticodeSignature");
 
-        let authenticode_good = *sig.digest() == *hash;
         let name = oid_to_name(&sig.digest_algorithm().oid);
         println!(
             "  authenticode/algo: {} ({})",
             name,
             sig.digest_algorithm().oid
         );
+
+        let hash = hash_pe_binary(&pefile, sig.digest_algorithm().oid)?;
+        println!("  authenticode/hashed: {}", hex::encode(&hash));
+
+        let authenticode_good = *sig.digest() == *hash;
         println!(
-            "  authenticode/hash: {} {}",
+            "  authenticode/signed: {} {}",
             emoji(authenticode_good),
             hex::encode(sig.digest())
         );
