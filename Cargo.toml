@@ -34,8 +34,8 @@ num_enum = { version = "0.7.6", default-features = false }
 serde = { version = "1", default-features = false, features = [ "alloc", "derive" ] }
 serde_json = { version = "1", default-features = false, features = [ "alloc" ]  }
 spin = { version = ">= 0.10, < 0.13" }
-uefi = { version = ">= 0.39, < 0.41" }
-uefi-raw = { version = ">= 0.15, < 0.17" }
+uefi = { version = ">= 0.39, < 0.42" }
+uefi-raw = { version = ">= 0.15, < 0.18" }
 uguid = { version = "2" }
 zerocopy = { version = "0.8", features = [ "derive" ] }
 
