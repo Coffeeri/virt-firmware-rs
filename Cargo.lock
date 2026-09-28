@@ -117,17 +117,6 @@ checksum = "1e4b40c7323adcfc0a41c4b88143ed58346ff65a288fc144329c5c45e05d70c6"
 
 [[package]]
 name = "bitfield-struct"
-version = "0.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2be5a46ba01b60005ae2c51a36a29cfe134bcacae2dd5cedcd4615fbaad1494b"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.119",
-]
-
-[[package]]
-name = "bitfield-struct"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3ca6739863c590881f038d033a146c51ddae239186a4327014839fd864f44ed5"
@@ -750,11 +739,11 @@ dependencies = [
 
 [[package]]
 name = "igvm"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "67578b05ebcdfa1aa0fe13f77a13bdd7d87036128898a327f1bf8e7356cf09cd"
+checksum = "59f77675c910030e49a3e66db299a53982893695a5cc2938d053605fc0923a94"
 dependencies = [
- "bitfield-struct 0.10.1",
+ "bitfield-struct",
  "crc32fast",
  "hex",
  "igvm_defs",
@@ -768,11 +757,11 @@ dependencies = [
 
 [[package]]
 name = "igvm_defs"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eedd8c64460676101062f9f2ecdeb52d8f43e622da6a6c5bf5158f4ef08b0906"
+checksum = "b08f88b4ca58693b1fae4e9ea923eeff031e01c0d33730b6ff73a1f1abe8bfba"
 dependencies = [
- "bitfield-struct 0.10.1",
+ "bitfield-struct",
  "open-enum",
  "static_assertions",
  "zerocopy",
@@ -1841,7 +1830,7 @@ name = "virtfw-igvm-tools"
 version = "0.2.5"
 dependencies = [
  "authenticode",
- "bitfield-struct 0.13.0",
+ "bitfield-struct",
  "clap",
  "clap_mangen",
  "env_logger",
@@ -1859,7 +1848,7 @@ dependencies = [
 name = "virtfw-libefi"
 version = "0.7.1"
 dependencies = [
- "bitfield-struct 0.13.0",
+ "bitfield-struct",
  "byteorder",
  "chrono",
  "clap",
@@ -1879,7 +1868,7 @@ dependencies = [
 name = "virtfw-libhw"
 version = "0.5.2"
 dependencies = [
- "bitfield-struct 0.13.0",
+ "bitfield-struct",
  "log",
  "num_enum",
  "zerocopy",
@@ -1889,7 +1878,7 @@ dependencies = [
 name = "virtfw-mefisto"
 version = "0.0.1"
 dependencies = [
- "bitfield-struct 0.13.0",
+ "bitfield-struct",
  "cc",
  "efiloader",
  "igvm_defs",
