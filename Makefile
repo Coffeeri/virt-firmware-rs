@@ -76,6 +76,8 @@ package: cargo-package
 
 update:
 	cargo update --verbose
+
+update-commit: update
 	git diff --quiet Cargo.lock || git commit -m "update Cargo.lock" Cargo.lock
 
 fedora: update
