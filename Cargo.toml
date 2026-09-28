@@ -49,4 +49,4 @@ sha2 = { version = "0.10.9" }
 x509-cert = { version = "0.2.5", default-features = false }
 
 virtfw-libhw = { path = "libhw", version = "0.5.2" }
-virtfw-libefi = { path = "libefi", version = "0.7.0" }
+virtfw-libefi = { path = "libefi", version = "0.7.1" }
