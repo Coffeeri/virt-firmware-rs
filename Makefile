@@ -76,6 +76,7 @@ package: cargo-package
 
 update:
 	cargo update --verbose
+	git diff --quiet Cargo.lock || git commit -m "update Cargo.lock" Cargo.lock
 
 fedora: update
 	rpms=$$(cargo update --verbose 2>&1 | awk '/available/ { printf("rust-%s-devel\n",$$2) }');\
