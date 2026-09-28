@@ -1798,7 +1798,7 @@ dependencies = [
 
 [[package]]
 name = "virtfw-efi-tools"
-version = "0.1.12"
+version = "0.1.13"
 dependencies = [
  "authenticode",
  "clap",
@@ -1857,7 +1857,7 @@ dependencies = [
 
 [[package]]
 name = "virtfw-libefi"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "bitfield-struct 0.13.0",
  "byteorder",
@@ -1903,7 +1903,7 @@ dependencies = [
 
 [[package]]
 name = "virtfw-varstore"
-version = "0.6.5"
+version = "0.6.6"
 dependencies = [
  "clap",
  "clap_mangen",
