@@ -19,6 +19,8 @@ impl Pager {
 
     fn wait_read_key(stdin: &mut Input) -> Option<Key> {
         let key_event = stdin.wait_for_key_event().unwrap();
+        // mut is needed by uefi < 0.41
+        #[allow(clippy::unnecessary_mut_passed)]
         boot::wait_for_event(&mut [key_event]).unwrap();
         stdin.read_key().unwrap()
     }
