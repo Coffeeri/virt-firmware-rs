@@ -107,10 +107,10 @@ fn emoji(good: bool) -> &'static str {
 }
 
 fn process_signature(
+    cfg: &Args,
     eficms: &dyn EfiCms,
     signature: &[u8],
     signed_data: &[u8],
-    dump: bool,
 ) -> Result<bool, EfiCmsError> {
     let sd = get_signed_data(signature)?;
     let si = get_signer_info(&sd)?;
@@ -131,7 +131,7 @@ fn process_signature(
         si.signature_algorithm.oid
     );
 
-    if dump {
+    if cfg.dump {
         println!("  cms/dump/asn1");
         if let Err(e) = asn1_dump(signature, 1, 99) {
             error!("asn1 dump error: {e}");
@@ -205,9 +205,9 @@ fn hash_pe_binary(
 }
 
 fn process_pe_binary(
+    cfg: &Args,
     eficms: &dyn EfiCms,
     filename: &str,
-    dump: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
     println!("parsing efi/pe binary: {filename}");
     let binary = std::fs::read(filename)?;
@@ -246,7 +246,7 @@ fn process_pe_binary(
 
         let (signature, content) =
             preprocess_authenticode(ac.data).expect("preprocess authenticode signature");
-        match process_signature(eficms, &signature, &content, dump) {
+        match process_signature(cfg, eficms, &signature, &content) {
             Ok(true) => {
                 if authenticode_good {
                     sig_pass += 1;
@@ -291,10 +291,10 @@ fn print_signature_database(data: &[u8]) -> Option<()> {
 }
 
 fn process_sb_var_update(
+    cfg: &Args,
     eficms: &dyn EfiCms,
     variable: EfiVarId,
     filename: &str,
-    dump: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
     println!("parsing variable update: {filename}");
     let update = std::fs::read(filename)?;
@@ -313,7 +313,7 @@ fn process_sb_var_update(
     let signature = authvar.get_pkcs7();
     let signed_data = authvar.get_signed_data(&variable);
 
-    let passed = match process_signature(eficms, &signature, &signed_data, dump) {
+    let passed = match process_signature(cfg, eficms, &signature, &signed_data) {
         Ok(r) => r,
         Err(e) => {
             error!("{e}");
@@ -408,7 +408,7 @@ fn main() -> ExitCode {
     load_certificates(&cfg, eficms);
 
     for pe in &cfg.pe {
-        let r = process_pe_binary(eficms, pe, cfg.dump);
+        let r = process_pe_binary(&cfg, eficms, pe);
         if let Err(e) = r {
             error!("{pe}: {e}");
             rc = 1;
@@ -416,7 +416,7 @@ fn main() -> ExitCode {
     }
 
     for update in &cfg.kek {
-        let r = process_sb_var_update(eficms, ids::KEK.into(), update, cfg.dump);
+        let r = process_sb_var_update(&cfg, eficms, ids::KEK.into(), update);
         if let Err(e) = r {
             error!("{update}: {e}");
             rc = 1;
@@ -424,7 +424,7 @@ fn main() -> ExitCode {
     }
 
     for update in &cfg.db {
-        let r = process_sb_var_update(eficms, ids::DB.into(), update, cfg.dump);
+        let r = process_sb_var_update(&cfg, eficms, ids::DB.into(), update);
         if let Err(e) = r {
             error!("{update}: {e}");
             rc = 1;
@@ -432,7 +432,7 @@ fn main() -> ExitCode {
     }
 
     for update in &cfg.dbx {
-        let r = process_sb_var_update(eficms, ids::DBX.into(), update, cfg.dump);
+        let r = process_sb_var_update(&cfg, eficms, ids::DBX.into(), update);
         if let Err(e) = r {
             error!("{update}: {e}");
             rc = 1;
