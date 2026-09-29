@@ -10,8 +10,8 @@ use uguid::Guid;
 
 use virtfw_libefi::eficms::openssl::EfiCmsOpenSSL;
 use virtfw_libefi::eficms::parse::{
-    get_certificate, get_issuer_cert, get_issuer_serial, get_signed_data, get_signer_info,
-    preprocess_authenticode,
+    asn1_dump, get_certificate, get_issuer_cert, get_issuer_serial, get_signed_data,
+    get_signer_info, preprocess_authenticode,
 };
 use virtfw_libefi::eficms::{EfiCms, EfiCmsCert, EfiCmsError, EfiCmsNull};
 use virtfw_libefi::efivar::auth::EfiVarAuth2;
@@ -48,6 +48,10 @@ struct Args {
     /// pkcs7 verification code
     #[arg(long, hide = true)]
     code: Option<EfiCmsImpl>,
+
+    /// enable asn1 dump
+    #[arg(long, hide = true)]
+    dump: bool,
 
     /// select 'PK' option
     #[arg(long, value_name = "OPT", help_heading = "certificate configuration")]
@@ -106,6 +110,7 @@ fn process_signature(
     eficms: &dyn EfiCms,
     signature: &[u8],
     signed_data: &[u8],
+    dump: bool,
 ) -> Result<bool, EfiCmsError> {
     let sd = get_signed_data(signature)?;
     let si = get_signer_info(&sd)?;
@@ -125,6 +130,13 @@ fn process_signature(
         oid_to_name(&si.signature_algorithm.oid),
         si.signature_algorithm.oid
     );
+
+    if dump {
+        println!("  cms/dump/asn1");
+        if let Err(e) = asn1_dump(signature, 1, 99) {
+            error!("asn1 dump error: {e}");
+        }
+    }
 
     for (c, cert) in sd
         .certificates
@@ -195,6 +207,7 @@ fn hash_pe_binary(
 fn process_pe_binary(
     eficms: &dyn EfiCms,
     filename: &str,
+    dump: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
     println!("parsing efi/pe binary: {filename}");
     let binary = std::fs::read(filename)?;
@@ -233,7 +246,7 @@ fn process_pe_binary(
 
         let (signature, content) =
             preprocess_authenticode(ac.data).expect("preprocess authenticode signature");
-        match process_signature(eficms, &signature, &content) {
+        match process_signature(eficms, &signature, &content, dump) {
             Ok(true) => {
                 if authenticode_good {
                     sig_pass += 1;
@@ -281,6 +294,7 @@ fn process_sb_var_update(
     eficms: &dyn EfiCms,
     variable: EfiVarId,
     filename: &str,
+    dump: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
     println!("parsing variable update: {filename}");
     let update = std::fs::read(filename)?;
@@ -299,7 +313,7 @@ fn process_sb_var_update(
     let signature = authvar.get_pkcs7();
     let signed_data = authvar.get_signed_data(&variable);
 
-    let passed = match process_signature(eficms, &signature, &signed_data) {
+    let passed = match process_signature(eficms, &signature, &signed_data, dump) {
         Ok(r) => r,
         Err(e) => {
             error!("{e}");
@@ -394,7 +408,7 @@ fn main() -> ExitCode {
     load_certificates(&cfg, eficms);
 
     for pe in &cfg.pe {
-        let r = process_pe_binary(eficms, pe);
+        let r = process_pe_binary(eficms, pe, cfg.dump);
         if let Err(e) = r {
             error!("{pe}: {e}");
             rc = 1;
@@ -402,7 +416,7 @@ fn main() -> ExitCode {
     }
 
     for update in &cfg.kek {
-        let r = process_sb_var_update(eficms, ids::KEK.into(), update);
+        let r = process_sb_var_update(eficms, ids::KEK.into(), update, cfg.dump);
         if let Err(e) = r {
             error!("{update}: {e}");
             rc = 1;
@@ -410,7 +424,7 @@ fn main() -> ExitCode {
     }
 
     for update in &cfg.db {
-        let r = process_sb_var_update(eficms, ids::DB.into(), update);
+        let r = process_sb_var_update(eficms, ids::DB.into(), update, cfg.dump);
         if let Err(e) = r {
             error!("{update}: {e}");
             rc = 1;
@@ -418,7 +432,7 @@ fn main() -> ExitCode {
     }
 
     for update in &cfg.dbx {
-        let r = process_sb_var_update(eficms, ids::DBX.into(), update);
+        let r = process_sb_var_update(eficms, ids::DBX.into(), update, cfg.dump);
         if let Err(e) = r {
             error!("{update}: {e}");
             rc = 1;
