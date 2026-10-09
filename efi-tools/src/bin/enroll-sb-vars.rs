@@ -218,6 +218,16 @@ struct EnrollCandidateCert {
     cert: &'static [u8],
 }
 
+impl core::fmt::Display for EnrollCandidateCert {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        if let Some(info) = CertInfo::new_from_der(self.cert) {
+            write!(f, "{}", info.desc())
+        } else {
+            write!(f, "invalid certificate")
+        }
+    }
+}
+
 const DB_CERTS: [EnrollCandidateCert; 6] = [
     EnrollCandidateCert {
         guid: &guids::MicrosoftVendor,
@@ -254,8 +264,7 @@ fn find_ca_certs(cfg: &Args, subjects: &[RdnSequence]) -> Vec<EnrollCandidateCer
                 return None;
             }
             if let Some(ref subject) = cfg.ca_subject {
-                let info = CertInfo::new(&cert);
-                let desc = info.desc();
+                let desc = ca.to_string();
                 if !desc.contains(subject) {
                     debug!("  ignoring \"{}\", does not match \"{}\"", desc, subject);
                     return None;
@@ -304,16 +313,10 @@ fn enroll_one_sigdb(
 fn cert_menu(
     certs: &[EnrollCandidateCert],
 ) -> Result<EnrollCandidateCert, Box<dyn std::error::Error>> {
-    let mut titlelist = Vec::new();
-    for c in certs {
-        let info = CertInfo::new_from_der(c.cert).unwrap();
-        titlelist.push(info.desc().to_owned());
-    }
-
     let theme = ColorfulTheme::default();
     let sel = Select::with_theme(&theme)
         .with_prompt("select 'db' ca certificate")
-        .items(&titlelist)
+        .items(certs)
         .interact_opt()?;
 
     let Some(s) = sel else {
