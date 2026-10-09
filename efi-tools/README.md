@@ -15,8 +15,20 @@ the python dependency on uki cloud images.
 
 ### list-sb-vars
 
-print secure boot certificate databases.
+Print secure boot certificate databases.
+
+### enroll-sb-vars
+
+Enroll secure boot certificate databases and enable secure boot.
+Requires recent (ekd2-stable202605 or newer) OVMF build.  See manpage
+or `--help` for details.
+
+### check-sb-signature
+
+Verify secure boot signatures.  Supports both signed variable updates
+(for example the dbx updates microsoft ships) and authenticode signed
+binaries.
 
 ### generate-boot-csv
 
-generate BOOT.CSV file for direct UKI boot.
+Generate BOOT.CSV file for direct UKI boot.
