@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{CommandFactory, Parser};
 use log::{debug, error, info, warn};
 use std::io;
 use std::io::Cursor;
@@ -22,7 +22,8 @@ use virtfw_libefi::varstore::sysfs;
 use virtfw_efi_tools::shimcsv::write_boot_csv;
 
 #[derive(Parser, Debug)]
-#[command(version, name = "mini-bootcfg", about = "show and manage uefi boot entries", long_about = None)]
+#[command(version, author, name = "mini-bootcfg",
+          about = "show and manage uefi boot entries", long_about = None)]
 struct Args {
     /// set loglevel
     #[arg(short, long, value_name = "LEVEL", default_value = "info")]
@@ -107,6 +108,9 @@ struct Args {
     /// print efi stub image
     #[arg(long, help_heading = "Print system information")]
     print_stub_image: bool,
+
+    #[arg(long, hide = true)]
+    manpage: bool,
 }
 
 fn create_file_boot_entry(
@@ -481,6 +485,12 @@ fn read_efi_var_str(name: &str) -> Option<String> {
 
 fn main() -> ExitCode {
     let cfg = Args::parse();
+
+    if cfg.manpage {
+        let man = clap_mangen::Man::new(Args::command());
+        man.render(&mut std::io::stdout()).expect("render manpage");
+        return 0.into();
+    }
 
     let levelfilter = cfg.loglevel.to_level_filter();
     env_logger::Builder::from_default_env()
