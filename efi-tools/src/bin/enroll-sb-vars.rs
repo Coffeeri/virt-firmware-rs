@@ -212,20 +212,44 @@ fn find_ca_subjects(bootloader: PathBuf) -> Result<Vec<RdnSequence>, Box<dyn std
     Ok(subjects)
 }
 
-const DB_CERTS: [(&Guid, &[u8]); 6] = [
-    (&guids::MicrosoftVendor, MICROSOFT_DB_WINDOWS_2011),
-    (&guids::MicrosoftVendor, MICROSOFT_DB_UEFI_2011),
-    (&guids::MicrosoftVendor, MICROSOFT_DB_WINDOWS_2023),
-    (&guids::MicrosoftVendor, MICROSOFT_DB_UEFI_2023),
-    (&guids::MicrosoftVendor, MICROSOFT_DB_UEFI_ROM_2023),
-    (&guids::OvmfEnrollDefaultKeys, REDHAT_DB_UEFI_2024),
+#[derive(Debug, Clone)]
+struct EnrollCandidateCert {
+    guid: &'static Guid,
+    cert: &'static [u8],
+}
+
+const DB_CERTS: [EnrollCandidateCert; 6] = [
+    EnrollCandidateCert {
+        guid: &guids::MicrosoftVendor,
+        cert: MICROSOFT_DB_UEFI_2011,
+    },
+    EnrollCandidateCert {
+        guid: &guids::MicrosoftVendor,
+        cert: MICROSOFT_DB_WINDOWS_2011,
+    },
+    EnrollCandidateCert {
+        guid: &guids::MicrosoftVendor,
+        cert: MICROSOFT_DB_WINDOWS_2023,
+    },
+    EnrollCandidateCert {
+        guid: &guids::MicrosoftVendor,
+        cert: MICROSOFT_DB_UEFI_2023,
+    },
+    EnrollCandidateCert {
+        guid: &guids::MicrosoftVendor,
+        cert: MICROSOFT_DB_UEFI_ROM_2023,
+    },
+    EnrollCandidateCert {
+        guid: &guids::OvmfEnrollDefaultKeys,
+        cert: REDHAT_DB_UEFI_2024,
+    },
 ];
 
-fn find_ca_certs(cfg: &Args, subjects: &[RdnSequence]) -> Vec<(&'static Guid, &'static [u8])> {
+fn find_ca_certs(cfg: &Args, subjects: &[RdnSequence]) -> Vec<EnrollCandidateCert> {
     DB_CERTS
         .iter()
         .filter_map(|ca| {
-            let cert = Certificate::from_der(ca.1).ok()?;
+            let cert = Certificate::from_der(ca.cert).ok()?;
             if !subjects.contains(&cert.tbs_certificate.subject) {
                 return None;
             }
@@ -238,7 +262,7 @@ fn find_ca_certs(cfg: &Args, subjects: &[RdnSequence]) -> Vec<(&'static Guid, &'
                 }
                 info!("  using \"{}\", matches \"{}\"", desc, subject);
             }
-            Some(*ca)
+            Some(ca.clone())
         })
         .collect()
 }
@@ -278,11 +302,11 @@ fn enroll_one_sigdb(
 }
 
 fn cert_menu(
-    certs: &[(&'static Guid, &'static [u8])],
-) -> Result<(&'static Guid, &'static [u8]), Box<dyn std::error::Error>> {
+    certs: &[EnrollCandidateCert],
+) -> Result<EnrollCandidateCert, Box<dyn std::error::Error>> {
     let mut titlelist = Vec::new();
-    for (_guid, cert) in certs {
-        let info = CertInfo::new_from_der(cert).unwrap();
+    for c in certs {
+        let info = CertInfo::new_from_der(c.cert).unwrap();
         titlelist.push(info.desc().to_owned());
     }
 
@@ -295,7 +319,7 @@ fn cert_menu(
     let Some(s) = sel else {
         return Err("interactive menu canceled".into());
     };
-    Ok(certs[s])
+    Ok(certs[s].clone())
 }
 
 fn enroll(cfg: &Args) -> Result<(), Box<dyn std::error::Error>> {
@@ -323,7 +347,7 @@ fn enroll(cfg: &Args) -> Result<(), Box<dyn std::error::Error>> {
             }
         }
 
-        let (guid, cert) = if db_certs.len() > 1 {
+        let enroll = if db_certs.len() > 1 {
             if !cfg.interactive {
                 return Err("found multiple signatures, try --ca-subject <match> or -i".into());
             }
@@ -333,7 +357,7 @@ fn enroll(cfg: &Args) -> Result<(), Box<dyn std::error::Error>> {
         };
 
         let mut sigdb = EfiSigDB::new();
-        sigdb.add_x509_from_der(guid, cert);
+        sigdb.add_x509_from_der(enroll.guid, enroll.cert);
         sigdb
     };
 
