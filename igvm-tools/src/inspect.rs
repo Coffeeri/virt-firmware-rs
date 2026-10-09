@@ -68,7 +68,7 @@ pub fn inspect_directives(igvm: &IgvmFile) {
     for d in igvm
         .directives()
         .iter()
-        .filter(|x| !matches! {x, IgvmDirectiveHeader::PageData { .. }})
+        .filter(|x| !matches!(x, IgvmDirectiveHeader::PageData { .. }))
     {
         match d {
             IgvmDirectiveHeader::SnpVpContext {
@@ -173,7 +173,7 @@ pub fn inspect_pagedata(igvm: &IgvmFile) {
     for d in igvm
         .directives()
         .iter()
-        .filter(|x| matches! {x, IgvmDirectiveHeader::PageData { .. }})
+        .filter(|x| matches!(x, IgvmDirectiveHeader::PageData { .. }))
     {
         if let IgvmDirectiveHeader::PageData {
             gpa,
