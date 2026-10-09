@@ -372,11 +372,15 @@ fn load_certificates(cfg: &Args, eficms: &mut dyn EfiCms) {
     }
 
     if !cfg.cert.is_empty() {
-        let certs = cfg
+        let certs: Vec<_> = cfg
             .cert
             .iter()
             .map(|fname| cert_loadfile(fname).expect("load certificate"))
             .collect();
+        info!(
+            "adding {} cert(s) from command line for 'Other'",
+            certs.len()
+        );
         eficms.add_certs_vec(EfiCmsCert::Other, certs);
     }
 }
