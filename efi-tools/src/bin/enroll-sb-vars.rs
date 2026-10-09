@@ -216,6 +216,7 @@ fn find_ca_subjects(bootloader: PathBuf) -> Result<Vec<RdnSequence>, Box<dyn std
 struct EnrollCandidateCert {
     guid: &'static Guid,
     cert: &'static [u8],
+    prio: u32,
 }
 
 impl core::fmt::Display for EnrollCandidateCert {
@@ -232,31 +233,37 @@ const DB_CERTS: [EnrollCandidateCert; 6] = [
     EnrollCandidateCert {
         guid: &guids::MicrosoftVendor,
         cert: MICROSOFT_DB_UEFI_2011,
+        prio: 1,
     },
     EnrollCandidateCert {
         guid: &guids::MicrosoftVendor,
         cert: MICROSOFT_DB_WINDOWS_2011,
+        prio: 1,
     },
     EnrollCandidateCert {
         guid: &guids::MicrosoftVendor,
         cert: MICROSOFT_DB_WINDOWS_2023,
+        prio: 2,
     },
     EnrollCandidateCert {
         guid: &guids::MicrosoftVendor,
         cert: MICROSOFT_DB_UEFI_2023,
+        prio: 2,
     },
     EnrollCandidateCert {
         guid: &guids::MicrosoftVendor,
         cert: MICROSOFT_DB_UEFI_ROM_2023,
+        prio: 2,
     },
     EnrollCandidateCert {
         guid: &guids::OvmfEnrollDefaultKeys,
         cert: REDHAT_DB_UEFI_2024,
+        prio: 2,
     },
 ];
 
 fn find_ca_certs(cfg: &Args, subjects: &[RdnSequence]) -> Vec<EnrollCandidateCert> {
-    DB_CERTS
+    let certs: Vec<_> = DB_CERTS
         .iter()
         .filter_map(|ca| {
             let cert = Certificate::from_der(ca.cert).ok()?;
@@ -273,6 +280,13 @@ fn find_ca_certs(cfg: &Args, subjects: &[RdnSequence]) -> Vec<EnrollCandidateCer
             }
             Some(ca.clone())
         })
+        .collect();
+
+    let maxprio = certs.iter().map(|entry| entry.prio).max().unwrap_or(0);
+    certs
+        .iter()
+        .filter(|entry| entry.prio == maxprio)
+        .cloned()
         .collect()
 }
 
