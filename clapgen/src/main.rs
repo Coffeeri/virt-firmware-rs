@@ -9,6 +9,8 @@ use virtfw_efi_tools::cmdline::list_sb_vars;
 use virtfw_efi_tools::cmdline::mini_bootcfg;
 use virtfw_efi_tools::cmdline::uefi_boot_menu;
 
+use virtfw_igvm_tools::cmdline::igvm_wrap;
+
 #[derive(Parser, Debug)]
 #[command(name = "clapgen", about = "generate docs for virt-firmware-rs")]
 pub struct Args {
@@ -23,12 +25,17 @@ pub struct Args {
 
 fn name_to_command(name: &str) -> Result<Command, Box<dyn std::error::Error>> {
     match name {
+        // efi tools
         "check-sb-signature" => Ok(check_sb_signature::Args::command()),
         "enroll-sb-vars" => Ok(enroll_sb_vars::Args::command()),
         "generate-boot-csv" => Ok(generate_boot_csv::Args::command()),
         "list-sb-vars" => Ok(list_sb_vars::Args::command()),
         "mini-bootcfg" => Ok(mini_bootcfg::Args::command()),
         "uefi-boot-menu" => Ok(uefi_boot_menu::Args::command()),
+
+        // igvm tools
+        "igvm-wrap" => Ok(igvm_wrap::Args::command()),
+
         _ => Err(format!("unknown command: {name}").into()),
     }
 }

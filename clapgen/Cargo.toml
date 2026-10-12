@@ -17,3 +17,4 @@ env_logger.workspace = true
 log.workspace = true
 
 virtfw-efi-tools = { path = "../efi-tools" }
+virtfw-igvm-tools = { path = "../igvm-tools" }
