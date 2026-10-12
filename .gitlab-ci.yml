@@ -40,7 +40,7 @@ compile-x64:
 compile-aa64:
   stage: build
   tags:
-    - aarch64.slow
+    - aarch64.kraxel.org
   script:
     - make build
   artifacts:
