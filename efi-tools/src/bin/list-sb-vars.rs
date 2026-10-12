@@ -2,18 +2,11 @@ use clap::Parser;
 use log::error;
 use uguid::Guid;
 
+use virtfw_efi_tools::cmdline::list_sb_vars::Args;
 use virtfw_libefi::efivar::sigdb::EfiSigDB;
 use virtfw_libefi::guids;
 use virtfw_libefi::sb::certs::info::CertInfo;
 use virtfw_libefi::varstore::sysfs;
-
-#[derive(Parser, Debug)]
-#[command(version, name = "list-sb-vars", about = "list secure boot databases", long_about = None)]
-struct Args {
-    /// verbose mode (print more certificate details)
-    #[arg(short, long)]
-    verbose: bool,
-}
 
 fn print_cert(cfg: &Args, der: &[u8]) {
     let info = CertInfo::new_from_der(der).expect("x509 cert parse error");
