@@ -1,5 +1,5 @@
 use authenticode::{authenticode_digest, AttributeCertificateIterator};
-use clap::{CommandFactory, Parser, ValueEnum};
+use clap::{CommandFactory, Parser};
 use der::asn1::ObjectIdentifier;
 use log::{error, info};
 use object::pe::ImageNtHeaders64;
@@ -8,6 +8,7 @@ use sha2::{Digest, Sha256, Sha384, Sha512};
 use std::process::ExitCode;
 use uguid::Guid;
 
+use virtfw_efi_tools::cmdline::check_sb_signature::{Args, EfiCmsImpl};
 use virtfw_libefi::eficms::openssl::EfiCmsOpenSSL;
 use virtfw_libefi::eficms::parse::{
     asn1_dump, get_certificate, get_issuer_cert, get_issuer_serial, get_signed_data,
@@ -24,75 +25,8 @@ use virtfw_libefi::sb::certs::loadfile::cert_loadfile;
 use virtfw_libefi::sb::certs::oids::{
     oid_to_name, OID_ALGO_SHA256, OID_ALGO_SHA384, OID_ALGO_SHA512,
 };
-use virtfw_libefi::sb::certs::profiles::{PkEnroll, SecureBootProfile};
 use virtfw_libefi::sb::certs::{MICROSOFT_KEK_2011, MICROSOFT_KEK_2023};
 use virtfw_libefi::varstore::sysfs;
-
-#[derive(Debug, Clone, ValueEnum)]
-pub enum EfiCmsImpl {
-    #[value(name = "null", help = "dummy implementation")]
-    Null,
-    #[value(name = "openssl", help = "OpenSSL implementation (default)")]
-    OpenSSLPkcs7,
-}
-
-#[derive(Parser, Debug)]
-#[command(version, author, name = "check-sb-signature",
-          about = "pkcs7 signature checker for efi binaries and efi variable updates",
-          long_about = None)]
-struct Args {
-    /// set loglevel
-    #[arg(short, long, value_name = "LEVEL", default_value = "info")]
-    loglevel: log::Level,
-
-    /// pkcs7 verification code
-    #[arg(long, hide = true)]
-    code: Option<EfiCmsImpl>,
-
-    /// enable asn1 dump
-    #[arg(long, hide = true)]
-    dump: bool,
-
-    /// select 'PK' option
-    #[arg(long, value_name = "OPT", help_heading = "certificate configuration")]
-    pk_enroll: Option<PkEnroll>,
-
-    /// use default 'KEK' certificates
-    #[arg(long, help_heading = "certificate configuration")]
-    default_kek: bool,
-
-    /// select 'db' profile
-    #[arg(long, value_name = "NAME", help_heading = "certificate configuration")]
-    profile: Option<SecureBootProfile>,
-
-    /// load additional certificates
-    #[arg(long, value_name = "FILE", help_heading = "certificate configuration")]
-    cert: Vec<String>,
-
-    /// pe/efi binary to inspect
-    #[arg(
-        long,
-        visible_alias = "efi",
-        value_name = "FILE",
-        help_heading = "verify signatures"
-    )]
-    pe: Vec<String>,
-
-    /// KEK variable update to inspect
-    #[arg(long, value_name = "FILE", help_heading = "verify signatures")]
-    kek: Vec<String>,
-
-    /// db variable update to inspect
-    #[arg(long, value_name = "FILE", help_heading = "verify signatures")]
-    db: Vec<String>,
-
-    /// dbx variable update to inspect
-    #[arg(long, value_name = "FILE", help_heading = "verify signatures")]
-    dbx: Vec<String>,
-
-    #[arg(long, hide = true)]
-    manpage: bool,
-}
 
 const GOOD: &str = "✅";
 const FAIL: &str = "❌";
