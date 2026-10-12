@@ -50,16 +50,22 @@ compile-aa64:
 
 release:
   stage: build
+  tags:
+    - any.kraxel.org
   script:
     - make install
 
 cargo-audit:
   stage: build
+  tags:
+    - any.kraxel.org
   script:
     - make audit
 
 cargo-machete:
   stage: build
+  tags:
+    - any.kraxel.org
   script:
     - cargo machete
 
