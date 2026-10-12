@@ -4,6 +4,7 @@ use std::io;
 use std::io::Cursor;
 use std::process::ExitCode;
 
+use virtfw_efi_tools::cmdline::mini_bootcfg::Args;
 use virtfw_libefi::bootcfg::BootConfig;
 use virtfw_libefi::distro::LinuxOsInfo;
 use virtfw_libefi::efifile::EfiFile;
@@ -20,98 +21,6 @@ use virtfw_libefi::nocasestr::NoCaseString;
 use virtfw_libefi::varstore::sysfs;
 
 use virtfw_efi_tools::shimcsv::write_boot_csv;
-
-#[derive(Parser, Debug)]
-#[command(version, author, name = "mini-bootcfg",
-          about = "show and manage uefi boot entries", long_about = None)]
-struct Args {
-    /// set loglevel
-    #[arg(short, long, value_name = "LEVEL", default_value = "info")]
-    loglevel: log::Level,
-
-    /// print boot configuration
-    #[arg(short, long)]
-    show: bool,
-
-    /// more verbose output
-    #[arg(short, long)]
-    verbose: bool,
-
-    /// add boot entry for UKI image FILE
-    #[arg(long, value_name = "FILE", help_heading = "Update UKI boot entries")]
-    add_uki: Option<String>,
-
-    /// remove boot entry for UKI image FILE
-    #[arg(long, value_name = "FILE", help_heading = "Update UKI boot entries")]
-    remove_uki: Option<String>,
-
-    /// remove stale UKI entries
-    #[arg(long, help_heading = "Update UKI boot entries")]
-    cleanup_uki: bool,
-
-    /// override cmd line for boot entry
-    #[arg(long, value_name = "CMDLINE", help_heading = "Update UKI boot entries")]
-    cmdline: Option<String>,
-
-    /// boot is successful.
-    #[arg(
-        long = "boot-ok",
-        visible_alias = "boot-successful",
-        help_heading = "Update UKI boot entries"
-    )]
-    boot_successful: bool,
-
-    /// update BOOT.CSV
-    #[arg(long, help_heading = "Update UKI boot entries")]
-    update_csv: bool,
-
-    /// add boot entry to netboot URI
-    #[arg(long, value_name = "URI", help_heading = "Update other boot entries")]
-    add_uri: Option<String>,
-
-    /// remove boot entry NNNN
-    #[arg(long, value_name = "NNNN", help_heading = "Update other boot entries")]
-    remove_entry: Option<String>,
-
-    /// boot added entry once (via BootNext)
-    #[arg(
-        long = "boot-next",
-        visible_alias = "once",
-        help_heading = "Options for entry updates"
-    )]
-    boot_next: bool,
-
-    /// place added entry at POS to BootOrder
-    #[arg(long, value_name = "POS", help_heading = "Options for entry updates")]
-    boot_order: Option<String>,
-
-    /// do not actually update the configuration
-    #[arg(long, help_heading = "Options for entry updates")]
-    dry_run: bool,
-
-    /// set title for boot entry
-    #[arg(long, value_name = "TITLE", help_heading = "Options for entry updates")]
-    title: Option<String>,
-
-    /// use shim binary FILE
-    #[arg(long, value_name = "FILE", help_heading = "Options for entry updates")]
-    shim: Option<String>,
-
-    /// print boot loader name
-    #[arg(long, help_heading = "Print system information")]
-    print_loader: bool,
-
-    /// print efi stub info
-    #[arg(long, help_heading = "Print system information")]
-    print_stub_info: bool,
-
-    /// print efi stub image
-    #[arg(long, help_heading = "Print system information")]
-    print_stub_image: bool,
-
-    #[arg(long, hide = true)]
-    manpage: bool,
-}
 
 fn create_file_boot_entry(
     bootcfg: &BootConfig,
