@@ -5,23 +5,12 @@ use std::process::{Command, ExitCode};
 use dialoguer::theme::ColorfulTheme;
 use dialoguer::Select;
 
+use virtfw_efi_tools::cmdline::uefi_boot_menu::Args;
 use virtfw_libefi::bootcfg;
 use virtfw_libefi::efivar::boot::BootIndex;
 use virtfw_libefi::efivar::ids;
 use virtfw_libefi::efivar::types::{EfiVar, EfiVarAttr};
 use virtfw_libefi::varstore::sysfs;
-
-#[derive(Parser, Debug)]
-#[command(version, name = "uefi-boot-menu", about = None, long_about = None)]
-struct Args {
-    /// enable debug logging
-    #[arg(short, long)]
-    debug: bool,
-
-    /// reboot after picking an entry
-    #[arg(short, long)]
-    reboot: bool,
-}
 
 fn main() -> ExitCode {
     let cfg = Args::parse();
