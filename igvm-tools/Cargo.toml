@@ -11,7 +11,7 @@ authors.workspace = true
 edition.workspace = true
 
 [features]
-authenticode = [ "dep:authenticode" ]
+authenticode = [ "dep:object", "dep:authenticode"  ]
 default = [ "authenticode" ]
 
 [dependencies]
@@ -26,7 +26,7 @@ sha2.workspace = true
 uguid.workspace = true
 zerocopy.workspace = true
 
-object = "0.39"
-authenticode = { version = "0.6", optional = true, features = [ "object" ] }
+object = { workspace = true, optional = true, features = [ "elf" ] }
+authenticode = { workspace = true, optional = true }
 
 virtfw-libefi = { workspace = true, features = [ "std", "sbdata", "x509" ] }
