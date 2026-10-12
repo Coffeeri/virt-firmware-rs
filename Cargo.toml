@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
+	"clapgen",
 	"efi-apps",
 	"efi-tools",
 	"experimental",

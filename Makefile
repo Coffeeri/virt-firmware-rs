@@ -20,7 +20,7 @@ export CC_x86_64_unknown_none := x86_64-linux-gnu-gcc
 endif
 
 # variables
-PKGS		:= efi-tools experimental igvm-tools varstore
+PKGS		:= clapgen efi-tools experimental igvm-tools varstore
 TGT_BIOS32	:=
 TGT_NONE	:=
 TGT_UEFI	:=

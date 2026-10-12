@@ -1,0 +1,19 @@
+[package]
+name = "virtfw-clapgen"
+version = "0.0.1"
+publish = false
+description = "generate docs from clap"
+#readme = "README.md"
+
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+edition.workspace = true
+
+[dependencies]
+clap.workspace = true
+clap_mangen.workspace = true
+env_logger.workspace = true
+log.workspace = true
+
+virtfw-efi-tools = { path = "../efi-tools" }
