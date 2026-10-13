@@ -1615,7 +1615,6 @@ version = "0.1.13"
 dependencies = [
  "authenticode",
  "clap",
- "clap_mangen",
  "der",
  "dialoguer",
  "env_logger",
@@ -1656,7 +1655,6 @@ dependencies = [
  "authenticode",
  "bitfield-struct",
  "clap",
- "clap_mangen",
  "env_logger",
  "igvm",
  "igvm_defs",
