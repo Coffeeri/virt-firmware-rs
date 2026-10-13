@@ -151,8 +151,8 @@ build-efi-apps: build-bios-32
 # maintainer target
 push: all
 	git push
-	sleep 10 # let gitlab create pipeline
-	gitlab-ci
+	sleep 10	# let gitlab create pipeline
+	gitlab-ci -r	# watch gitlab pipeline
 
 # cargo rules
 doc-%:
