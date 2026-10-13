@@ -24,6 +24,11 @@ pub struct Args {
     /// generate man page for command
     #[arg(long, value_name = "CMD")]
     manpage: Option<String>,
+
+    /// generate markdown file for command
+    #[cfg(feature = "markdown")]
+    #[arg(long, value_name = "CMD")]
+    markdown: Option<String>,
 }
 
 fn name_to_command(name: &str) -> Result<Command, Box<dyn std::error::Error>> {
@@ -46,10 +51,17 @@ fn name_to_command(name: &str) -> Result<Command, Box<dyn std::error::Error>> {
     }
 }
 
-fn manpage(name: &str) -> Result<(), Box<dyn std::error::Error>> {
+fn render_manpage(name: &str) -> Result<(), Box<dyn std::error::Error>> {
     let cmd = name_to_command(name)?;
     let man = clap_mangen::Man::new(cmd);
     man.render(&mut std::io::stdout())?;
+    Ok(())
+}
+
+fn render_markdown(name: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let cmd = name_to_command(name)?;
+    let md = clap_markdown::help_markdown_command(&cmd);
+    print!("{md}");
     Ok(())
 }
 
@@ -64,7 +76,14 @@ fn main() -> ExitCode {
         .init();
 
     if let Some(name) = args.manpage {
-        if let Err(e) = manpage(&name) {
+        if let Err(e) = render_manpage(&name) {
+            error!("{e}");
+            return 1.into();
+        }
+    }
+
+    if let Some(name) = args.markdown {
+        if let Err(e) = render_markdown(&name) {
             error!("{e}");
             return 1.into();
         }
