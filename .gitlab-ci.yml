@@ -81,6 +81,8 @@ test-cargo:
 
 test-tmt:
   stage: tests
+  tags:
+    - x86_64.kraxel.org # igvm tests
   needs: []
   before_script:
     - dnf install -y tmt
@@ -131,6 +133,8 @@ pkg-varstore:
 
 fedora-rpm-check:
   stage: package
+  tags:
+    - any.kraxel.org
   needs: []
   script:
     - sed -e '/mefisto/d' -i Cargo.toml
@@ -141,6 +145,8 @@ fedora-rpm-check:
 
 pages:
   stage: publish
+  tags:
+    - any.kraxel.org
   needs:
     - compile-x64
     - compile-aa64
@@ -167,6 +173,8 @@ pages:
 
 oidc-test:
   stage: publish
+  tags:
+    - any.kraxel.org
   when: manual
   id_tokens:
     CRATES_IO_ID_TOKEN:
@@ -178,6 +186,8 @@ oidc-test:
 
 upload-release:
   stage: publish
+  tags:
+    - any.kraxel.org
   rules:
     - if: $CI_COMMIT_TAG =~ /^[a-z-]+-v[0-9.]+$/
   id_tokens:
