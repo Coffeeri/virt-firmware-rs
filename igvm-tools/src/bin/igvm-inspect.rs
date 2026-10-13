@@ -3,25 +3,9 @@ use log::{error, info};
 use std::process::ExitCode;
 
 use igvm::IgvmFile;
+use virtfw_igvm_tools::cmdline::igvm_inspect::Args;
 use virtfw_igvm_tools::inspect::{find_resetvector, inspect_igvm};
 use virtfw_igvm_tools::ovmfmeta::OvmfMeta;
-
-#[derive(Parser, Debug)]
-#[command(version, author, name = "igvm-inspect",
-          about = "inspect igvm file content",
-          long_about = None)]
-struct Args {
-    /// print ovmf metadata
-    #[arg(long)]
-    meta: bool,
-
-    /// files to inspect
-    #[arg()]
-    files: Vec<String>,
-
-    #[arg(long, hide = true)]
-    manpage: bool,
-}
 
 fn print_one(filename: &str, ovmfmeta: bool) -> Result<(), Box<dyn std::error::Error>> {
     info!("inspecting {filename}");
