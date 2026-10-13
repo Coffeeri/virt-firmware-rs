@@ -26,6 +26,11 @@ TGT_NONE	:=
 TGT_UEFI	:=
 TGT_POST	:=
 
+CLAPGEN_TOOLS	:= check-sb-signature enroll-sb-vars generate-boot-csv
+CLAPGEN_TOOLS	+= list-sb-vars mini-bootcfg uefi-boot-menu
+CLAPGEN_TOOLS	+= igvm-elfis igvm-inspect igvm-update igvm-wrap
+CLAPGEN_MD	:= $(patsubst %,docs/%.md,$(CLAPGEN_TOOLS))
+
 ifeq ($(HOST_ARCH),x86_64)
 TGT_BIOS32	+= build-bios-32
 endif
@@ -190,6 +195,13 @@ install-%:
 
 package-%:
 	cargo package --package virtfw-$* $(TARGET)
+
+markdown: $(CLAPGEN_MD)
+
+docs/%.md: target/debug/virtfw-clapgen
+	$< --markdown $* > $@
+
+target/debug/virtfw-clapgen: build-clapgen
 
 # include makefiles with run-* convinience targets
 include scripts/Make.qemu.bare
