@@ -17,7 +17,6 @@ default = [ "authenticode" ]
 [dependencies]
 bitfield-struct.workspace = true
 clap.workspace = true
-clap_mangen.workspace = true
 env_logger.workspace = true
 igvm.workspace = true
 igvm_defs.workspace = true
