@@ -21,9 +21,13 @@ Related python project: https://gitlab.com/kraxel/virt-firmware
 
  * [32-bit firmware test images](bios-32/)
 
-### Binaries
+### Firmware and EFI binaries
 
  * https://kraxel.gitlab.io/virt-firmware-rs/
+
+### Manual pages for tools
+
+ * [docs](docs/)
 
 ### compiling the project
 
