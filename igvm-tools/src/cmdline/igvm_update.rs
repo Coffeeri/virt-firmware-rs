@@ -8,8 +8,8 @@ use virtfw_libefi::sb::certs::profiles::SecureBootProfile;
           long_about = None)]
 pub struct Args {
     /// input igvm image
-    #[arg(short, long, value_name = "FILE", required_unless_present = "manpage")]
-    pub input: Option<String>,
+    #[arg(short, long, value_name = "FILE")]
+    pub input: String,
 
     /// input shim image (optional)
     #[arg(short, long, value_name = "SHIM")]
@@ -43,7 +43,4 @@ pub struct Args {
     /// output igvm image
     #[arg(short, long, value_name = "FILE")]
     pub output: Option<String>,
-
-    #[arg(long, hide = true)]
-    pub manpage: bool,
 }

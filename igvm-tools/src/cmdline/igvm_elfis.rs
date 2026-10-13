@@ -22,8 +22,8 @@ pub struct Args {
     pub inspect: bool,
 
     /// input elf image
-    #[arg(short, long, value_name = "ELF", required_unless_present = "manpage")]
-    pub input: Option<String>,
+    #[arg(short, long, value_name = "ELF")]
+    pub input: String,
 
     /// input efi binary (usually linux kernel)
     #[arg(short, long, value_name = "EFI")]
@@ -32,9 +32,6 @@ pub struct Args {
     /// output igvm image
     #[arg(short, long, value_name = "IGVM")]
     pub output: Option<String>,
-
-    #[arg(long, hide = true)]
-    pub manpage: bool,
 }
 
 impl Args {

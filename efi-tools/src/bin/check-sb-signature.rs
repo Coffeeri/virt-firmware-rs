@@ -1,5 +1,5 @@
 use authenticode::{authenticode_digest, AttributeCertificateIterator};
-use clap::{CommandFactory, Parser};
+use clap::Parser;
 use der::asn1::ObjectIdentifier;
 use log::{error, info};
 use object::pe::ImageNtHeaders64;
@@ -322,12 +322,6 @@ fn load_certificates(cfg: &Args, eficms: &mut dyn EfiCms) {
 fn main() -> ExitCode {
     let cfg = Args::parse();
     let mut rc = 0;
-
-    if cfg.manpage {
-        let man = clap_mangen::Man::new(Args::command());
-        man.render(&mut std::io::stdout()).expect("render manpage");
-        return 0.into();
-    }
 
     let levelfilter = cfg.loglevel.to_level_filter();
     env_logger::Builder::from_default_env()

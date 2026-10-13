@@ -70,7 +70,4 @@ pub struct Args {
     /// explicitly.
     #[arg(long, value_name = "FILE")]
     pub db_cert: Vec<String>,
-
-    #[arg(long, hide = true)]
-    pub manpage: bool,
 }

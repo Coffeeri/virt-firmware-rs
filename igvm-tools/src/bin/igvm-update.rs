@@ -1,7 +1,7 @@
 //!
 //! add kernel image to (ovmf) igvm
 //!
-use clap::{CommandFactory, Parser};
+use clap::Parser;
 use log::{debug, error, info};
 use std::process::ExitCode;
 
@@ -167,7 +167,7 @@ fn igvm_add_kernel(
 }
 
 fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
-    let input = cfg.input.as_ref().unwrap();
+    let input = &cfg.input;
     info!("reading {}", input);
     let blob = std::fs::read(input)?;
     let igvm = IgvmFile::new_from_binary(&blob, None)?;
@@ -202,12 +202,6 @@ fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
 
 fn main() -> ExitCode {
     let cfg = Args::parse();
-
-    if cfg.manpage {
-        let man = clap_mangen::Man::new(Args::command());
-        man.render(&mut std::io::stdout()).expect("render manpage");
-        return 0.into();
-    }
 
     let levelfilter = log::LevelFilter::Debug;
     env_logger::Builder::from_default_env()

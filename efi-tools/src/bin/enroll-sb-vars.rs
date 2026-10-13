@@ -1,5 +1,5 @@
 use authenticode::AttributeCertificateIterator;
-use clap::{CommandFactory, Parser};
+use clap::Parser;
 use der::Decode;
 use dialoguer::theme::ColorfulTheme;
 use dialoguer::Select;
@@ -326,11 +326,6 @@ fn enroll(cfg: &Args) -> Result<(), Box<dyn std::error::Error>> {
 fn main() -> ExitCode {
     let cfg = Args::parse();
 
-    if cfg.manpage {
-        let man = clap_mangen::Man::new(Args::command());
-        man.render(&mut std::io::stdout()).expect("render manpage");
-        return 0.into();
-    }
     loginit(&cfg);
 
     match enroll(&cfg) {

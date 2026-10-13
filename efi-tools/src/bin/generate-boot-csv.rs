@@ -2,7 +2,7 @@
 //! Generate BOOT.CVS for UKIs
 //!
 
-use clap::{CommandFactory, Parser};
+use clap::Parser;
 use log::{debug, error, info};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -33,12 +33,6 @@ fn create_csv_line(esp_path: &Path, shim_name: &str, binary: &Path, cmdline: &st
 
 fn main() -> ExitCode {
     let args = Args::parse();
-
-    if args.manpage {
-        let man = clap_mangen::Man::new(Args::command());
-        man.render(&mut std::io::stdout()).expect("render manpage");
-        return 0.into();
-    }
 
     let levelfilter = args.loglevel.to_level_filter();
     env_logger::Builder::from_default_env()

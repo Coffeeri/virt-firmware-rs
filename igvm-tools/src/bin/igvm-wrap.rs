@@ -1,7 +1,7 @@
 //!
 //! wrap classic native firmware image as igvm
 //!
-use clap::{CommandFactory, Parser};
+use clap::Parser;
 use log::{error, info};
 use std::fs;
 use std::process::ExitCode;
@@ -14,12 +14,6 @@ use virtfw_igvm_tools::x86regs::{flat32_mode_regs, real_mode_regs};
 
 fn main() -> ExitCode {
     let cfg = Args::parse();
-
-    if cfg.manpage {
-        let man = clap_mangen::Man::new(Args::command());
-        man.render(&mut std::io::stdout()).expect("render manpage");
-        return 0.into();
-    }
 
     let levelfilter = log::LevelFilter::Debug;
     env_logger::Builder::from_default_env()

@@ -40,7 +40,4 @@ pub struct Args {
     /// override kernel cmd line (default: /etc/kernel/cmdline)
     #[arg(long, value_name = "APPEND")]
     pub cmdline: Option<String>,
-
-    #[arg(long, hide = true)]
-    pub manpage: bool,
 }

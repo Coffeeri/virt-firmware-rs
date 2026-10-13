@@ -87,7 +87,4 @@ pub struct Args {
     /// print efi stub image
     #[arg(long, help_heading = "Print system information")]
     pub print_stub_image: bool,
-
-    #[arg(long, hide = true)]
-    pub manpage: bool,
 }

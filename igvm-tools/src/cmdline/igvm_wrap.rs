@@ -64,9 +64,6 @@ pub struct Args {
     /// output igvm image
     #[arg(short, long, value_name = "IGVM")]
     pub output: Option<String>,
-
-    #[arg(long, hide = true)]
-    pub manpage: bool,
 }
 
 impl Args {

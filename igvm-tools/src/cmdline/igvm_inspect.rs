@@ -12,7 +12,4 @@ pub struct Args {
     /// files to inspect
     #[arg()]
     pub files: Vec<String>,
-
-    #[arg(long, hide = true)]
-    pub manpage: bool,
 }

@@ -62,7 +62,4 @@ pub struct Args {
     /// dbx variable update to inspect
     #[arg(long, value_name = "FILE", help_heading = "verify signatures")]
     pub dbx: Vec<String>,
-
-    #[arg(long, hide = true)]
-    pub manpage: bool,
 }

@@ -1,7 +1,7 @@
 //!
 //! convert elf images into igvm
 //!
-use clap::{CommandFactory, Parser};
+use clap::Parser;
 use igvm_defs::IgvmPageDataType;
 use log::{debug, error, info};
 use object::elf::{PT_LOAD, SHF_ALLOC};
@@ -194,7 +194,7 @@ fn entry_addr(object: &object::File, symbol: &str) -> Option<u64> {
 }
 
 fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
-    let input = cfg.input.as_ref().unwrap();
+    let input = &cfg.input;
     info!("reading {}", input);
     let binary = fs::read(input)?;
     let object = File::parse(&*binary)?;
@@ -353,12 +353,6 @@ fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
 
 fn main() -> ExitCode {
     let cfg = Args::parse();
-
-    if cfg.manpage {
-        let man = clap_mangen::Man::new(Args::command());
-        man.render(&mut std::io::stdout()).expect("render manpage");
-        return 0.into();
-    }
 
     env_logger::Builder::from_default_env()
         .filter_module(module_path!(), log::LevelFilter::Info)

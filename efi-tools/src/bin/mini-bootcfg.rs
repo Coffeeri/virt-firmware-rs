@@ -1,4 +1,4 @@
-use clap::{CommandFactory, Parser};
+use clap::Parser;
 use log::{debug, error, info, warn};
 use std::io;
 use std::io::Cursor;
@@ -394,12 +394,6 @@ fn read_efi_var_str(name: &str) -> Option<String> {
 
 fn main() -> ExitCode {
     let cfg = Args::parse();
-
-    if cfg.manpage {
-        let man = clap_mangen::Man::new(Args::command());
-        man.render(&mut std::io::stdout()).expect("render manpage");
-        return 0.into();
-    }
 
     let levelfilter = cfg.loglevel.to_level_filter();
     env_logger::Builder::from_default_env()
