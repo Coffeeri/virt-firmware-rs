@@ -22,6 +22,8 @@ stages:
 
 compile-x64:
   stage: build
+  tags:
+    - x86_64.kraxel.org
   script:
     - make build
     - make doc
@@ -71,6 +73,8 @@ cargo-machete:
 
 test-cargo:
   stage: tests
+  tags:
+    - any.kraxel.org
   needs: []
   script:
     - make test
@@ -95,6 +99,8 @@ test-tmt:
 
 .pkg-check: &pkg-check
   stage: package
+  tags:
+    - any.kraxel.org
   needs: []
   script:
     - PKG=${CI_JOB_NAME#pkg-}
