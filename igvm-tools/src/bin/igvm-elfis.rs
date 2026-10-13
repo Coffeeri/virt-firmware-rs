@@ -13,6 +13,7 @@ use std::process::ExitCode;
 
 use igvm::IgvmFile;
 use virtfw_igvm_tools::builder::{Builder, SEV_SNP_COMPAT};
+use virtfw_igvm_tools::cmdline::igvm_elfis::Args;
 use virtfw_igvm_tools::inspect::inspect_igvm;
 use virtfw_igvm_tools::x86regs::flat32_mode_regs;
 use virtfw_libefi::hob::igvmdata::{EfiIgvmDataList, EfiIgvmDataType};
@@ -21,59 +22,6 @@ const SNP_CPUID: &str = ".snp.cpuid";
 const SNP_SECRETS: &str = ".snp.secrets";
 const IGVM_PARAM_MEMMAP: &str = ".igvm.memmap";
 const IGVM_DATA_HOB: &str = ".igvm.datahobs";
-
-#[derive(Parser, Debug)]
-#[command(version, author, name = "igvm-elfis",
-          about = "convert elf images into igvm",
-          long_about = None)]
-struct Args {
-    /// boot firmware in real mode (default)
-    #[arg(long, help_heading = "IGVM build options", conflicts_with = "flat32")]
-    real16: bool,
-
-    /// boot firmware in protected mode
-    #[arg(long, help_heading = "IGVM build options", conflicts_with = "real16")]
-    flat32: bool,
-
-    /// list regions in elf image
-    #[arg(long, help_heading = "Print informations")]
-    regions: bool,
-
-    /// inspect generated igvm
-    #[arg(long, help_heading = "Print informations")]
-    inspect: bool,
-
-    /// input elf image
-    #[arg(short, long, value_name = "ELF", required_unless_present = "manpage")]
-    input: Option<String>,
-
-    /// input efi binary (usually linux kernel)
-    #[arg(short, long, value_name = "EFI")]
-    kernel: Option<String>,
-
-    /// output igvm image
-    #[arg(short, long, value_name = "IGVM")]
-    output: Option<String>,
-
-    #[arg(long, hide = true)]
-    manpage: bool,
-}
-
-impl Args {
-    fn evaluate_bool(enable: bool, disable: bool, default: bool) -> bool {
-        if enable {
-            true
-        } else if disable {
-            false
-        } else {
-            default
-        }
-    }
-
-    fn get_flat32(&self) -> bool {
-        Args::evaluate_bool(self.flat32, self.real16, false)
-    }
-}
 
 struct Region<'r> {
     // section

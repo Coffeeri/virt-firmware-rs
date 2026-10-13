@@ -9,6 +9,7 @@ use virtfw_efi_tools::cmdline::list_sb_vars;
 use virtfw_efi_tools::cmdline::mini_bootcfg;
 use virtfw_efi_tools::cmdline::uefi_boot_menu;
 
+use virtfw_igvm_tools::cmdline::igvm_elfis;
 use virtfw_igvm_tools::cmdline::igvm_inspect;
 use virtfw_igvm_tools::cmdline::igvm_update;
 use virtfw_igvm_tools::cmdline::igvm_wrap;
@@ -36,6 +37,7 @@ fn name_to_command(name: &str) -> Result<Command, Box<dyn std::error::Error>> {
         "uefi-boot-menu" => Ok(uefi_boot_menu::Args::command()),
 
         // igvm tools
+        "igvm-elfis" => Ok(igvm_elfis::Args::command()),
         "igvm-inspect" => Ok(igvm_inspect::Args::command()),
         "igvm-update" => Ok(igvm_update::Args::command()),
         "igvm-wrap" => Ok(igvm_wrap::Args::command()),
