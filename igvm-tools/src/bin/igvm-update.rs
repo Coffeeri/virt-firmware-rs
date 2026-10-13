@@ -11,7 +11,6 @@ use authenticode::authenticode_digest;
 use object::read::pe;
 use sha2::{Digest, Sha256};
 
-use virtfw_libefi::arch::EfiArch;
 use virtfw_libefi::efivar::auth::esl_to_auth;
 use virtfw_libefi::efivar::sigdb::EfiSigDB;
 use virtfw_libefi::guids;
@@ -23,54 +22,9 @@ use virtfw_libefi::types::EfiTime;
 
 use igvm::IgvmFile;
 use virtfw_igvm_tools::builder::Builder;
+use virtfw_igvm_tools::cmdline::igvm_update::Args;
 use virtfw_igvm_tools::inspect::{find_resetvector, inspect_igvm};
 use virtfw_igvm_tools::ovmfmeta::{OvmfMeta, OvmfRegionType};
-
-#[derive(Parser, Debug)]
-#[command(version, author, name = "igvm-update",
-          about = "add kernel to igvm file",
-          long_about = None)]
-struct Args {
-    /// input igvm image
-    #[arg(short, long, value_name = "FILE", required_unless_present = "manpage")]
-    input: Option<String>,
-
-    /// input shim image (optional)
-    #[arg(short, long, value_name = "SHIM")]
-    shim: Option<String>,
-
-    /// input kernel image (can be any efi image)
-    #[arg(short, long, value_name = "KERNEL")]
-    kernel: Option<String>,
-
-    /// add authenticode sha256 hashes for shim and kernel to 'db'
-    #[cfg(feature = "authenticode")]
-    #[arg(long, visible_alias = "add-hash")]
-    add_hash_sha256: bool,
-
-    /// add microsoft certificates to 'db'
-    #[arg(long)]
-    add_cert_ms: bool,
-
-    /// select 'db' profile
-    #[arg(long, value_name = "NAME")]
-    profile: Option<SecureBootProfile>,
-
-    /// select efi architecture for 'dbx'
-    #[arg(long, value_name = "ARCH")]
-    arch: Option<EfiArch>,
-
-    /// inspect updated igvm
-    #[arg(long)]
-    inspect: bool,
-
-    /// output igvm image
-    #[arg(short, long, value_name = "FILE")]
-    output: Option<String>,
-
-    #[arg(long, hide = true)]
-    manpage: bool,
-}
 
 #[cfg(feature = "authenticode")]
 fn get_sha256(binary: &[u8]) -> [u8; 32] {

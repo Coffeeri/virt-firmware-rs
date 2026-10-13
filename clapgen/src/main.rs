@@ -9,6 +9,7 @@ use virtfw_efi_tools::cmdline::list_sb_vars;
 use virtfw_efi_tools::cmdline::mini_bootcfg;
 use virtfw_efi_tools::cmdline::uefi_boot_menu;
 
+use virtfw_igvm_tools::cmdline::igvm_update;
 use virtfw_igvm_tools::cmdline::igvm_wrap;
 
 #[derive(Parser, Debug)]
@@ -34,6 +35,7 @@ fn name_to_command(name: &str) -> Result<Command, Box<dyn std::error::Error>> {
         "uefi-boot-menu" => Ok(uefi_boot_menu::Args::command()),
 
         // igvm tools
+        "igvm-update" => Ok(igvm_update::Args::command()),
         "igvm-wrap" => Ok(igvm_wrap::Args::command()),
 
         _ => Err(format!("unknown command: {name}").into()),

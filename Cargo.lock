@@ -1591,6 +1591,7 @@ dependencies = [
  "env_logger",
  "log",
  "virtfw-efi-tools",
+ "virtfw-igvm-tools",
 ]
 
 [[package]]
