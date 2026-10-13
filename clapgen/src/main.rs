@@ -82,6 +82,7 @@ fn main() -> ExitCode {
         }
     }
 
+    #[cfg(feature = "markdown")]
     if let Some(name) = args.markdown {
         if let Err(e) = render_markdown(&name) {
             error!("{e}");
