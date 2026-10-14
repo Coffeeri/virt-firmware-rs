@@ -1,6 +1,6 @@
 [package]
 name = "virtfw-efi-tools"
-version = "0.1.13"
+version = "0.1.14"
 publish = true
 description = "efi related linux applications"
 readme = "README.md"
