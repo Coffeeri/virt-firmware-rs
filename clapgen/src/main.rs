@@ -58,6 +58,7 @@ fn render_manpage(name: &str) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+#[cfg(feature = "markdown")]
 fn render_markdown(name: &str) -> Result<(), Box<dyn std::error::Error>> {
     let cmd = name_to_command(name)?;
     let md = clap_markdown::help_markdown_command(&cmd);
