@@ -38,8 +38,8 @@ use virtfw_mefisto::sercon::sercon_init;
 use virtfw_mefisto::{println, symrange};
 
 const META_BIOS_MAJOR: u8 = 26;
-const META_BIOS_MINOR: u8 = 9;
-const META_BIOS_DATE: &str = "09/16/2026";
+const META_BIOS_MINOR: u8 = 10;
+const META_BIOS_DATE: &str = "10/14/2026";
 const META_BIOS_NAME: &str = "mefisto/efiloader";
 const META_CRATE_VER: &str = env!("CARGO_PKG_VERSION");
 
@@ -348,7 +348,7 @@ fn main() {
     info!("efi loader init complete");
 
     if let Some(mut smbios) = smbios::SmbiosLoader::new(&FWCFG) {
-        let version = format!("{META_BIOS_NAME} v{META_BIOS_MAJOR}.{META_BIOS_MINOR}");
+        let version = 26;
         smbios.set_bios(
             META_BIOS_MAJOR,
             META_BIOS_MINOR,
