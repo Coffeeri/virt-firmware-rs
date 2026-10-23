@@ -37,6 +37,10 @@ pub const OID_ALGO_SHA384_RSA: ObjectIdentifier =
     ObjectIdentifier::new_unwrap("1.2.840.113549.1.1.12");
 pub const OID_ALGO_SHA512_RSA: ObjectIdentifier =
     ObjectIdentifier::new_unwrap("1.2.840.113549.1.1.13");
+pub const OID_ALGO_ML_DSA_44: ObjectIdentifier =
+    ObjectIdentifier::new_unwrap("2.16.840.1.101.3.4.3.17");
+pub const OID_ALGO_ML_DSA_65: ObjectIdentifier =
+    ObjectIdentifier::new_unwrap("2.16.840.1.101.3.4.3.18");
 pub const OID_ALGO_ML_DSA_87: ObjectIdentifier =
     ObjectIdentifier::new_unwrap("2.16.840.1.101.3.4.3.19");
 
@@ -64,6 +68,8 @@ pub fn oid_to_known_name(oid: &ObjectIdentifier) -> Option<&'static str> {
         OID_ALGO_SHA256_RSA => Some("SHA-256 with RSA"),
         OID_ALGO_SHA384_RSA => Some("SHA-384 with RSA"),
         OID_ALGO_SHA512_RSA => Some("SHA-512 with RSA"),
+        OID_ALGO_ML_DSA_44 => Some("ML-DSA-44"),
+        OID_ALGO_ML_DSA_65 => Some("ML-DSA-65"),
         OID_ALGO_ML_DSA_87 => Some("ML-DSA-87"),
 
         _ => None,
