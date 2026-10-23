@@ -16,6 +16,8 @@ pub const OID_CMS_SIGNED_DATA: ObjectIdentifier =
 // authenticode
 pub const OID_SPC_INDIRECT_DATA: ObjectIdentifier =
     ObjectIdentifier::new_unwrap("1.3.6.1.4.1.311.2.1.4");
+pub const OID_SPC_PE_IMAGE_DATA: ObjectIdentifier =
+    ObjectIdentifier::new_unwrap("1.3.6.1.4.1.311.2.1.15");
 
 // hashes
 pub const OID_ALGO_SHA256: ObjectIdentifier =
@@ -51,6 +53,7 @@ pub fn oid_to_known_name(oid: &ObjectIdentifier) -> Option<&'static str> {
         OID_CMS_SIGNED_DATA => Some("SignedData [cms/pkcs7]"),
 
         OID_SPC_INDIRECT_DATA => Some("SpcIndirectData [authenticode]"),
+        OID_SPC_PE_IMAGE_DATA => Some("SpcPeImageData [authenticode]"),
 
         OID_ALGO_SHA256 => Some("SHA-256"),
         OID_ALGO_SHA384 => Some("SHA-384"),
