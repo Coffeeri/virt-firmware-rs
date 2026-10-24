@@ -29,20 +29,33 @@ pub const OID_ALGO_SHA512: ObjectIdentifier =
 
 // asymmetic crypto
 pub const OID_ALGO_RSA: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.2.840.113549.1.1.1");
+pub const OID_ALGO_ECDSA: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.2.840.10045.4.3");
 
-// signatures
+// signatures: rsa
 pub const OID_ALGO_SHA256_RSA: ObjectIdentifier =
     ObjectIdentifier::new_unwrap("1.2.840.113549.1.1.11");
 pub const OID_ALGO_SHA384_RSA: ObjectIdentifier =
     ObjectIdentifier::new_unwrap("1.2.840.113549.1.1.12");
 pub const OID_ALGO_SHA512_RSA: ObjectIdentifier =
     ObjectIdentifier::new_unwrap("1.2.840.113549.1.1.13");
+
+// signatures: pure ml-dsa
 pub const OID_ALGO_ML_DSA_44: ObjectIdentifier =
     ObjectIdentifier::new_unwrap("2.16.840.1.101.3.4.3.17");
 pub const OID_ALGO_ML_DSA_65: ObjectIdentifier =
     ObjectIdentifier::new_unwrap("2.16.840.1.101.3.4.3.18");
 pub const OID_ALGO_ML_DSA_87: ObjectIdentifier =
     ObjectIdentifier::new_unwrap("2.16.840.1.101.3.4.3.19");
+
+// signatures: composite mldsa ecdsa
+pub const OID_ALGO_COMPOSITE_MLDSA44_ECDSA_P256_SHA256: ObjectIdentifier =
+    ObjectIdentifier::new_unwrap("1.3.6.1.5.5.7.6.40");
+pub const OID_ALGO_COMPOSITE_MLDSA65_ECDSA_P256_SHA512: ObjectIdentifier =
+    ObjectIdentifier::new_unwrap("1.3.6.1.5.5.7.6.45");
+pub const OID_ALGO_COMPOSITE_MLDSA65_ECDSA_P384_SHA512: ObjectIdentifier =
+    ObjectIdentifier::new_unwrap("1.3.6.1.5.5.7.6.46");
+pub const OID_ALGO_COMPOSITE_MLDSA87_ECDSA_P384_SHA512: ObjectIdentifier =
+    ObjectIdentifier::new_unwrap("1.3.6.1.5.5.7.6.49");
 
 pub fn oid_to_known_name(oid: &ObjectIdentifier) -> Option<&'static str> {
     match *oid {
@@ -64,13 +77,28 @@ pub fn oid_to_known_name(oid: &ObjectIdentifier) -> Option<&'static str> {
         OID_ALGO_SHA512 => Some("SHA-512"),
 
         OID_ALGO_RSA => Some("RSA"),
+        OID_ALGO_ECDSA => Some("ECDSA"),
 
         OID_ALGO_SHA256_RSA => Some("SHA-256 with RSA"),
         OID_ALGO_SHA384_RSA => Some("SHA-384 with RSA"),
         OID_ALGO_SHA512_RSA => Some("SHA-512 with RSA"),
+
         OID_ALGO_ML_DSA_44 => Some("ML-DSA-44"),
         OID_ALGO_ML_DSA_65 => Some("ML-DSA-65"),
         OID_ALGO_ML_DSA_87 => Some("ML-DSA-87"),
+
+        OID_ALGO_COMPOSITE_MLDSA44_ECDSA_P256_SHA256 => {
+            Some("Composite ML-DSA-44 + ECDSA + SHA-256")
+        }
+        OID_ALGO_COMPOSITE_MLDSA65_ECDSA_P256_SHA512 => {
+            Some("Composite ML-DSA-65 + ECDSA + SHA-512")
+        }
+        OID_ALGO_COMPOSITE_MLDSA65_ECDSA_P384_SHA512 => {
+            Some("Composite ML-DSA-65 + ECDSA + SHA-512")
+        }
+        OID_ALGO_COMPOSITE_MLDSA87_ECDSA_P384_SHA512 => {
+            Some("Composite ML-DSA-87 + ECDSA + SHA-512")
+        }
 
         _ => None,
     }
