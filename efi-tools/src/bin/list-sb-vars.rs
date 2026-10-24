@@ -23,6 +23,7 @@ fn print_cert(cfg: &Args, der: &[u8]) {
     }
     println!("    valid  : {} -> {}", info.not_before, info.not_after);
     println!("    signed : {}", info.signature);
+    println!("    fp     : {}", info.fingerprint());
 }
 
 fn print_sigdb(cfg: &Args, name: &str, guid: &Guid) {
