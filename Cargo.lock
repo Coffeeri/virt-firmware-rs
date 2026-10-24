@@ -1127,27 +1127,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tls_codec"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0de2e01245e2bb89d6f05801c564fa27624dbd7b1846859876c7dad82e90bf6b"
-dependencies = [
- "tls_codec_derive",
- "zeroize",
-]
-
-[[package]]
-name = "tls_codec_derive"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2d2e76690929402faae40aebdda620a2c0e25dd6d3b9afe48867dfd95991f4bd"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.119",
-]
-
-[[package]]
 name = "tracing"
 version = "0.1.44"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1626,7 +1605,6 @@ dependencies = [
  "const-oid",
  "der",
  "spki",
- "tls_codec",
 ]
 
 [[package]]
@@ -1667,20 +1645,6 @@ name = "zeroize"
 version = "1.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e13084392c5e4bc371903e2935a5eaeed24905a7511356b883835e18a78f6879"
-dependencies = [
- "zeroize_derive",
-]
-
-[[package]]
-name = "zeroize_derive"
-version = "1.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c50655cbb0fe3fc43170059e702f1ce5e19b84cec58dc87b037a09935c2f328"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.119",
-]
 
 [[package]]
 name = "zlib-rs"

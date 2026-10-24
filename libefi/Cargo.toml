@@ -11,7 +11,11 @@ authors.workspace = true
 edition.workspace = true
 
 [features]
-std = [ "zerocopy/std", "byteorder/std", "log/std", "x509-cert/std", "x509-cert/pem", "der/std", "dep:chrono", "dep:clap", "dep:libc" ]
+std = [
+    "zerocopy/std", "byteorder/std", "log/std", "der/std",
+    "x509-cert/pem",
+    "dep:chrono", "dep:clap", "dep:libc"
+]
 udev = [ "std", "dep:udev" ]
 sbdata = []
 sbtest = [ "sbdata" ]
