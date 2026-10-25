@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{Parser, ValueHint};
 
 #[derive(Parser, Debug)]
 #[command(version, author, name = "igvm-inspect",
@@ -10,6 +10,6 @@ pub struct Args {
     pub meta: bool,
 
     /// files to inspect
-    #[arg()]
+    #[arg(value_hint = ValueHint::FilePath)]
     pub files: Vec<String>,
 }

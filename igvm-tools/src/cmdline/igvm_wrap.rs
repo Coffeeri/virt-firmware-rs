@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{Parser, ValueHint};
 
 #[derive(Parser, Debug)]
 #[command(version, author, name = "igvm-wrap",
@@ -54,15 +54,15 @@ pub struct Args {
     pub inspect: bool,
 
     /// input firmware image
-    #[arg(short, long, value_name = "CODE")]
+    #[arg(short, long, value_name = "CODE", value_hint = ValueHint::FilePath)]
     pub input: Option<String>,
 
     /// input uefi vars image
-    #[arg(long, value_name = "VARS")]
+    #[arg(long, value_name = "VARS", value_hint = ValueHint::FilePath)]
     pub vars: Option<String>,
 
     /// output igvm image
-    #[arg(short, long, value_name = "IGVM")]
+    #[arg(short, long, value_name = "IGVM", value_hint = ValueHint::FilePath)]
     pub output: Option<String>,
 }
 

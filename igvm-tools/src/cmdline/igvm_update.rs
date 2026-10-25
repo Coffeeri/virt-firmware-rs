@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{Parser, ValueHint};
 use virtfw_libefi::arch::EfiArch;
 use virtfw_libefi::sb::certs::profiles::SecureBootProfile;
 
@@ -8,15 +8,15 @@ use virtfw_libefi::sb::certs::profiles::SecureBootProfile;
           long_about = None)]
 pub struct Args {
     /// input igvm image
-    #[arg(short, long, value_name = "FILE")]
+    #[arg(short, long, value_name = "FILE", value_hint = ValueHint::FilePath)]
     pub input: String,
 
     /// input shim image (optional)
-    #[arg(short, long, value_name = "SHIM")]
+    #[arg(short, long, value_name = "SHIM", value_hint = ValueHint::FilePath)]
     pub shim: Option<String>,
 
     /// input kernel image (can be any efi image)
-    #[arg(short, long, value_name = "KERNEL")]
+    #[arg(short, long, value_name = "KERNEL", value_hint = ValueHint::FilePath)]
     pub kernel: Option<String>,
 
     /// add authenticode sha256 hashes for shim and kernel to 'db'
@@ -41,6 +41,6 @@ pub struct Args {
     pub inspect: bool,
 
     /// output igvm image
-    #[arg(short, long, value_name = "FILE")]
+    #[arg(short, long, value_name = "FILE", value_hint = ValueHint::FilePath)]
     pub output: Option<String>,
 }

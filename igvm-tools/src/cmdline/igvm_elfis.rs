@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{Parser, ValueHint};
 
 #[derive(Parser, Debug)]
 #[command(version, author, name = "igvm-elfis",
@@ -22,15 +22,15 @@ pub struct Args {
     pub inspect: bool,
 
     /// input elf image
-    #[arg(short, long, value_name = "ELF")]
+    #[arg(short, long, value_name = "ELF", value_hint = ValueHint::FilePath)]
     pub input: String,
 
     /// input efi binary (usually linux kernel)
-    #[arg(short, long, value_name = "EFI")]
+    #[arg(short, long, value_name = "EFI", value_hint = ValueHint::FilePath)]
     pub kernel: Option<String>,
 
     /// output igvm image
-    #[arg(short, long, value_name = "IGVM")]
+    #[arg(short, long, value_name = "IGVM", value_hint = ValueHint::FilePath)]
     pub output: Option<String>,
 }
 
