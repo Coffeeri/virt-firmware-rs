@@ -1,4 +1,4 @@
-use clap::{Parser, ValueEnum};
+use clap::{Parser, ValueEnum, ValueHint};
 use virtfw_libefi::sb::certs::profiles::{PkEnroll, SecureBootProfile};
 
 #[derive(Debug, Clone, ValueEnum)]
@@ -39,7 +39,8 @@ pub struct Args {
     pub profile: Option<SecureBootProfile>,
 
     /// load additional certificates
-    #[arg(long, value_name = "FILE", help_heading = "certificate configuration")]
+    #[arg(long, value_name = "FILE", help_heading = "certificate configuration",
+          value_hint = ValueHint::FilePath)]
     pub cert: Vec<String>,
 
     /// pe/efi binary to inspect
@@ -47,19 +48,23 @@ pub struct Args {
         long,
         visible_alias = "efi",
         value_name = "FILE",
-        help_heading = "verify signatures"
+        help_heading = "verify signatures",
+        value_hint = ValueHint::FilePath,
     )]
     pub pe: Vec<String>,
 
     /// KEK variable update to inspect
-    #[arg(long, value_name = "FILE", help_heading = "verify signatures")]
+    #[arg(long, value_name = "FILE", help_heading = "verify signatures",
+          value_hint = ValueHint::FilePath)]
     pub kek: Vec<String>,
 
     /// db variable update to inspect
-    #[arg(long, value_name = "FILE", help_heading = "verify signatures")]
+    #[arg(long, value_name = "FILE", help_heading = "verify signatures",
+          value_hint = ValueHint::FilePath)]
     pub db: Vec<String>,
 
     /// dbx variable update to inspect
-    #[arg(long, value_name = "FILE", help_heading = "verify signatures")]
+    #[arg(long, value_name = "FILE", help_heading = "verify signatures",
+          value_hint = ValueHint::FilePath)]
     pub dbx: Vec<String>,
 }

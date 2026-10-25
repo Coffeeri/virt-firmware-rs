@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{Parser, ValueHint};
 
 #[derive(Parser, Debug)]
 #[command(
@@ -26,15 +26,15 @@ pub struct Args {
     pub loglevel: log::Level,
 
     /// set efi system partition location
-    #[arg(long, value_name = "ESP")]
+    #[arg(long, value_name = "ESP", value_hint = ValueHint::DirPath)]
     pub esp: Option<String>,
 
     /// add efi binary
-    #[arg(long, value_name = "EFI")]
+    #[arg(long, value_name = "EFI", value_hint = ValueHint::FilePath)]
     pub add: Vec<String>,
 
     /// override csv output location
-    #[arg(long, value_name = "CSV")]
+    #[arg(long, value_name = "CSV", value_hint = ValueHint::FilePath)]
     pub csv: Option<String>,
 
     /// override kernel cmd line (default: /etc/kernel/cmdline)

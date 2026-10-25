@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{Parser, ValueHint};
 
 #[derive(Parser, Debug)]
 #[command(version, author, name = "mini-bootcfg",
@@ -17,11 +17,13 @@ pub struct Args {
     pub verbose: bool,
 
     /// add boot entry for UKI image FILE
-    #[arg(long, value_name = "FILE", help_heading = "Update UKI boot entries")]
+    #[arg(long, value_name = "FILE", help_heading = "Update UKI boot entries",
+          value_hint = ValueHint::FilePath)]
     pub add_uki: Option<String>,
 
     /// remove boot entry for UKI image FILE
-    #[arg(long, value_name = "FILE", help_heading = "Update UKI boot entries")]
+    #[arg(long, value_name = "FILE", help_heading = "Update UKI boot entries",
+          value_hint = ValueHint::FilePath)]
     pub remove_uki: Option<String>,
 
     /// remove stale UKI entries
@@ -45,7 +47,8 @@ pub struct Args {
     pub update_csv: bool,
 
     /// add boot entry to netboot URI
-    #[arg(long, value_name = "URI", help_heading = "Update other boot entries")]
+    #[arg(long, value_name = "URI", help_heading = "Update other boot entries",
+          value_hint = ValueHint::Url)]
     pub add_uri: Option<String>,
 
     /// remove boot entry NNNN
@@ -73,7 +76,8 @@ pub struct Args {
     pub title: Option<String>,
 
     /// use shim binary FILE
-    #[arg(long, value_name = "FILE", help_heading = "Options for entry updates")]
+    #[arg(long, value_name = "FILE", help_heading = "Options for entry updates",
+          value_hint = ValueHint::FilePath)]
     pub shim: Option<String>,
 
     /// print boot loader name

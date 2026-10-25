@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{Parser, ValueHint};
 use virtfw_libefi::sb::certs::profiles::{PkEnroll, SecureBootProfile};
 
 #[derive(Parser, Debug)]
@@ -68,6 +68,6 @@ pub struct Args {
     /// enrolled in addition to the other certificates.  Use
     /// '--profile none' if you want specify all certificates
     /// explicitly.
-    #[arg(long, value_name = "FILE")]
+    #[arg(long, value_name = "FILE", value_hint = ValueHint::FilePath)]
     pub db_cert: Vec<String>,
 }
