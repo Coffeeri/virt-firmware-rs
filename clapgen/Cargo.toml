@@ -15,6 +15,7 @@ markdown = [ "dep:clap-markdown" ]
 
 [dependencies]
 clap.workspace = true
+clap_complete.workspace = true
 clap_mangen.workspace = true
 clap-markdown = { workspace = true, optional = true }
 env_logger.workspace = true

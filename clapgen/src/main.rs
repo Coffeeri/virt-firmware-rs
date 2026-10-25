@@ -1,4 +1,5 @@
 use clap::{Command, CommandFactory, Parser};
+use clap_complete::aot::{generate, Shell};
 use log::error;
 use std::process::ExitCode;
 
@@ -29,6 +30,14 @@ pub struct Args {
     #[cfg(feature = "markdown")]
     #[arg(long, value_name = "CMD")]
     markdown: Option<String>,
+
+    /// generate shell completions for command
+    #[arg(long, value_name = "CMD")]
+    complete: Option<String>,
+
+    /// specify shell for completions
+    #[arg(long, value_name = "SHELL", default_value = "bash")]
+    shell: String,
 }
 
 fn name_to_command(name: &str) -> Result<Command, Box<dyn std::error::Error>> {
@@ -66,6 +75,13 @@ fn render_markdown(name: &str) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+fn complete(name: &str, shell: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let mut cmd = name_to_command(name)?;
+    let gen = Shell::from_shell_path(shell).ok_or("unknown shell")?;
+    generate(gen, &mut cmd, name, &mut std::io::stdout());
+    Ok(())
+}
+
 fn main() -> ExitCode {
     let args = Args::parse();
 
@@ -86,6 +102,13 @@ fn main() -> ExitCode {
     #[cfg(feature = "markdown")]
     if let Some(name) = args.markdown {
         if let Err(e) = render_markdown(&name) {
+            error!("{e}");
+            return 1.into();
+        }
+    }
+
+    if let Some(name) = args.complete {
+        if let Err(e) = complete(&name, &args.shell) {
             error!("{e}");
             return 1.into();
         }
