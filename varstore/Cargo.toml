@@ -28,6 +28,7 @@ json = [ "dep:serde", "dep:serde_json", "uguid/serde" ]
 sbtest = [ "virtfw-libefi/sbtest" ]
 
 [dependencies]
+hex.workspace = true
 log.workspace = true
 uguid.workspace = true
 zerocopy.workspace = true
@@ -40,6 +41,5 @@ serde_json = { workspace = true, optional = true }
 uefi = { workspace = true, features = [ "alloc" ] }
 
 flate2 = { version = "1", optional = true }
-hex = { version = "0.4", default-features = false, features = [ "alloc" ] }
 
 virtfw-libefi = { workspace = true, features = [ "sbdata", "x509" ] }
