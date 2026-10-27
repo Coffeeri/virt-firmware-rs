@@ -10,6 +10,7 @@ use super::oids::{oid_to_name, OID_CERT_CN};
 use crate::types::EfiTime;
 
 pub struct CertInfo {
+    pub cert: Certificate,
     pub subject: String,
     pub subject_cn: Option<String>,
     pub issuer: String,
@@ -36,6 +37,7 @@ impl CertInfo {
         let not_after = cert.tbs_certificate.validity.not_after.to_date_time();
         let signature = oid_to_name(&cert.signature_algorithm.oid);
         Self {
+            cert: cert.clone(),
             subject: subject.to_string(),
             subject_cn: Self::attr(subject, &OID_CERT_CN),
             issuer: issuer.to_string(),
@@ -66,5 +68,23 @@ impl CertInfo {
         } else {
             &self.issuer
         }
+    }
+
+    #[cfg(feature = "std")]
+    pub fn fingerprint(&self) -> String {
+        use alloc::vec::Vec;
+        use der::Encode;
+        use sha2::{Digest, Sha256};
+
+        let der = self.cert.to_der().unwrap();
+        let mut hasher = Sha256::new();
+        hasher.update(&der);
+        let fingerprint = hasher.finalize();
+
+        fingerprint
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect::<Vec<_>>()
+            .join(":")
     }
 }
