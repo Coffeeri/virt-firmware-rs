@@ -390,8 +390,9 @@ dependencies = [
 
 [[package]]
 name = "efiloader"
-version = "0.0.1"
-source = "git+https://github.com/ardbiesheuvel/efiloader.git?rev=699b3142085c#699b3142085c6432332e6f7cc7fec49a2f4faa5a"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "baa765a79d14694d8912e6b2f440acb4fc069a7b0643b061e9aa44973fb0f908"
 dependencies = [
  "const-utf16",
  "crc",

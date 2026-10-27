@@ -166,7 +166,7 @@ fn memory_phys_init(
     for (range, kind) in memory {
         match kind {
             EfiConventionalMemory => {
-                memmap.declare_memory_region(range).expect("add memory");
+                unsafe { memmap.declare_memory_region(range) }.expect("add memory");
                 if range.start >= 4 * GIB {
                     // we boot with the first 4GB already identity
                     // mapped, so only memory above that must be
