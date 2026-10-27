@@ -111,12 +111,16 @@ impl RequestBuffer {
         Self([0; 64 * 1024])
     }
 
-    fn serialize(&mut self, req: &MmVariableParsedRequest) {
+    fn serialize(&mut self, req: &MmVariableParsedRequest) -> Result<(), Status> {
         let vars_buf = Vec::<u8>::try_from(req).unwrap();
         let core_hdr = MmCoreHeader::new(guids::EfiSmmVariableProtocol, vars_buf.len() as u64);
         let offset = size_of::<MmCoreHeader>();
+        if offset + vars_buf.len() > self.0.len() {
+            return Err(Status::EFI_BUFFER_TOO_SMALL);
+        }
         self.0[0..offset].copy_from_slice(core_hdr.as_bytes());
         self.0[offset..offset + vars_buf.len()].copy_from_slice(&vars_buf);
+        Ok(())
     }
 
     fn result_variable(&self) -> Result<EfiVar, Status> {
@@ -175,7 +179,9 @@ extern "efiapi" fn qemuvars_get_variable(
 
     let req = MmVariableParsedRequest::GetVariable(id);
     let mut reqbuf = REQBUF.lock();
-    reqbuf.serialize(&req);
+    if let Err(status) = reqbuf.serialize(&req) {
+        return status;
+    }
 
     let uefivars = UEFIVARS.lock();
     if let Err(_err) = uefivars.dma_mm() {
@@ -204,7 +210,9 @@ extern "efiapi" fn qemuvars_get_next_variable_name(
 
     let req = MmVariableParsedRequest::GetNextVariableName(id);
     let mut reqbuf = REQBUF.lock();
-    reqbuf.serialize(&req);
+    if let Err(status) = reqbuf.serialize(&req) {
+        return status;
+    }
 
     let uefivars = UEFIVARS.lock();
     if let Err(_err) = uefivars.dma_mm() {
@@ -238,7 +246,9 @@ extern "efiapi" fn qemuvars_set_valiable(
 
     let req = MmVariableParsedRequest::SetVariable(var);
     let mut reqbuf = REQBUF.lock();
-    reqbuf.serialize(&req);
+    if let Err(status) = reqbuf.serialize(&req) {
+        return status;
+    }
 
     let uefivars = UEFIVARS.lock();
     if let Err(_err) = uefivars.dma_mm() {
