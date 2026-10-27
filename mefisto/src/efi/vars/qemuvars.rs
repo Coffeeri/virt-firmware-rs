@@ -285,6 +285,9 @@ pub fn probe(fwcfg: &FwCfgX86) -> Result<u64, &'static str> {
             let (mmio, _) = result.unwrap();
             return Ok(mmio);
         }
+        if (hdr.size as usize) < size_of::<HardwareInfoHdr>() {
+            return Err("hwinfo: invalid header size");
+        }
         if rest.len() <= hdr.size as usize {
             return Err("hwinfo: uefi vars not found");
         }
