@@ -133,7 +133,7 @@ impl MmVariableParsedRequest {
         Ok(id)
     }
 
-    fn parse_access_var(body: &[u8]) -> Result<EfiVar, Error<&'static str>> {
+    pub fn parse_access_var(body: &[u8]) -> Result<EfiVar, Error<&'static str>> {
         let (access, namedata) = MmVariableAccess::from_data(body)?;
         let ns = access.name_size as usize;
         let ds = access.data_size as usize;
@@ -150,7 +150,7 @@ impl MmVariableParsedRequest {
         Ok(var)
     }
 
-    fn parse_next(body: &[u8]) -> Result<EfiVarId, Error<&'static str>> {
+    pub fn parse_next(body: &[u8]) -> Result<EfiVarId, Error<&'static str>> {
         let (next, namebytes) = MmNextVariable::from_data(body)?;
         let ns = next.name_size as usize;
         let Some(slice) = &namebytes.get(0..ns) else {
