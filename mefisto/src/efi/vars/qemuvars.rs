@@ -235,13 +235,20 @@ extern "efiapi" fn qemuvars_set_valiable(
     data_size: usize,
     data: *const (),
 ) -> Status {
-    if variable_name.is_null() || vendor_guid.is_null() || data.is_null() {
+    if variable_name.is_null() || vendor_guid.is_null() {
+        return Status::EFI_INVALID_PARAMETER;
+    }
+    if data_size > 0 && data.is_null() {
         return Status::EFI_INVALID_PARAMETER;
     }
 
     let id = ptrs_to_id(variable_name, vendor_guid);
     info!("set-variable: {}", id.name());
-    let data = unsafe { core::slice::from_raw_parts(data as *const u8, data_size) };
+    let data = if data.is_null() {
+        [].as_slice()
+    } else {
+        unsafe { core::slice::from_raw_parts(data as *const u8, data_size) }
+    };
     let var = EfiVar::new_with_vec(id, attributes.into(), data.to_vec());
 
     let req = MmVariableParsedRequest::SetVariable(var);
