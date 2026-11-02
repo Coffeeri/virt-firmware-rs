@@ -17,8 +17,10 @@ pub fn get_dbx_update(arch: EfiArch, kek: KEK) -> &'static [u8] {
     match (arch, kek) {
         (EfiArch::X64, KEK::Microsoft2011) => DBX_2011_X86_64,
         (EfiArch::Aa64, KEK::Microsoft2011) => DBX_2011_AARCH64,
+        (EfiArch::Riscv64, KEK::Microsoft2011) => DBX_2011_AARCH64,
         (EfiArch::X64, KEK::Microsoft2023) => DBX_2023_X86_64,
         (EfiArch::Aa64, KEK::Microsoft2023) => DBX_2023_AARCH64,
+        (EfiArch::Riscv64, KEK::Microsoft2023) => DBX_2023_AARCH64,
     }
 }
 
