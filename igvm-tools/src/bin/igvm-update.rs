@@ -11,6 +11,7 @@ use authenticode::authenticode_digest;
 use object::read::pe;
 use sha2::{Digest, Sha256};
 
+use virtfw_libefi::arch::EfiArch;
 use virtfw_libefi::efivar::auth::esl_to_auth;
 use virtfw_libefi::efivar::sigdb::EfiSigDB;
 use virtfw_libefi::guids;
@@ -45,6 +46,7 @@ fn igvm_add_kernel(
     igvm: &IgvmFile,
     shim_blob: Option<&[u8]>,
     kernel_blob: Option<&[u8]>,
+    efi_arch: Option<EfiArch>,
     sb_profile: Option<&SecureBootProfile>,
 ) -> IgvmFile {
     let mut builder = Builder::from(igvm);
@@ -109,7 +111,7 @@ fn igvm_add_kernel(
     let db_blob = esl_to_auth(&db_ts, &Vec::<u8>::from(&db));
 
     // dbx
-    let dbx_esl: Vec<u8> = get_dbx_opt(cfg.arch).into();
+    let dbx_esl: Vec<u8> = get_dbx_opt(efi_arch).into();
     let dbx_blob = esl_to_auth(&EfiTime::dbxupdate(), &dbx_esl);
 
     // calculate load addresses + create hobs
@@ -201,6 +203,7 @@ fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
         &igvm,
         shim_blob.as_deref(),
         kernel_blob.as_deref(),
+        cfg.arch,
         sb_profile,
     );
     if cfg.inspect {
