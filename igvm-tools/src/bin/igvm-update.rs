@@ -45,6 +45,7 @@ fn igvm_add_kernel(
     igvm: &IgvmFile,
     shim_blob: Option<&[u8]>,
     kernel_blob: Option<&[u8]>,
+    sb_profile: Option<&SecureBootProfile>,
 ) -> IgvmFile {
     let mut builder = Builder::from(igvm);
     let mut hoblist = EfiIgvmDataList::new(0x20000000); // start at 512 MB
@@ -52,10 +53,10 @@ fn igvm_add_kernel(
     let mut shalist = Vec::new();
 
     #[cfg(feature = "authenticode")]
-    let secureboot = cfg.add_hash_sha256 || cfg.add_cert_ms;
+    let secureboot = cfg.add_hash_sha256 || sb_profile.is_some();
 
     #[cfg(not(feature = "authenticode"))]
-    let secureboot = cfg.add_cert_ms;
+    let secureboot = sb_profile.is_some();
 
     // shim + kernel
     #[cfg(feature = "authenticode")]
@@ -84,8 +85,7 @@ fn igvm_add_kernel(
     let kek_blob = esl_to_auth(&kek_ts, &Vec::<u8>::from(&kek));
 
     // db
-    let mut db = if cfg.add_cert_ms {
-        let profile = cfg.profile.as_ref().unwrap_or(&SecureBootProfile::Uefi11);
+    let mut db = if let Some(profile) = sb_profile {
         info!("add microsoft uefi certificates to 'db' (profile: {profile:?})");
         profile.sigdb()
     } else {
@@ -191,7 +191,18 @@ fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
     };
 
     // merge
-    let new_igvm = igvm_add_kernel(cfg, &igvm, shim_blob.as_deref(), kernel_blob.as_deref());
+    let sb_profile = if cfg.add_cert_ms {
+        Some(cfg.profile.as_ref().unwrap_or(&SecureBootProfile::Uefi11))
+    } else {
+        None
+    };
+    let new_igvm = igvm_add_kernel(
+        cfg,
+        &igvm,
+        shim_blob.as_deref(),
+        kernel_blob.as_deref(),
+        sb_profile,
+    );
     if cfg.inspect {
         println!("updated IGVM image");
         inspect_igvm(&new_igvm);
