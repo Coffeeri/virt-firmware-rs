@@ -42,12 +42,12 @@ fn siglist_dummy() -> Vec<[u8; 32]> {
 }
 
 fn igvm_add_kernel(
-    cfg: &Args,
     igvm: &IgvmFile,
     shim_blob: Option<&[u8]>,
     kernel_blob: Option<&[u8]>,
     efi_arch: Option<EfiArch>,
     sb_profile: Option<&SecureBootProfile>,
+    add_hash_sha256: bool,
 ) -> IgvmFile {
     let mut builder = Builder::from(igvm);
     let mut hoblist = EfiIgvmDataList::new(0x20000000); // start at 512 MB
@@ -55,14 +55,14 @@ fn igvm_add_kernel(
     let mut shalist = Vec::new();
 
     #[cfg(feature = "authenticode")]
-    let secureboot = cfg.add_hash_sha256 || sb_profile.is_some();
+    let secureboot = add_hash_sha256 || sb_profile.is_some();
 
     #[cfg(not(feature = "authenticode"))]
     let secureboot = sb_profile.is_some();
 
     // shim + kernel
     #[cfg(feature = "authenticode")]
-    if cfg.add_hash_sha256 {
+    if add_hash_sha256 {
         if let Some(b) = shim_blob {
             info!("calc shim authenticode sha256 hash");
             shalist.push(get_sha256(b));
@@ -94,7 +94,7 @@ fn igvm_add_kernel(
         EfiSigDB::new()
     };
     #[cfg(feature = "authenticode")]
-    if cfg.add_hash_sha256 && !shalist.is_empty() {
+    if add_hash_sha256 && !shalist.is_empty() {
         info!("add authenticode sha256 hash(es) to 'db'");
         db.add_sha256_from_list(&guids::OvmfEnrollDefaultKeys, shalist);
     }
@@ -199,12 +199,12 @@ fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
         None
     };
     let new_igvm = igvm_add_kernel(
-        cfg,
         &igvm,
         shim_blob.as_deref(),
         kernel_blob.as_deref(),
         cfg.arch,
         sb_profile,
+        cfg.add_hash_sha256,
     );
     if cfg.inspect {
         println!("updated IGVM image");
