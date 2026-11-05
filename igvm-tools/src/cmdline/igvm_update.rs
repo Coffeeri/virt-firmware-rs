@@ -1,6 +1,6 @@
 use clap::{Parser, ValueHint};
 use virtfw_libefi::arch::EfiArch;
-use virtfw_libefi::sb::certs::profiles::SecureBootProfile;
+use virtfw_libefi::sb::certs::profiles::{PkEnroll, SecureBootProfile};
 
 #[derive(Parser, Debug)]
 #[command(version, author, name = "igvm-update",
@@ -31,6 +31,11 @@ pub struct Args {
     /// select 'db' profile
     #[arg(long, value_name = "NAME")]
     pub profile: Option<SecureBootProfile>,
+
+    /// select 'PK' enroll mode
+    #[arg(long, value_name = "MODE",
+          value_enum, default_value_t = PkEnroll::RedHat)]
+    pub enroll: PkEnroll,
 
     /// select efi architecture for 'dbx'
     #[arg(long, value_name = "ARCH")]

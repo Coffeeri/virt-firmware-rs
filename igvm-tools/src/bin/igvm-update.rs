@@ -16,8 +16,7 @@ use virtfw_libefi::efivar::auth::esl_to_auth;
 use virtfw_libefi::efivar::sigdb::EfiSigDB;
 use virtfw_libefi::guids;
 use virtfw_libefi::hob::igvmdata::{EfiIgvmDataList, EfiIgvmDataType};
-use virtfw_libefi::sb::certs::profiles::SecureBootProfile;
-use virtfw_libefi::sb::certs::*;
+use virtfw_libefi::sb::certs::profiles::{PkEnroll, SecureBootProfile};
 use virtfw_libefi::sb::dbx::*;
 use virtfw_libefi::types::EfiTime;
 
@@ -47,6 +46,7 @@ fn igvm_add_kernel(
     kernel_blob: Option<&[u8]>,
     efi_arch: Option<EfiArch>,
     sb_profile: Option<&SecureBootProfile>,
+    pk_enroll: &PkEnroll,
     add_hash_sha256: bool,
 ) -> IgvmFile {
     let mut builder = Builder::from(igvm);
@@ -74,15 +74,12 @@ fn igvm_add_kernel(
     }
 
     // PK
-    let mut pk = EfiSigDB::new();
-    pk.add_x509_from_der(&guids::MicrosoftVendor, REDHAT_PK_KEK_2014);
+    let pk = pk_enroll.sigdb();
     let pk_ts = pk.get_x509_mtime().unwrap();
     let pk_blob = esl_to_auth(&pk_ts, &Vec::<u8>::from(&pk));
 
     // KEK
-    let mut kek = EfiSigDB::new();
-    kek.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_KEK_2011);
-    kek.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_KEK_2023);
+    let kek = pk_enroll.kek_sigdb();
     let kek_ts = kek.get_x509_mtime().unwrap();
     let kek_blob = esl_to_auth(&kek_ts, &Vec::<u8>::from(&kek));
 
@@ -204,6 +201,7 @@ fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
         kernel_blob.as_deref(),
         cfg.arch,
         sb_profile,
+        &cfg.enroll,
         cfg.add_hash_sha256,
     );
     if cfg.inspect {
