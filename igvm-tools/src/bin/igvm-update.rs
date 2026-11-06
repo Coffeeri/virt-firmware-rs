@@ -51,15 +51,10 @@ fn igvm_add_kernel(
 ) -> Result<IgvmFile, Box<dyn core::error::Error>> {
     let mut builder = Builder::from(igvm);
     let mut hoblist = EfiIgvmDataList::new(0x20000000); // start at 512 MB
+    let secureboot = add_hash_sha256 || sb_profile.is_some();
 
     #[cfg(feature = "authenticode")]
     let mut shalist = Vec::new();
-
-    #[cfg(feature = "authenticode")]
-    let secureboot = add_hash_sha256 || sb_profile.is_some();
-
-    #[cfg(not(feature = "authenticode"))]
-    let secureboot = sb_profile.is_some();
 
     // shim + kernel
     #[cfg(feature = "authenticode")]
@@ -199,6 +194,13 @@ fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
     } else {
         None
     };
+
+    #[cfg(feature = "authenticode")]
+    let add_hash = cfg.add_hash_sha256;
+
+    #[cfg(not(feature = "authenticode"))]
+    let add_hash = false;
+
     let new_igvm = igvm_add_kernel(
         &igvm,
         shim_blob.as_deref(),
@@ -206,7 +208,7 @@ fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
         cfg.arch,
         sb_profile,
         &cfg.enroll,
-        cfg.add_hash_sha256,
+        add_hash,
     )?;
     if cfg.inspect {
         println!("updated IGVM image");
