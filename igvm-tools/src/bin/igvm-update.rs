@@ -71,7 +71,7 @@ fn igvm_add_kernel(
 
     // PK
     let pk = pk_enroll.sigdb();
-    let pk_ts = pk.get_x509_mtime().unwrap();
+    let pk_ts = pk.get_x509_mtime().unwrap_or(EfiTime::initial());
     let pk_blob = esl_to_auth(&pk_ts, &Vec::<u8>::from(&pk));
 
     // KEK
