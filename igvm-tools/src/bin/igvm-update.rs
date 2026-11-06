@@ -11,12 +11,12 @@ use authenticode::authenticode_digest;
 use object::read::pe;
 use sha2::{Digest, Sha256};
 
+use virtfw_libefi::arch::EfiArch;
 use virtfw_libefi::efivar::auth::esl_to_auth;
 use virtfw_libefi::efivar::sigdb::EfiSigDB;
 use virtfw_libefi::guids;
 use virtfw_libefi::hob::igvmdata::{EfiIgvmDataList, EfiIgvmDataType};
-use virtfw_libefi::sb::certs::profiles::SecureBootProfile;
-use virtfw_libefi::sb::certs::*;
+use virtfw_libefi::sb::certs::profiles::{PkEnroll, SecureBootProfile};
 use virtfw_libefi::sb::dbx::*;
 use virtfw_libefi::types::EfiTime;
 
@@ -41,25 +41,24 @@ fn siglist_dummy() -> Vec<[u8; 32]> {
 }
 
 fn igvm_add_kernel(
-    cfg: &Args,
     igvm: &IgvmFile,
     shim_blob: Option<&[u8]>,
     kernel_blob: Option<&[u8]>,
-) -> IgvmFile {
+    efi_arch: Option<EfiArch>,
+    sb_profile: Option<&SecureBootProfile>,
+    pk_enroll: &PkEnroll,
+    add_hash_sha256: bool,
+) -> Result<IgvmFile, Box<dyn core::error::Error>> {
     let mut builder = Builder::from(igvm);
     let mut hoblist = EfiIgvmDataList::new(0x20000000); // start at 512 MB
+    let secureboot = add_hash_sha256 || sb_profile.is_some();
+
     #[cfg(feature = "authenticode")]
     let mut shalist = Vec::new();
 
-    #[cfg(feature = "authenticode")]
-    let secureboot = cfg.add_hash_sha256 || cfg.add_cert_ms;
-
-    #[cfg(not(feature = "authenticode"))]
-    let secureboot = cfg.add_cert_ms;
-
     // shim + kernel
     #[cfg(feature = "authenticode")]
-    if cfg.add_hash_sha256 {
+    if add_hash_sha256 {
         if let Some(b) = shim_blob {
             info!("calc shim authenticode sha256 hash");
             shalist.push(get_sha256(b));
@@ -71,28 +70,24 @@ fn igvm_add_kernel(
     }
 
     // PK
-    let mut pk = EfiSigDB::new();
-    pk.add_x509_from_der(&guids::MicrosoftVendor, REDHAT_PK_KEK_2014);
-    let pk_ts = pk.get_x509_mtime().unwrap();
+    let pk = pk_enroll.sigdb();
+    let pk_ts = pk.get_x509_mtime().unwrap_or(EfiTime::initial());
     let pk_blob = esl_to_auth(&pk_ts, &Vec::<u8>::from(&pk));
 
     // KEK
-    let mut kek = EfiSigDB::new();
-    kek.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_KEK_2011);
-    kek.add_x509_from_der(&guids::MicrosoftVendor, MICROSOFT_KEK_2023);
+    let kek = pk_enroll.kek_sigdb();
     let kek_ts = kek.get_x509_mtime().unwrap();
     let kek_blob = esl_to_auth(&kek_ts, &Vec::<u8>::from(&kek));
 
     // db
-    let mut db = if cfg.add_cert_ms {
-        let profile = cfg.profile.as_ref().unwrap_or(&SecureBootProfile::Uefi11);
+    let mut db = if let Some(profile) = sb_profile {
         info!("add microsoft uefi certificates to 'db' (profile: {profile:?})");
         profile.sigdb()
     } else {
         EfiSigDB::new()
     };
     #[cfg(feature = "authenticode")]
-    if cfg.add_hash_sha256 && !shalist.is_empty() {
+    if add_hash_sha256 && !shalist.is_empty() {
         info!("add authenticode sha256 hash(es) to 'db'");
         db.add_sha256_from_list(&guids::OvmfEnrollDefaultKeys, shalist);
     }
@@ -109,7 +104,7 @@ fn igvm_add_kernel(
     let db_blob = esl_to_auth(&db_ts, &Vec::<u8>::from(&db));
 
     // dbx
-    let dbx_esl: Vec<u8> = get_dbx_opt(cfg.arch).into();
+    let dbx_esl: Vec<u8> = get_dbx_opt(efi_arch).into();
     let dbx_blob = esl_to_auth(&EfiTime::dbxupdate(), &dbx_esl);
 
     // calculate load addresses + create hobs
@@ -160,10 +155,13 @@ fn igvm_add_kernel(
     }
 
     // sanity checks
-    builder.verify().expect("verify updated igvm");
+    builder.verify()?;
 
     // build updated igvm
-    builder.finalize().expect("build updated igvm")
+    let new_igvm = builder.finalize()?;
+
+    // all done
+    Ok(new_igvm)
 }
 
 fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
@@ -191,7 +189,27 @@ fn process(cfg: &Args) -> Result<IgvmFile, Box<dyn std::error::Error>> {
     };
 
     // merge
-    let new_igvm = igvm_add_kernel(cfg, &igvm, shim_blob.as_deref(), kernel_blob.as_deref());
+    let sb_profile = if cfg.add_cert_ms {
+        Some(cfg.profile.as_ref().unwrap_or(&SecureBootProfile::Uefi11))
+    } else {
+        None
+    };
+
+    #[cfg(feature = "authenticode")]
+    let add_hash = cfg.add_hash_sha256;
+
+    #[cfg(not(feature = "authenticode"))]
+    let add_hash = false;
+
+    let new_igvm = igvm_add_kernel(
+        &igvm,
+        shim_blob.as_deref(),
+        kernel_blob.as_deref(),
+        cfg.arch,
+        sb_profile,
+        &cfg.enroll,
+        add_hash,
+    )?;
     if cfg.inspect {
         println!("updated IGVM image");
         inspect_igvm(&new_igvm);

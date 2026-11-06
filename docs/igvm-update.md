@@ -43,6 +43,18 @@ add kernel to igvm file
   - `all`:
     Both Windows and UEFI CA certificates, 2011 + 2023
 
+* `--enroll <MODE>` — select 'PK' enroll mode
+
+  Default value: `redhat`
+
+  Possible values:
+  - `mgmt`:
+    EFI_CERT_EXTERNAL_MANAGEMENT_GUID
+  - `redhat`:
+    Red Hat Secure Boot (PK/KEK key 1)
+  - `microsoft`:
+    Windows OEM Devices PK
+
 * `--arch <ARCH>` — select efi architecture for 'dbx'
 
   Possible values: `aa64`, `x64`
