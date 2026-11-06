@@ -40,6 +40,9 @@ pub struct Args {
     #[arg(long)]
     pub dry_run: bool,
 
+    #[arg(long, hide = true)]
+    pub bypass_check_vm: bool,
+
     /// select 'PK' enroll mode
     #[arg(long, value_name = "MODE",
           value_enum, default_value_t = PkEnroll::RedHat)]

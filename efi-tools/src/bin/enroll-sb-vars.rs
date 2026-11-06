@@ -40,14 +40,17 @@ fn loginit(cfg: &Args) {
         .init();
 }
 
-fn check_virtualization() -> Result<(), Box<dyn std::error::Error>> {
+fn check_virtualization(cfg: &Args) -> Result<(), Box<dyn std::error::Error>> {
     let output = Command::new("systemd-detect-virt").arg("--vm").output()?;
     let virt = std::str::from_utf8(&output.stdout)?.trim();
     info!("virtualization is {virt}");
-    if virt != "kvm" {
-        return Err("supporting only virtual machines".into());
+    if virt == "kvm" {
+        return Ok(());
     }
-    Ok(())
+    if cfg.bypass_check_vm {
+        return Ok(());
+    }
+    Err("supporting only virtual machines".into())
 }
 
 fn check_setup_mode() -> Result<(), Box<dyn std::error::Error>> {
@@ -270,7 +273,7 @@ fn enroll(cfg: &Args) -> Result<(), Box<dyn std::error::Error>> {
         info!("--- dry run mode ---");
     } else {
         check_setup_mode()?;
-        check_virtualization()?;
+        check_virtualization(cfg)?;
     }
 
     let mut db = if let Some(profile) = &cfg.profile {
