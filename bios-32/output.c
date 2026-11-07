@@ -38,6 +38,12 @@ void puts(const char *s)
     }
 }
 
+void putsln(const char *s)
+{
+    puts(s);
+    puts("\r\n");
+}
+
 void putb(uint8_t b)
 {
     static const char map[] = {

@@ -28,6 +28,7 @@ void serial_putc(char c);
 void debugcon_putc(const char c);
 void putc(char c);
 void puts(const char *s);
+void putsln(const char *s);
 void putb(uint8_t b);
 void putw(uint16_t w);
 void putl(uint32_t l);

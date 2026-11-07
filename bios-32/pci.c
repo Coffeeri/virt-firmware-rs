@@ -88,16 +88,16 @@ void pci_init_info(bool verbose)
 
     if (v == 0x8086 && d == 0x1237) {
         if (verbose)
-            puts("i440fx chipset (pc)\n");
+            putsln("i440fx chipset (pc)");
         acpi_pm_init_pc();
 
     } else if (v == 0x8086 && d == 0x29c0) {
         if (verbose)
-            puts("q35 chipset\n");
+            putsln("q35 chipset");
         acpi_pm_init_q35();
 
     } else {
         if (verbose)
-            puts("unknown chipset\n");
+            putsln("unknown chipset");
     }
 }

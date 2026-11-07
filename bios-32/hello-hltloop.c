@@ -4,9 +4,9 @@ void main(void)
 {
     serial_init();
 
-    puts("\n");
-    puts("Hello World\n");
-    puts("\n");
+    putsln("");
+    putsln("Hello World");
+    putsln("");
 
-    puts("hlt ...\n");
+    putsln("hlt ...");
 }

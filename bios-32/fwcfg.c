@@ -78,7 +78,7 @@ bool fwcfg_detect(void)
     putl(sig);
     puts(" version=");
     putl(ver);
-    puts("\n");
+    putsln("");
 
     return true;
 }
@@ -107,7 +107,7 @@ void fwcfg_readdir(const char *search, uint16_t *ret_item, uint32_t *ret_size)
     if (!search) {
         puts("fwcfg: file count=");
         putl(count);
-        puts("\n");
+        putsln("");
     }
 
     for (uint32_t i = 0; i < count; i++) {
@@ -124,7 +124,7 @@ void fwcfg_readdir(const char *search, uint16_t *ret_item, uint32_t *ret_size)
             putw(item);
             puts(" name='");
             puts((char*)name);
-            puts("'\n");
+            putsln("'");
         }
 
         if (found) {
@@ -137,7 +137,7 @@ void fwcfg_readdir(const char *search, uint16_t *ret_item, uint32_t *ret_size)
     if (search) {
         puts("fwcfg: file not found ('");
         puts(search);
-        puts("')\n");
+        putsln("')");
     }
 }
 
@@ -167,10 +167,10 @@ void fwcfg_hexdump(const char *file, uint32_t max)
         putc(' ');
         putb(byte);
         if ((i % 16) == 15) {
-            puts("\n");
+            putsln("");
         }
     }
     if ((i % 16) != 0) {
-        puts("\n");
+        putsln("");
     }
 }

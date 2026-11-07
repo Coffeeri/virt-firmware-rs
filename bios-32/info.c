@@ -19,13 +19,13 @@ void fwcfg_print_e820(void)
         type = fwcfg_read_le32();
         switch (type) {
         case 1:
-            puts(" memory\n");
+            putsln(" memory");
             break;
         case 2:
-            puts(" reserved\n");
+            putsln(" reserved");
             break;
         default:
-            puts(" unknown\n");
+            putsln(" unknown");
             break;
         }
     }
@@ -38,12 +38,12 @@ void print_range(const char *prefix, void *from, void *to)
     putl((uint32_t)from);
     puts(" - ");
     putl(((uint32_t)to)-1);
-    puts("\n");
+    putsln("");
 }
 
 void print_romlayout(void)
 {
-    puts("romlayout\n");
+    putsln("romlayout");
 
     print_range("    code    ", &copy_start, &data_start);
     print_range("    data    ", &data_start, &copy_end);
@@ -58,19 +58,19 @@ void main(uint32_t boot_mode)
 
     puts("boot mode: ");
     putl(boot_mode);
-    puts("\n---\n");
+    putsln("\r\n---");
 
     print_romlayout();
-    puts("---\n");
+    putsln("---");
     pci_init_info(true);
-    puts("---\n");
+    putsln("---");
 
     if (fwcfg_detect()) {
-        puts("---\n");
+        putsln("---");
         fwcfg_readdir(NULL, NULL, NULL);
-        puts("---\n");
+        putsln("---");
         fwcfg_print_e820();
-        puts("---\n");
+        putsln("---");
         fwcfg_hexdump("etc/e820", 128);
     }
 

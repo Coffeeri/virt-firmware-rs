@@ -13,13 +13,13 @@ void main(void)
 {
     serial_init();
 
-    puts("\n");
-    puts("launch ok\n");
-    puts("\n");
+    putsln("");
+    putsln("launch ok");
+    putsln("");
 
     if (fwcfg_detect()) {
         for (uint32_t i = 0; filelist[i] != NULL; i++) {
-            puts("\n");
+            putsln("");
             fwcfg_hexdump(filelist[i], 128);
         }
     }

@@ -4,13 +4,13 @@ void main(void)
 {
     serial_init();
 
-    puts("\n");
-    puts("Hello World\n");
-    puts("\n");
+    putsln("");
+    putsln("Hello World");
+    putsln("");
 
     pci_init_info(false);
     acpi_pm_sleep(1);
 
-    puts("poweroff ...\n");
+    putsln("poweroff ...");
     acpi_pm_poweroff();
 }
