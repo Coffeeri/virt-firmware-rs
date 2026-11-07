@@ -79,7 +79,7 @@ test-cargo:
   script:
     - make test
 
-test-tmt:
+test-tmt-x64:
   stage: tests
   tags:
     - x86_64.kraxel.org # igvm tests
