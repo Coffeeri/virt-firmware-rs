@@ -21,8 +21,8 @@ CFLAGS	:= $(COMMON) -Os -g -Wall
 CFLAGS	+= -mno-mmx -mno-sse -fpic
 LDFLAGS	:= -melf_i386 --script=bios32.lds
 
-TARGETS	:= hello-poweroff.bin hello-reset.bin hello-hltloop.bin info.bin vmfwupdate.bin
-TARGETS	+= hello-poweroff.igvm hello-reset.igvm hello-hltloop.igvm info.igvm vmfwupdate.igvm
+TARGETS	:= hello-poweroff.bin hello-reset.bin hello-hltloop.bin info.bin
+TARGETS	+= hello-poweroff.igvm hello-reset.igvm hello-hltloop.igvm info.igvm
 
 # build targets
 all: build
@@ -33,7 +33,6 @@ hello-poweroff.elf: hello-poweroff.o entry32.o pci.o output.o ioport.o
 hello-reset.elf: hello-reset.o entry32.o pci.o output.o ioport.o
 hello-hltloop.elf: hello-hltloop.o entry32.o output.o ioport.o
 info.elf: info.o entry32.o fwcfg.o pci.o output.o ioport.o
-vmfwupdate.elf: vmfwupdate.o entry32.o fwcfg.o pci.o output.o ioport.o
 
 clean:
 	rm -f *.o *.elf *.bin *.igvm
@@ -44,10 +43,6 @@ run-hello: hello-poweroff.bin
 
 run-info: info.bin
 	qemu-system-x86_64 -enable-kvm -nographic -bios info.bin
-
-run-vmfwupdate: vmfwupdate.bin
-	qemu-system-x86_64 -enable-kvm -nographic -bios vmfwupdate.bin \
-		-device vmfwupdate
 
 # build rules
 %.elf: %.o
