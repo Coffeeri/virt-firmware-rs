@@ -14,6 +14,7 @@ wrap classic native firmware image as igvm
 
 ###### **Options:**
 
+* `--tdx` — wrap TDVF for a TDVF-aware TDX loader
 * `--native` — enable native platform (default)
 * `--no-native` — disable native platform
 * `--snp` — enable sev-snp platform

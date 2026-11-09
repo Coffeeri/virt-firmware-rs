@@ -1,5 +1,5 @@
 use std::cmp::{min, Ordering};
-use std::collections::HashSet;
+use std::collections::HashMap;
 
 use igvm::snp_defs::SevFeatures;
 use igvm::{
@@ -12,10 +12,12 @@ use igvm_defs::{
 };
 
 use crate::ovmfmeta::{OvmfMeta, OvmfRegionType};
+use crate::tdvf::{validate_bfv_metadata, Tdvf, TdvfSectionType};
 use crate::x86regs::{native_context, vmsa_context};
 
 pub const NATIVE_COMPAT: u32 = 1u32 << 0;
 pub const SEV_SNP_COMPAT: u32 = 1u32 << 1;
+pub const TDX_COMPAT: u32 = 1u32 << 2;
 
 pub struct Builder {
     revision: IgvmRevision,
@@ -26,6 +28,57 @@ pub struct Builder {
 }
 
 impl Builder {
+    /// Adds a TDVF image for a TDVF-aware TDX loader.
+    ///
+    /// Requires an empty builder. Runtime HOB insertion retains its metadata
+    /// position because page additions contribute to MRTD even without contents.
+    pub fn add_tdvf(&mut self, firmware: &[u8]) -> Result<&mut Builder, String> {
+        if !self.platforms.is_empty()
+            || !self.initializations.is_empty()
+            || !self.directives.is_empty()
+        {
+            return Err("TDVF requires an empty builder".into());
+        }
+        let tdvf = Tdvf::parse(firmware)?;
+        validate_bfv_metadata(firmware)?;
+        self.platforms.push(IgvmPlatformHeader::SupportedPlatform(
+            IGVM_VHS_SUPPORTED_PLATFORM {
+                compatibility_mask: TDX_COMPAT,
+                highest_vtl: 0,
+                platform_type: IgvmPlatformType::TDX,
+                platform_version: igvm_defs::IGVM_TDX_PLATFORM_VERSION,
+                shared_gpa_boundary: 0,
+            },
+        ));
+        self.compatibility_mask_all = TDX_COMPAT;
+        let hob = tdvf
+            .sections
+            .iter()
+            .find(|section| section.kind == TdvfSectionType::Hob)
+            .ok_or("missing TDVF HOB section")?;
+        self.add_igvm_param_area(0, hob.memory_size);
+        for section in tdvf.sections {
+            if section.kind == TdvfSectionType::Hob {
+                self.add_igvm_param_insert(0, section.gpa);
+                continue;
+            }
+            let flags = IgvmPageDataFlags::new().with_unmeasured(!section.measured);
+            for offset in (0..section.memory_size).step_by(PAGE_SIZE_4K as usize) {
+                let start = usize::try_from(offset)
+                    .map_err(|_| "TDVF section exceeds host address space")?;
+                let data = section.data.get(start..).unwrap_or_default();
+                self.directives.push(IgvmDirectiveHeader::PageData {
+                    gpa: section.gpa + offset,
+                    compatibility_mask: TDX_COMPAT,
+                    flags,
+                    data_type: IgvmPageDataType::NORMAL,
+                    data: data[..data.len().min(PAGE_SIZE_4K as usize)].to_vec(),
+                });
+            }
+        }
+        Ok(self)
+    }
+
     fn revision() -> IgvmRevision {
         IgvmRevision::V2 {
             arch: Arch::X64,
@@ -333,28 +386,63 @@ impl Builder {
     }
 
     fn check_pages(&self) -> Result<(), String> {
-        let mut pages = HashSet::new();
-        for d in &self.directives {
-            let page = match d {
+        let areas: HashMap<_, _> = self
+            .directives
+            .iter()
+            .filter_map(|directive| {
+                if let IgvmDirectiveHeader::ParameterArea {
+                    parameter_area_index,
+                    number_of_bytes,
+                    ..
+                } = directive
+                {
+                    Some((*parameter_area_index, *number_of_bytes))
+                } else {
+                    None
+                }
+            })
+            .collect();
+        let mut ranges = Vec::new();
+        for directive in &self.directives {
+            let (start, size, mask) = match directive {
                 IgvmDirectiveHeader::PageData {
                     gpa,
                     compatibility_mask,
+                    flags,
                     ..
-                } => Some((*gpa, *compatibility_mask)),
-                IgvmDirectiveHeader::ParameterInsert(pi) => Some((pi.gpa, pi.compatibility_mask)),
-                _ => None,
+                } => (
+                    *gpa,
+                    if flags.is_2mb_page() {
+                        2 * 1024 * 1024
+                    } else {
+                        PAGE_SIZE_4K
+                    },
+                    *compatibility_mask,
+                ),
+                IgvmDirectiveHeader::ParameterInsert(insert) => (
+                    insert.gpa,
+                    *areas
+                        .get(&insert.parameter_area_index)
+                        .ok_or("undefined parameter area")?,
+                    insert.compatibility_mask,
+                ),
+                _ => continue,
             };
-            if let Some((gpa, compat)) = page {
-                for bit in [NATIVE_COMPAT, SEV_SNP_COMPAT] {
-                    if compat & bit != 0 {
-                        let entry = (gpa, bit);
-                        if pages.contains(&entry) {
-                            let err = format!("duplicate at gpa {:x}", gpa);
-                            return Err(err);
-                        }
-                        pages.insert(entry);
-                    }
+            let end = start.checked_add(size).ok_or("page range overflow")?;
+            ranges.push((start, end, mask));
+        }
+        ranges.sort_unstable();
+        for bit_index in 0..32 {
+            let bit = 1u32 << bit_index;
+            let mut previous_end = 0;
+            for &(start, end, mask) in &ranges {
+                if mask & bit == 0 {
+                    continue;
                 }
+                if start < previous_end {
+                    return Err(format!("overlap at gpa {start:x}"));
+                }
+                previous_end = end;
             }
         }
         Ok(())
@@ -367,7 +455,13 @@ impl Builder {
 
     pub fn finalize(&self) -> Result<IgvmFile, igvm::Error> {
         let mut directives = self.directives.clone();
-        directives.sort_by(Self::sort_pages);
+        // TDVF metadata order defines the page-add transcript used for MRTD.
+        if !self.platforms.iter().any(|platform| {
+            let IgvmPlatformHeader::SupportedPlatform(platform) = platform;
+            platform.platform_type == IgvmPlatformType::TDX
+        }) {
+            directives.sort_by(Self::sort_pages);
+        }
         IgvmFile::new(
             self.revision,
             self.platforms.clone(),

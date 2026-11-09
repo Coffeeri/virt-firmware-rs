@@ -25,6 +25,16 @@ pub struct TdvfSection<'a> {
     pub data: &'a [u8],
 }
 
+#[derive(Debug)]
+pub(crate) struct TdvfRegion {
+    pub file_offset: usize,
+    pub raw_size: usize,
+    pub gpa: u64,
+    pub memory_size: u64,
+    pub kind: TdvfSectionType,
+    pub measured: bool,
+}
+
 /// A supported TDVF version 1 section type.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum TdvfSectionType {
@@ -42,7 +52,7 @@ fn read_u64(data: &[u8]) -> u64 {
     u64::from_le_bytes(data.try_into().expect("eight-byte field"))
 }
 
-fn metadata_offset(firmware: &[u8]) -> Result<usize, String> {
+pub(crate) fn metadata_distance(firmware: &[u8]) -> Result<usize, String> {
     let footer_end = firmware
         .len()
         .checked_sub(32)
@@ -97,16 +107,166 @@ fn metadata_offset(firmware: &[u8]) -> Result<usize, String> {
             }
             let distance = usize::try_from(read_u32(&firmware[entry_start..header]))
                 .map_err(|_| "TDVF locator is too large")?;
-            locator = Some(
-                firmware
-                    .len()
-                    .checked_sub(distance)
-                    .ok_or("TDVF metadata locator exceeds firmware")?,
-            );
+            locator = Some(distance);
         }
         entry_end = entry_start;
     }
     locator.ok_or_else(|| "TDVF metadata locator not found".into())
+}
+
+pub(crate) fn metadata_offset(firmware: &[u8]) -> Result<usize, String> {
+    firmware
+        .len()
+        .checked_sub(metadata_distance(firmware)?)
+        .ok_or_else(|| "TDVF metadata locator exceeds firmware".into())
+}
+
+pub(crate) fn validate_bfv_metadata(firmware: &[u8]) -> Result<(), String> {
+    let offset = metadata_offset(firmware)?;
+    let regions = parse_descriptor(firmware, offset, firmware.len())?;
+    let bfv = regions
+        .iter()
+        .find(|region| region.kind == TdvfSectionType::Bfv)
+        .ok_or("missing BFV section")?;
+    let raw_size = u64::try_from(bfv.raw_size).map_err(|_| "BFV size is too large")?;
+    if raw_size != bfv.memory_size
+        || bfv.gpa.checked_add(raw_size) != Some(0x1_0000_0000)
+        || bfv.file_offset.checked_add(bfv.raw_size) != Some(firmware.len())
+    {
+        return Err("BFV raw data must end at 4 GiB and at the end of the firmware".into());
+    }
+    let descriptor_size = HEADER_SIZE
+        .checked_add(
+            regions
+                .len()
+                .checked_mul(ENTRY_SIZE)
+                .ok_or("TDVF metadata length overflow")?,
+        )
+        .ok_or("TDVF metadata length overflow")?;
+    let descriptor_end = offset
+        .checked_add(descriptor_size)
+        .ok_or("TDVF metadata offset overflow")?;
+    let footer_end = firmware.len() - 32;
+    let footer_start = footer_end - TABLE_HEADER_SIZE;
+    let table_size = usize::from(u16::from_le_bytes(
+        firmware[footer_start..footer_start + 2]
+            .try_into()
+            .expect("size field"),
+    ));
+    let table_start = footer_end - table_size;
+    if offset < bfv.file_offset || descriptor_end > firmware.len() || table_start < bfv.file_offset
+    {
+        return Err("TDVF metadata and OVMF table must be contained in the BFV".into());
+    }
+    Ok(())
+}
+
+pub(crate) fn parse_descriptor(
+    blob: &[u8],
+    offset: usize,
+    image_size: usize,
+) -> Result<Vec<TdvfRegion>, String> {
+    let header_end = offset
+        .checked_add(HEADER_SIZE)
+        .ok_or("TDVF header offset overflow")?;
+    let header = blob
+        .get(offset..header_end)
+        .ok_or("truncated TDVF header")?;
+    if &header[..4] != b"TDVF" {
+        return Err("invalid TDVF signature".into());
+    }
+    if read_u32(&header[8..12]) != 1 {
+        return Err("unsupported TDVF metadata version".into());
+    }
+    let length =
+        usize::try_from(read_u32(&header[4..8])).map_err(|_| "TDVF length is too large")?;
+    let count =
+        usize::try_from(read_u32(&header[12..16])).map_err(|_| "TDVF entry count is too large")?;
+    let expected = count
+        .checked_mul(ENTRY_SIZE)
+        .and_then(|size| size.checked_add(HEADER_SIZE))
+        .ok_or("TDVF metadata length overflow")?;
+    if length != expected {
+        return Err("TDVF metadata length does not match entry count".into());
+    }
+    let end = offset
+        .checked_add(length)
+        .ok_or("TDVF metadata offset overflow")?;
+    let entries = blob.get(header_end..end).ok_or("truncated TDVF metadata")?;
+    let mut sections: Vec<TdvfRegion> = Vec::new();
+    for (index, entry) in entries.chunks_exact(ENTRY_SIZE).enumerate() {
+        let parse = || -> Result<TdvfRegion, String> {
+            let raw_offset =
+                usize::try_from(read_u32(&entry[..4])).map_err(|_| "raw offset is too large")?;
+            let raw_size =
+                usize::try_from(read_u32(&entry[4..8])).map_err(|_| "raw size is too large")?;
+            let gpa = read_u64(&entry[8..16]);
+            let memory_size = read_u64(&entry[16..24]);
+            let kind = match read_u32(&entry[24..28]) {
+                0 => TdvfSectionType::Bfv,
+                1 => TdvfSectionType::Cfv,
+                2 => TdvfSectionType::Hob,
+                3 => TdvfSectionType::TempMemory,
+                _ => return Err("unsupported section type".into()),
+            };
+            let attributes = read_u32(&entry[28..32]);
+            if attributes & !1 != 0 || (kind == TdvfSectionType::Hob && attributes != 0) {
+                return Err("unsupported section attributes".into());
+            }
+            if memory_size == 0
+                || !memory_size.is_multiple_of(PAGE_SIZE)
+                || !gpa.is_multiple_of(PAGE_SIZE)
+            {
+                return Err("memory address and nonzero size must be page aligned".into());
+            }
+            let end = gpa
+                .checked_add(memory_size)
+                .ok_or("memory range overflow")?;
+            if sections
+                .iter()
+                .any(|section| gpa < section.gpa + section.memory_size && section.gpa < end)
+            {
+                return Err("memory range overlaps another entry".into());
+            }
+            if matches!(kind, TdvfSectionType::Bfv | TdvfSectionType::Cfv) != (raw_size != 0) {
+                return Err("invalid raw data size for section type".into());
+            }
+            if u64::try_from(raw_size).map_err(|_| "raw size is too large")? > memory_size {
+                return Err("raw data exceeds memory size".into());
+            }
+            let raw_end = raw_offset
+                .checked_add(raw_size)
+                .ok_or("raw data range overflow")?;
+            if raw_end > image_size {
+                return Err("raw data exceeds firmware".into());
+            }
+            Ok(TdvfRegion {
+                file_offset: raw_offset,
+                raw_size,
+                gpa,
+                memory_size,
+                kind,
+                measured: attributes == 1,
+            })
+        };
+        sections.push(parse().map_err(|error| format!("TDVF entry {index}: {error}"))?);
+    }
+    let mut bfv = sections
+        .iter()
+        .filter(|section| section.kind == TdvfSectionType::Bfv);
+    let boot = bfv.next().ok_or("missing BFV section")?;
+    if bfv.next().is_some() || !(boot.gpa..boot.gpa + boot.memory_size).contains(&RESET_VECTOR) {
+        return Err("exactly one BFV must cover the reset vector".into());
+    }
+    if sections
+        .iter()
+        .filter(|section| section.kind == TdvfSectionType::Hob)
+        .count()
+        != 1
+    {
+        return Err("exactly one HOB section is required".into());
+    }
+    Ok(sections)
 }
 
 impl Tdvf<'_> {
@@ -117,108 +277,16 @@ impl Tdvf<'_> {
     /// Returns an error if the locator, metadata, or section ranges are invalid.
     pub fn parse(firmware: &[u8]) -> Result<Tdvf<'_>, String> {
         let offset = metadata_offset(firmware)?;
-        let header_end = offset
-            .checked_add(HEADER_SIZE)
-            .ok_or("TDVF header offset overflow")?;
-        let header = firmware
-            .get(offset..header_end)
-            .ok_or("truncated TDVF header")?;
-        if &header[..4] != b"TDVF" {
-            return Err("invalid TDVF signature".into());
-        }
-        if read_u32(&header[8..12]) != 1 {
-            return Err("unsupported TDVF metadata version".into());
-        }
-        let length =
-            usize::try_from(read_u32(&header[4..8])).map_err(|_| "TDVF length is too large")?;
-        let count = usize::try_from(read_u32(&header[12..16]))
-            .map_err(|_| "TDVF entry count is too large")?;
-        let expected = count
-            .checked_mul(ENTRY_SIZE)
-            .and_then(|size| size.checked_add(HEADER_SIZE))
-            .ok_or("TDVF metadata length overflow")?;
-        if length != expected {
-            return Err("TDVF metadata length does not match entry count".into());
-        }
-        let end = offset
-            .checked_add(length)
-            .ok_or("TDVF metadata offset overflow")?;
-        let entries = firmware
-            .get(header_end..end)
-            .ok_or("truncated TDVF metadata")?;
-        let mut sections: Vec<TdvfSection<'_>> = Vec::new();
-        for (index, entry) in entries.chunks_exact(ENTRY_SIZE).enumerate() {
-            let parse = || -> Result<TdvfSection<'_>, String> {
-                let raw_offset = usize::try_from(read_u32(&entry[..4]))
-                    .map_err(|_| "raw offset is too large")?;
-                let raw_size =
-                    usize::try_from(read_u32(&entry[4..8])).map_err(|_| "raw size is too large")?;
-                let gpa = read_u64(&entry[8..16]);
-                let memory_size = read_u64(&entry[16..24]);
-                let kind = match read_u32(&entry[24..28]) {
-                    0 => TdvfSectionType::Bfv,
-                    1 => TdvfSectionType::Cfv,
-                    2 => TdvfSectionType::Hob,
-                    3 => TdvfSectionType::TempMemory,
-                    _ => return Err("unsupported section type".into()),
-                };
-                let attributes = read_u32(&entry[28..32]);
-                if attributes & !1 != 0 || (kind == TdvfSectionType::Hob && attributes != 0) {
-                    return Err("unsupported section attributes".into());
-                }
-                if memory_size == 0
-                    || !memory_size.is_multiple_of(PAGE_SIZE)
-                    || !gpa.is_multiple_of(PAGE_SIZE)
-                {
-                    return Err("memory address and nonzero size must be page aligned".into());
-                }
-                let end = gpa
-                    .checked_add(memory_size)
-                    .ok_or("memory range overflow")?;
-                if sections
-                    .iter()
-                    .any(|section| gpa < section.gpa + section.memory_size && section.gpa < end)
-                {
-                    return Err("memory range overlaps another entry".into());
-                }
-                if matches!(kind, TdvfSectionType::Bfv | TdvfSectionType::Cfv) != (raw_size != 0) {
-                    return Err("invalid raw data size for section type".into());
-                }
-                if u64::try_from(raw_size).map_err(|_| "raw size is too large")? > memory_size {
-                    return Err("raw data exceeds memory size".into());
-                }
-                let raw_end = raw_offset
-                    .checked_add(raw_size)
-                    .ok_or("raw data range overflow")?;
-                let data = firmware
-                    .get(raw_offset..raw_end)
-                    .ok_or("raw data exceeds firmware")?;
-                Ok(TdvfSection {
-                    gpa,
-                    memory_size,
-                    kind,
-                    measured: attributes == 1,
-                    data,
-                })
-            };
-            sections.push(parse().map_err(|error| format!("TDVF entry {index}: {error}"))?);
-        }
-        let mut bfv = sections
-            .iter()
-            .filter(|section| section.kind == TdvfSectionType::Bfv);
-        let boot = bfv.next().ok_or("missing BFV section")?;
-        if bfv.next().is_some() || !(boot.gpa..boot.gpa + boot.memory_size).contains(&RESET_VECTOR)
-        {
-            return Err("exactly one BFV must cover the reset vector".into());
-        }
-        if sections
-            .iter()
-            .filter(|section| section.kind == TdvfSectionType::Hob)
-            .count()
-            != 1
-        {
-            return Err("exactly one HOB section is required".into());
-        }
+        let sections = parse_descriptor(firmware, offset, firmware.len())?
+            .into_iter()
+            .map(|region| TdvfSection {
+                gpa: region.gpa,
+                memory_size: region.memory_size,
+                kind: region.kind,
+                measured: region.measured,
+                data: &firmware[region.file_offset..region.file_offset + region.raw_size],
+            })
+            .collect();
         Ok(Tdvf { sections })
     }
 }
@@ -272,6 +340,27 @@ mod tests {
         assert!(tdvf.sections[0].measured);
         assert_eq!(tdvf.sections[1].kind, TdvfSectionType::Hob);
         assert!(!tdvf.sections[1].measured);
+    }
+
+    #[test]
+    fn rejects_metadata_outside_bfv() {
+        assert!(validate_bfv_metadata(&image()).is_err());
+        let mut firmware = vec![0u8; 4096];
+        firmware[4096 - 512..].copy_from_slice(&image());
+        let entry = 4096 - 512 + FIRST;
+        firmware[entry + 4..entry + 8].copy_from_slice(&4096u32.to_le_bytes());
+        assert!(validate_bfv_metadata(&firmware).is_ok());
+    }
+
+    #[test]
+    fn parses_descriptor_from_tail_with_original_image_bounds() {
+        let firmware = image();
+        let tail = &firmware[METADATA..];
+        let regions = parse_descriptor(tail, 0, firmware.len()).unwrap();
+        assert_eq!(regions[0].file_offset, 0);
+        assert_eq!(regions[0].raw_size, 3);
+        assert!(parse_descriptor(tail, 0, 2).is_err());
+        assert!(parse_descriptor(&tail[..HEADER_SIZE], 0, firmware.len()).is_err());
     }
 
     #[test]

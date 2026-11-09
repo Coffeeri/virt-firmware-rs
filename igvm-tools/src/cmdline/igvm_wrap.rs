@@ -5,6 +5,11 @@ use clap::{Parser, ValueHint};
           about = "wrap classic native firmware image as igvm",
           long_about = None)]
 pub struct Args {
+    /// wrap TDVF for a TDVF-aware TDX loader
+    #[arg(long, help_heading = "IGVM build options",
+        conflicts_with_all = ["native", "snp", "vars", "real16", "flat32", "params", "no_params"])]
+    pub tdx: bool,
+
     /// enable native platform (default)
     #[arg(
         long,
@@ -78,7 +83,7 @@ impl Args {
     }
 
     pub fn get_native(&self) -> bool {
-        Args::evaluate_bool(self.native, self.no_native, true)
+        Args::evaluate_bool(self.native, self.no_native, !self.tdx)
     }
 
     pub fn get_snp(&self) -> bool {

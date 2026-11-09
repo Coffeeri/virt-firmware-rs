@@ -56,49 +56,56 @@ fn main() -> ExitCode {
 
         let mut builder = Builder::new();
 
-        // native
-        if cfg.get_native() {
-            builder.add_native_platform();
-            if cfg.get_flat32() {
-                let regs = flat32_mode_regs(None);
-                builder.add_native_context(&regs);
-            } else {
-                // nothing to do, this is the default
+        if cfg.tdx {
+            if let Err(error) = builder.add_tdvf(&firmware) {
+                error!("TDVF: {error}");
+                return ExitCode::from(1);
             }
-        }
+        } else {
+            // native
+            if cfg.get_native() {
+                builder.add_native_platform();
+                if cfg.get_flat32() {
+                    let regs = flat32_mode_regs(None);
+                    builder.add_native_context(&regs);
+                } else {
+                    // nothing to do, this is the default
+                }
+            }
 
-        // sev-snp
-        if cfg.get_snp() {
-            let regs = if cfg.get_flat32() {
-                flat32_mode_regs(None)
-            } else {
-                real_mode_regs()
-            };
-            builder.add_snp_platform();
-            builder.add_snp_vmsa_context(&regs, false);
+            // sev-snp
+            if cfg.get_snp() {
+                let regs = if cfg.get_flat32() {
+                    flat32_mode_regs(None)
+                } else {
+                    real_mode_regs()
+                };
+                builder.add_snp_platform();
+                builder.add_snp_vmsa_context(&regs, false);
+                if let Some(m) = ovmfmeta.as_ref() {
+                    builder.add_ovmf_snp_pages(m);
+                }
+                builder.add_snp_policy(None);
+            }
+
+            // parameters + hoblist
             if let Some(m) = ovmfmeta.as_ref() {
-                builder.add_ovmf_snp_pages(m);
+                if cfg.get_params() {
+                    builder.add_ovmf_igvm_params(m);
+                }
+                builder.add_ovmf_igvm_hoblist_clear(m);
             }
-            builder.add_snp_policy(None);
-        }
 
-        // parameters + hoblist
-        if let Some(m) = ovmfmeta.as_ref() {
-            if cfg.get_params() {
-                builder.add_ovmf_igvm_params(m);
+            // firmware code
+            if !cfg.get_flat32() {
+                builder.add_firmware_1m(&firmware);
             }
-            builder.add_ovmf_igvm_hoblist_clear(m);
-        }
+            builder.add_firmware_4g(&firmware);
 
-        // firmware code
-        if !cfg.get_flat32() {
-            builder.add_firmware_1m(&firmware);
-        }
-        builder.add_firmware_4g(&firmware);
-
-        // uefi vars
-        if let Some(v) = uefivars {
-            builder.add_uefivars(&v, firmware.len());
+            // uefi vars
+            if let Some(v) = uefivars {
+                builder.add_uefivars(&v, firmware.len());
+            }
         }
 
         // sanity checks
