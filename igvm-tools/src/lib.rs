@@ -2,4 +2,5 @@ pub mod builder;
 pub mod cmdline;
 pub mod inspect;
 pub mod ovmfmeta;
+pub mod tdvf;
 pub mod x86regs;
