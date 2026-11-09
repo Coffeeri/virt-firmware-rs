@@ -3,11 +3,13 @@ use std::path::PathBuf;
 use std::process::Command;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use igvm::{IgvmDirectiveHeader, IgvmFile, IgvmPlatformHeader};
+use igvm::{Arch, IgvmDirectiveHeader, IgvmFile, IgvmPlatformHeader, IgvmRevision};
 use igvm_defs::{IgvmPageDataType, IgvmPlatformType};
 use sha2::{Digest, Sha384};
 use virtfw_igvm_tools::ovmfmeta::{OVMF_META_LIST, OVMF_META_TDX_LIST};
 use virtfw_igvm_tools::tdvf::Tdvf;
+use virtfw_igvm_tools::tdvf_hob::{MemoryResource, ResourceType};
+use virtfw_igvm_tools::tdvf_launch::prepare_tdvf_launch;
 
 const PAGE: usize = 4096;
 static NEXT_DIR: AtomicUsize = AtomicUsize::new(0);
@@ -165,6 +167,283 @@ fn wraps_tdvf_in_metadata_order() {
     assert_eq!(transcript.finalize(), expected.finalize());
 }
 
+fn dsdt(size: usize) -> Vec<u8> {
+    let mut table = vec![0u8; size];
+    table[..4].copy_from_slice(b"DSDT");
+    table[4..8].copy_from_slice(&(size as u32).to_le_bytes());
+    table[9] = 0u8.wrapping_sub(table.iter().fold(0u8, |sum, byte| sum.wrapping_add(*byte)));
+    table
+}
+
+fn ram() -> MemoryResource {
+    MemoryResource {
+        start: 0,
+        length: 0x100_0000,
+        kind: ResourceType::Unaccepted,
+    }
+}
+
+fn prepare(
+    file: &IgvmFile,
+    resources: &[MemoryResource],
+    tables: &[&[u8]],
+) -> Result<virtfw_igvm_tools::tdvf_launch::TdvfLaunch, String> {
+    let IgvmPlatformHeader::SupportedPlatform(platform) = &file.platforms()[0];
+    prepare_tdvf_launch(file, platform.compatibility_mask, resources, tables)
+}
+
+fn launch(file: &IgvmFile) -> Result<virtfw_igvm_tools::tdvf_launch::TdvfLaunch, String> {
+    prepare(file, &[ram()], &[&dsdt(36)])
+}
+
+fn with_directives(file: &IgvmFile, directives: Vec<IgvmDirectiveHeader>) -> IgvmFile {
+    IgvmFile::new(
+        IgvmRevision::V2 {
+            arch: Arch::X64,
+            page_size: 4096,
+        },
+        file.platforms().to_vec(),
+        file.initializations().to_vec(),
+        directives,
+    )
+    .unwrap()
+}
+
+#[test]
+fn standard_igvm_launch_and_metadata_validation() {
+    let dir = TestDir::new();
+    let firmware = firmware();
+    let result = wrap(&dir, &firmware, &[]);
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    let file = read_output(&dir);
+    assert!(!file.directives().iter().any(|directive| matches!(
+        directive,
+        IgvmDirectiveHeader::SnpVpContext { .. }
+            | IgvmDirectiveHeader::X64NativeVpContext { .. }
+            | IgvmDirectiveHeader::X64VbsVpContext { .. }
+            | IgvmDirectiveHeader::AArch64VbsVpContext { .. }
+            | IgvmDirectiveHeader::AArch64CcaVpContext { .. }
+    )));
+    let prepared = launch(&file).unwrap();
+    assert_eq!(prepared.initial_rcx, 0x9000);
+    assert_eq!(
+        prepared
+            .pages
+            .iter()
+            .map(|page| (page.gpa, page.measured))
+            .collect::<Vec<_>>(),
+        [
+            (0xffff_f000, true),
+            (0x9000, false),
+            (0xa000, false),
+            (0x4000, false)
+        ]
+    );
+    assert_eq!(prepared.pages[0].data, firmware);
+
+    let original = file.directives().to_vec();
+    let page_indices: Vec<_> = original
+        .iter()
+        .enumerate()
+        .filter_map(|(index, directive)| {
+            matches!(directive, IgvmDirectiveHeader::PageData { .. }).then_some(index)
+        })
+        .collect();
+    assert_eq!(page_indices.len(), 2);
+    let mut directives = original.clone();
+    directives.swap(page_indices[0], page_indices[1]);
+    assert!(launch(&with_directives(&file, directives)).is_err());
+    let mut directives = original.clone();
+    if let IgvmDirectiveHeader::PageData { flags, .. } = &mut directives[page_indices[1]] {
+        *flags = flags.with_unmeasured(false);
+    }
+    assert!(launch(&with_directives(&file, directives)).is_err());
+    let mut directives = original.clone();
+    directives.remove(page_indices[1]);
+    assert!(launch(&with_directives(&file, directives)).is_err());
+    let mut directives = original.clone();
+    for directive in &mut directives {
+        if let IgvmDirectiveHeader::ParameterInsert(insert) = directive {
+            insert.gpa = 0xb000;
+        }
+    }
+    assert!(launch(&with_directives(&file, directives)).is_err());
+    let mut directives = original;
+    for directive in &mut directives {
+        if let IgvmDirectiveHeader::ParameterArea {
+            number_of_bytes, ..
+        } = directive
+        {
+            *number_of_bytes = 4096;
+        }
+    }
+    assert!(launch(&with_directives(&file, directives)).is_err());
+}
+
+#[test]
+fn validates_runtime_resources_and_acpi() {
+    let dir = TestDir::new();
+    assert!(wrap(&dir, &firmware(), &[]).status.success());
+    let file = read_output(&dir);
+    let prepared = launch(&file).unwrap();
+    let hob = &prepared.pages[1].data;
+    assert_eq!(u16::from_le_bytes(hob[0..2].try_into().unwrap()), 1);
+    let end = u64::from_le_bytes(hob[48..56].try_into().unwrap());
+    let mut offset = 56;
+    let mut resources = Vec::new();
+    while 0x9000 + (offset as u64) < end {
+        let kind = u16::from_le_bytes(hob[offset..offset + 2].try_into().unwrap());
+        let length = u16::from_le_bytes(hob[offset + 2..offset + 4].try_into().unwrap()) as usize;
+        if kind == 3 {
+            resources.push((
+                u32::from_le_bytes(hob[offset + 24..offset + 28].try_into().unwrap()),
+                u64::from_le_bytes(hob[offset + 32..offset + 40].try_into().unwrap()),
+                u64::from_le_bytes(hob[offset + 40..offset + 48].try_into().unwrap()),
+            ));
+        }
+        offset += length;
+    }
+    assert_eq!(
+        resources,
+        [
+            (7, 0, 0x4000),
+            (0, 0x4000, 0x1000),
+            (7, 0x5000, 0x4000),
+            (0, 0x9000, 0x2000),
+            (7, 0xb000, 0xff5000)
+        ]
+    );
+    let table = dsdt(36);
+    let mut invalid = ram();
+    invalid.kind = ResourceType::Accepted;
+    assert!(prepare(&file, &[invalid], &[&table]).is_err());
+    invalid = MemoryResource {
+        start: u64::MAX - 4095,
+        length: 4096,
+        kind: ResourceType::Unaccepted,
+    };
+    assert!(prepare(&file, &[invalid], &[&table]).is_err());
+    assert!(prepare(&file, &[ram(), ram()], &[&table]).is_err());
+    invalid = MemoryResource {
+        start: 0,
+        length: 0x9000,
+        kind: ResourceType::Unaccepted,
+    };
+    assert!(prepare(&file, &[invalid], &[&table]).is_err());
+    invalid = MemoryResource {
+        start: 0x4000,
+        length: 0x1000,
+        kind: ResourceType::Reserved,
+    };
+    let split_ram = [
+        MemoryResource {
+            start: 0,
+            length: 0x4000,
+            ..ram()
+        },
+        invalid,
+        MemoryResource {
+            start: 0x5000,
+            length: 0xffb000,
+            ..ram()
+        },
+    ];
+    assert!(prepare(&file, &split_ram, &[&table]).is_err());
+    assert!(prepare(&file, &[ram()], &[&dsdt(8192)]).is_err());
+    let mut bad = table.clone();
+    bad[10] = 1;
+    assert!(prepare(&file, &[ram()], &[&bad]).is_err());
+    assert!(prepare(&file, &[ram()], &[]).is_err());
+}
+
+#[test]
+fn rejects_invalid_embedded_metadata_and_parameter_writers() {
+    let dir = TestDir::new();
+    assert!(wrap(&dir, &firmware(), &[]).status.success());
+    let file = read_output(&dir);
+    let original = file.directives().to_vec();
+    for mutation in 0..6 {
+        let mut directives = original.clone();
+        for directive in &mut directives {
+            if let IgvmDirectiveHeader::PageData {
+                gpa, data, flags, ..
+            } = directive
+            {
+                if *gpa == 0xffff_f000 {
+                    match mutation {
+                        0 => data[PAGE - 32 - 16] ^= 1,
+                        1 => data[72..76].copy_from_slice(&2u32.to_le_bytes()),
+                        2 => data[68..72].copy_from_slice(&u32::MAX.to_le_bytes()),
+                        3 => data[PAGE - 32 - 18 - 22..PAGE - 32 - 18 - 18]
+                            .copy_from_slice(&(PAGE as u32 + 4096).to_le_bytes()),
+                        4 => *flags = flags.with_unmeasured(true),
+                        _ => {}
+                    }
+                } else if mutation == 5 {
+                    data.resize(PAGE, 0);
+                    data[0] = 1;
+                }
+            }
+        }
+        assert!(
+            launch(&with_directives(&file, directives)).is_err(),
+            "mutation {mutation}"
+        );
+    }
+    let mut directives = original.clone();
+    for directive in &mut directives {
+        match directive {
+            IgvmDirectiveHeader::ParameterArea {
+                parameter_area_index,
+                ..
+            } => *parameter_area_index = 7,
+            IgvmDirectiveHeader::ParameterInsert(insert) => insert.parameter_area_index = 7,
+            _ => {}
+        }
+    }
+    assert!(launch(&with_directives(&file, directives)).is_ok());
+    let mut directives = original.clone();
+    let mask = if let IgvmDirectiveHeader::ParameterInsert(insert) = directives
+        .iter()
+        .find(|directive| matches!(directive, IgvmDirectiveHeader::ParameterInsert(_)))
+        .unwrap()
+    {
+        insert.compatibility_mask
+    } else {
+        unreachable!()
+    };
+    directives.push(IgvmDirectiveHeader::ParameterArea {
+        parameter_area_index: 1,
+        number_of_bytes: 4096,
+        initial_data: vec![],
+    });
+    directives.push(IgvmDirectiveHeader::ParameterInsert(
+        igvm_defs::IGVM_VHS_PARAMETER_INSERT {
+            gpa: 0xc000,
+            compatibility_mask: mask,
+            parameter_area_index: 1,
+        },
+    ));
+    assert!(launch(&with_directives(&file, directives)).is_err());
+    let mut directives = original;
+    let insert = directives
+        .iter()
+        .position(|directive| matches!(directive, IgvmDirectiveHeader::ParameterInsert(_)))
+        .unwrap();
+    directives.insert(
+        insert,
+        IgvmDirectiveHeader::MemoryMap(igvm_defs::IGVM_VHS_PARAMETER {
+            parameter_area_index: 0,
+            byte_offset: 0,
+        }),
+    );
+    assert!(launch(&with_directives(&file, directives)).is_err());
+}
+
 #[test]
 fn rejects_overlap_with_second_hob_page() {
     use virtfw_igvm_tools::builder::Builder;
@@ -250,6 +529,13 @@ fn wraps_real_firmware() {
         String::from_utf8_lossy(&result.stderr)
     );
     let igvm = read_output(&dir);
+    let prepared = launch(&igvm).unwrap();
+    assert_eq!(prepared.initial_rcx, 0x809000);
+    assert_eq!(prepared.pages.len(), 1050);
+    assert_eq!(
+        prepared.pages.iter().filter(|page| page.measured).count(),
+        892
+    );
     let mut total = 0;
     let mut measured = 0;
     let mut output_hash = Sha384::new();
