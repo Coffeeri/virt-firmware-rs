@@ -9,6 +9,10 @@ Inspect igvm files, print informations to the console.
 
 Wrap traditional firmware images (flash/rom) into an igvm.
 
+`igvm-wrap --tdx` wraps TDVF using standard IGVM directives and embedded
+TDVF metadata for a TDVF-aware loader. See [the TDVF boot contract](../docs/tdvf-boot.md)
+for loader requirements and limitations.
+
 ### igvm-update
 
 Update OVMF igvm images (created by igvm-wrap), add efi binary
